@@ -63,7 +63,7 @@ export default function TwoFactorAuth() {
 
   // Handle countdown timer
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (timer > 0 && !isSuccess) {
       interval = setInterval(() => {
         setTimer((prev) => prev - 1);
@@ -84,11 +84,7 @@ export default function TwoFactorAuth() {
   useEffect(() => {
     if (isSuccess) {
       const timer = setTimeout(() => {
-        try {
-          router.replace(dashboardRoute as any);
-        } catch (e) {
-          console.error("Navigation failed:", e);
-        }
+        router.replace(dashboardRoute);
       }, 2500);
       return () => clearTimeout(timer);
     }
@@ -241,7 +237,7 @@ export default function TwoFactorAuth() {
 
             <TouchableOpacity 
               style={styles.continueButton} 
-              onPress={() => router.replace(dashboardRoute as any)}
+              onPress={() => router.replace(dashboardRoute)}
               activeOpacity={0.8}
             >
               <Text style={styles.continueButtonText}>Enter Dashboard</Text>

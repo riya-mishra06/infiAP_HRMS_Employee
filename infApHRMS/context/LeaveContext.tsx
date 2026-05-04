@@ -19,27 +19,31 @@ export interface LeaveRequest {
 
 interface LeaveContextType {
   leaves: LeaveRequest[];
+  isLoading: boolean;
+  error: string | null;
   balances: {
     privilege: number;
     casual: number;
     sick: number;
   };
+  refreshLeaves: () => Promise<void>;
   applyLeave: (leave: Omit<LeaveRequest, 'id' | 'status' | 'appliedDate' | 'days'>, status?: LeaveStatus) => Promise<void>;
   updateLeave: (id: string, leave: Partial<Omit<LeaveRequest, 'id' | 'status' | 'appliedDate'>>) => void;
   cancelLeave: (id: string) => void;
-  mockReviewLeave: (id: string, status: 'APPROVED' | 'REJECTED', reason?: string) => void;
 }
 
 const LeaveContext = createContext<LeaveContextType | undefined>(undefined);
 
 export const LeaveProvider = ({ children }: { children: ReactNode }) => {
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [balances, setBalances] = useState({
+  const balances = {
     privilege: 12,
     casual: 5,
     sick: 8,
-  });
+  };
 
   const mapApiStatus = (value?: string): LeaveStatus => {
     const normalized = (value || '').toLowerCase();
@@ -74,6 +78,8 @@ export const LeaveProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshLeaves = async () => {
     try {
+      setIsLoading(true);
+      setError(null);
       const response = await fetchEmployeeLeaves();
       const records = Array.isArray(response.data)
         ? response.data
@@ -101,8 +107,11 @@ export const LeaveProvider = ({ children }: { children: ReactNode }) => {
       });
 
       setLeaves(uniqueLeaves);
-    } catch {
+    } catch (fetchError) {
       setLeaves([]);
+      setError(fetchError instanceof Error ? fetchError.message : 'Unable to load leave data.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -132,7 +141,7 @@ export const LeaveProvider = ({ children }: { children: ReactNode }) => {
 
     const newLeave: LeaveRequest = {
       ...leave,
-      id: Math.random().toString(36).slice(2, 11),
+      id: `draft-${Date.now()}`,
       employeeName: 'You',
       status,
       appliedDate: new Date().toISOString().split('T')[0],
@@ -167,29 +176,19 @@ export const LeaveProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const mockReviewLeave = (id: string, status: 'APPROVED' | 'REJECTED', reason?: string) => {
-    setLeaves((prev) => 
-      prev.map((l) => {
-        if (l.id === id) {
-          // If approved, deduct from balance (mock logic)
-          if (status === 'APPROVED') {
-             const typeKey = l.type.toLowerCase().split(' ')[0] as keyof typeof balances;
-             if (balances[typeKey] !== undefined) {
-               setBalances(prevBal => ({
-                 ...prevBal,
-                 [typeKey]: Math.max(0, prevBal[typeKey] - l.days)
-               }));
-             }
-          }
-          return { ...l, status, ...(status === 'REJECTED' && reason ? { rejectionReason: reason } : {}) };
-        }
-        return l;
-      })
-    );
-  };
-
   return (
-    <LeaveContext.Provider value={{ leaves, balances, applyLeave, updateLeave, cancelLeave, mockReviewLeave }}>
+    <LeaveContext.Provider
+      value={{
+        leaves,
+        isLoading,
+        error,
+        balances,
+        refreshLeaves,
+        applyLeave,
+        updateLeave,
+        cancelLeave,
+      }}
+    >
       {children}
     </LeaveContext.Provider>
   );

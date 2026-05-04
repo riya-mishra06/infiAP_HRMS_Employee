@@ -24,8 +24,10 @@ export interface UserProfile {
 interface UserContextType {
   user: UserProfile;
   isHydrating: boolean;
+  isAuthenticated: boolean;
   updateUser: (updates: Partial<UserProfile>) => void;
   updateSettings: (updates: Partial<UserProfile['settings']>) => void;
+  clearUserSession: () => void;
   syncUserFromApi: (apiUser: AuthApiUser & { phone?: string; address?: string; avatar?: string; profileImage?: string; systemRole?: UserProfile['systemRole']; role?: string; }) => void;
 }
 
@@ -52,8 +54,10 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile>(defaultUser);
   const [isHydrating, setIsHydrating] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const syncUserFromApi: UserContextType['syncUserFromApi'] = (apiUser) => {
+    setIsAuthenticated(true);
     setUser((prev) => ({
       ...prev,
       name: apiUser.name || prev.name,
@@ -82,12 +86,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
+  const clearUserSession = () => {
+    setIsAuthenticated(false);
+    setUser(defaultUser);
+  };
+
   useEffect(() => {
     const hydrateUser = async () => {
       try {
         const session = await getStoredAuthSession();
         if (session?.user) {
           syncUserFromApi(session.user);
+        } else {
+          setIsAuthenticated(false);
         }
 
         if (session?.token) {
@@ -113,7 +124,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, isHydrating, updateUser, updateSettings, syncUserFromApi }}>
+    <UserContext.Provider
+      value={{
+        user,
+        isHydrating,
+        isAuthenticated,
+        updateUser,
+        updateSettings,
+        clearUserSession,
+        syncUserFromApi,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

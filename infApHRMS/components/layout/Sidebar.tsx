@@ -23,6 +23,7 @@ import { useSidebar } from '../../context/SidebarContext';
 import { useUser } from '../../context/UserContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { resolveImageSource } from '@/utils/image';
+import { signOutUser } from '@/services/auth';
 // import { BlurView } from 'expo-blur';
 
 const { width } = Dimensions.get('window');
@@ -46,7 +47,7 @@ const MENU_CONFIG = {
 
 const Sidebar = () => {
   const { isOpen, closeSidebar } = useSidebar();
-  const { user } = useUser();
+  const { user, clearUserSession } = useUser();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const progress = useSharedValue(0);
@@ -98,6 +99,16 @@ const Sidebar = () => {
   const handleNavigate = (route: string) => {
     closeSidebar();
     router.push(route as any);
+  };
+
+  const handleSignOut = async () => {
+    closeSidebar();
+    try {
+      await signOutUser();
+    } finally {
+      clearUserSession();
+      router.replace('/(auth)/sign-in');
+    }
   };
 
   if (!isMounted) {
@@ -180,10 +191,7 @@ const Sidebar = () => {
           </ScrollView>
 
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.8} onPress={() => {
-              closeSidebar();
-              router.replace('/(auth)/sign-in');
-            }}>
+            <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.8} onPress={handleSignOut}>
               <Ionicons name="log-out-outline" size={20} color="#ef4444" />
               <Text style={styles.logoutText}>Sign Out</Text>
             </TouchableOpacity>

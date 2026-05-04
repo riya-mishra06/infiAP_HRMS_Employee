@@ -1,8 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL } from '../constants/api';
 
-const AUTH_SESSION_KEY = 'auth-session-v1';
+const AUTH_SESSION_META_KEY = 'auth-session-meta-v1';
+const AUTH_TOKEN_KEY = 'auth-token-v1';
 const PENDING_2FA_KEY = 'pending-2fa-v1';
+const REQUEST_TIMEOUT_MS = 15000;
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
@@ -67,6 +70,8 @@ type StoredAuthSession = {
   user: AuthApiUser;
 };
 
+type StoredAuthSessionMeta = Omit<StoredAuthSession, 'token'>;
+
 export type EmployeeProfileResponse = {
   status: string;
   data: {
@@ -97,7 +102,24 @@ class ApiError extends Error {
 
 const buildUrl = (path: string) => `${API_BASE_URL}${path}`;
 
+const parseJsonSafely = (rawValue: string) => {
+  if (!rawValue) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(rawValue) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+};
+
 const request = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
+
   try {
     const response = await fetch(buildUrl(path), {
       method: options.method || 'GET',
@@ -107,15 +129,16 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<T
         ...(options.headers || {}),
       },
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      signal: controller.signal,
     });
 
     const rawText = await response.text();
-    const data = rawText ? JSON.parse(rawText) : {};
+    const data = parseJsonSafely(rawText);
 
     if (!response.ok) {
       const message =
-        data?.message ||
-        data?.error ||
+        (typeof data.message === 'string' ? data.message : '') ||
+        (typeof data.error === 'string' ? data.error : '') ||
         `Request failed with status ${response.status}`;
       throw new ApiError(message, response.status);
     }
@@ -126,9 +149,15 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<T
       throw error;
     }
 
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new ApiError('Request timeout. Please check your network and try again.');
+    }
+
     throw new ApiError(
       'Unable to reach the server. Check that the backend is running and your device can access it.'
     );
+  } finally {
+    clearTimeout(timeoutId);
   }
 };
 
@@ -186,16 +215,49 @@ export const clearPendingTwoFactorChallenge = async () => {
 };
 
 export const storeAuthSession = async (session: StoredAuthSession) => {
-  await AsyncStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+  const meta: StoredAuthSessionMeta = {
+    role: session.role,
+    user: session.user,
+  };
+
+  await Promise.all([
+    SecureStore.setItemAsync(AUTH_TOKEN_KEY, session.token),
+    AsyncStorage.setItem(AUTH_SESSION_META_KEY, JSON.stringify(meta)),
+  ]);
 };
 
 export const getStoredAuthSession = async () => {
-  const value = await AsyncStorage.getItem(AUTH_SESSION_KEY);
-  return value ? (JSON.parse(value) as StoredAuthSession) : null;
+  const [token, metaValue] = await Promise.all([
+    SecureStore.getItemAsync(AUTH_TOKEN_KEY),
+    AsyncStorage.getItem(AUTH_SESSION_META_KEY),
+  ]);
+
+  if (!token || !metaValue) {
+    return null;
+  }
+
+  try {
+    const meta = JSON.parse(metaValue) as StoredAuthSessionMeta;
+    return {
+      token,
+      role: meta.role,
+      user: meta.user,
+    };
+  } catch {
+    await clearStoredAuthSession();
+    return null;
+  }
 };
 
 export const clearStoredAuthSession = async () => {
-  await AsyncStorage.removeItem(AUTH_SESSION_KEY);
+  await Promise.all([
+    SecureStore.deleteItemAsync(AUTH_TOKEN_KEY),
+    AsyncStorage.removeItem(AUTH_SESSION_META_KEY),
+  ]);
+};
+
+export const signOutUser = async () => {
+  await Promise.all([clearStoredAuthSession(), clearPendingTwoFactorChallenge()]);
 };
 
 const getAuthHeaders = async (): Promise<Record<string, string>> => {

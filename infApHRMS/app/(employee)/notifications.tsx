@@ -1,19 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Platform, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { BottomNav } from '../../components/BottomNav';
 import { useNotifications, Notification, NotificationType } from '../../context/NotificationContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/layout/Header';
 import Animated, { 
   FadeInDown, 
-  FadeIn, 
   Layout, 
-  ZoomIn,
 } from 'react-native-reanimated';
-
-const { width } = Dimensions.get('window');
 
 const NotificationIcon = ({ type }: { type: NotificationType }) => {
   switch (type) {
@@ -33,8 +28,9 @@ const NotificationIcon = ({ type }: { type: NotificationType }) => {
 };
 
 export default function NotificationsPage() {
-  const { notifications, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, isLoading, error, refreshNotifications, markAsRead, markAllAsRead } = useNotifications();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const unreadCount = useMemo(() => notifications.filter((item) => !item.isRead).length, [notifications]);
 
   const filteredNotifications = useMemo(() => {
     if (filter === 'all') return notifications;
@@ -47,7 +43,7 @@ export default function NotificationsPage() {
     router.push({
       pathname: '/(employee)/notification-details/[id]',
       params: { id: item.id }
-    } as any);
+    });
   };
 
   return (
@@ -72,9 +68,9 @@ export default function NotificationsPage() {
           >
             <View style={styles.unreadTabContent}>
               <Text style={[styles.tabText, filter === 'unread' && styles.activeTabText]}>Unread</Text>
-              {notifications.filter(n => !n.isRead).length > 0 && (
+              {unreadCount > 0 && (
                 <View style={styles.unreadCountBadge}>
-                  <Text style={styles.unreadCountText}>{notifications.filter(n => !n.isRead).length}</Text>
+                  <Text style={styles.unreadCountText}>{unreadCount}</Text>
                 </View>
               )}
             </View>
@@ -98,7 +94,19 @@ export default function NotificationsPage() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {filteredNotifications.length > 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Loading notifications...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Unable to load notifications</Text>
+            <Text style={styles.emptySub}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={refreshNotifications} activeOpacity={0.8}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : filteredNotifications.length > 0 ? (
           filteredNotifications.map((item, index) => (
             <Animated.View 
               key={item.id}
@@ -314,5 +322,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 40,
     lineHeight: 20,
+  },
+  retryButton: {
+    marginTop: 16,
+    backgroundColor: '#4f46e5',
+    borderRadius: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
