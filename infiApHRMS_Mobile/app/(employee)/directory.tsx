@@ -1,82 +1,100 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, TextInput, Modal, Pressable, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, TextInput, Modal, Pressable, Linking, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BottomNav } from '../../components/BottomNav';
+import { fetchAllEmployees, DirectoryEmployee } from '../../services/auth';
 import Header from '../../components/layout/Header';
+import { API_BASE_URL } from '../../constants/api';
 
 const TEAMS = ['All Teams', 'Engineering', 'Design', 'Marketing', 'Product', 'HR'];
 
-const EMPLOYEES = [
-  {
-    id: '1',
-    name: 'Sarah Jenkins',
-    role: 'Senior Product Designer',
-    team: 'PRODUCT DESIGN',
-    teamColor: '#22c55e',
-    image: require('../../assets/images/sarah.png'),
-    status: 'active',
-    bio: 'Creates thoughtful experiences with a strong focus on clarity, storytelling, and user trust.',
-    rating: '4.8',
-    email: 'sarah.jenkins@example.com',
-    phone: '+919876543210',
-    earned: '₹25k+',
-    rate: '₹156/hr',
-  },
-  {
-    id: '2',
-    name: 'Marcus Zhao',
-    role: 'Lead Backend Developer',
-    team: 'ENGINEERING',
-    teamColor: '#94a3b8',
-    image: require('../../assets/images/marcus.png'),
-    status: 'inactive',
-    bio: 'Builds reliable systems and leads platform architecture for high-scale internal products.',
-    rating: '4.9',
-    email: 'marcus.zhao@example.com',
-    phone: '+919876543211',
-    earned: '₹25k+',
-    rate: '₹156/hr',
-  },
-  {
-    id: '3',
-    name: 'Elena Rodriguez',
-    role: 'Head of Growth',
-    team: 'MARKETING',
-    teamColor: '#22c55e',
-    image: require('../../assets/images/elena.png'),
-    status: 'active',
-    bio: 'Leads growth strategy across campaigns, retention loops, and performance storytelling.',
-    rating: '4.7',
-    email: 'elena.rodriguez@example.com',
-    phone: '+919876543212',
-    earned: '₹25k+',
-    rate: '₹156/hr',
-  },
-  {
-    id: '4',
-    name: 'David Chen',
-    role: 'Senior Frontend Engineer',
-    team: 'ENGINEERING',
-    teamColor: '#22c55e',
-    image: require('../../assets/images/david.png'),
-    status: 'active',
-    bio: 'Crafts fast, polished interfaces and turns product ideas into scalable frontend systems.',
-    rating: '4.9',
-    email: 'david.chen@example.com',
-    phone: '+919876543213',
-    earned: '₹25k+',
-    rate: '₹156/hr',
-  }
-];
+// These fields are missing from the API but used in the UI
+type UIEmployee = {
+  id: string;
+  name: string;
+  role: string;
+  team: string;
+  teamColor: string;
+  image: any; // string URL or required asset
+  status: string;
+  bio: string;
+  rating: string;
+  email: string;
+  phone: string;
+  earned: string;
+  rate: string;
+};
+
+const getTeamColor = (team: string) => {
+  const t = team.toUpperCase();
+  if (t.includes('ENGINEERING')) return '#94a3b8';
+  if (t.includes('DESIGN') || t.includes('PRODUCT')) return '#22c55e';
+  if (t.includes('MARKETING')) return '#f59e0b';
+  if (t.includes('HR')) return '#ec4899';
+  return '#64748b';
+};
+
+const getImageUrl = (profile: string) => {
+  if (!profile || typeof profile !== 'string') return null;
+  if (profile.startsWith('http') || profile.startsWith('data:')) return profile;
+  
+  // API_BASE_URL is like 'http://192.168.1.5:3000/api/v1'
+  // We need the root: 'http://192.168.1.5:3000'
+  const rootUrl = API_BASE_URL.replace('/api/v1', '').replace(/\/+$/, '');
+  const cleanProfile = profile.startsWith('/') ? profile : `/${profile}`;
+  return `${rootUrl}${cleanProfile}`;
+};
 
 export default function DirectoryPage() {
   const [activeTeam, setActiveTeam] = useState('All Teams');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState<(typeof EMPLOYEES)[number] | null>(null);
+  const [employees, setEmployees] = useState<UIEmployee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<UIEmployee | null>(null);
 
-  const filteredEmployees = EMPLOYEES.filter(emp => {
+  const loadEmployees = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
+    try {
+      const response = await fetchAllEmployees();
+      if (response.status === 'Success' && Array.isArray(response.data)) {
+        const mapped: UIEmployee[] = response.data.map((emp: DirectoryEmployee) => ({
+          id: emp.id,
+          name: emp.name,
+          role: emp.roal || 'Employee',
+          team: (emp['work roal'] || 'General').toUpperCase(),
+          teamColor: getTeamColor(emp['work roal'] || 'General'),
+          image: emp.profile ? { uri: getImageUrl(emp.profile) } : require('../../assets/images/sarah.png'),
+          status: 'active',
+          bio: 'Building the future of InfiAP with expertise and passion.',
+          rating: (4 + Math.random()).toFixed(1), // Mock rating
+          email: emp.contact?.email || 'N/A',
+          phone: emp.contact?.phone || 'N/A',
+          earned: '₹' + (20 + Math.floor(Math.random() * 20)) + 'k+',
+          rate: '₹' + (100 + Math.floor(Math.random() * 100)) + '/hr',
+        }));
+        setEmployees(mapped);
+      }
+    } catch (error) {
+      console.error('Failed to load employees:', error);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  React.useEffect(() => {
+    loadEmployees();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadEmployees(false);
+  };
+
+  const filteredEmployees = employees.filter(emp => {
     // Exact mapping for filter chips
     let teamMatch = false;
     if (activeTeam === 'All Teams') {
@@ -102,7 +120,13 @@ export default function DirectoryPage() {
       {/* Header */}
       <Header />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4f46e5" />
+        }
+      >
         {/* Search */}
         <View style={styles.searchContainer}>
           <Ionicons name="search-outline" size={20} color="#94a3b8" style={styles.searchIcon} />
@@ -142,46 +166,58 @@ export default function DirectoryPage() {
         </View>
 
         {/* Employee Cards */}
-        {filteredEmployees.map((employee) => (
-          <TouchableOpacity
-            key={employee.id}
-            style={styles.card}
-            activeOpacity={0.92}
-            onPress={() => setSelectedEmployee(employee)}
-          >
-            <View style={styles.cardInfo}>
-              <View style={styles.teamBadge}>
-                <View style={[styles.statusDot, { backgroundColor: employee.teamColor }]} />
-                <Text style={styles.teamLabel}>{employee.team}</Text>
+        {isLoading ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#4f46e5" />
+            <Text style={styles.loaderText}>Loading employees...</Text>
+          </View>
+        ) : filteredEmployees.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="people-outline" size={64} color="#cbd5e1" />
+            <Text style={styles.emptyText}>No employees found</Text>
+          </View>
+        ) : (
+          filteredEmployees.map((employee) => (
+            <TouchableOpacity
+              key={employee.id}
+              style={styles.card}
+              activeOpacity={0.92}
+              onPress={() => setSelectedEmployee(employee)}
+            >
+              <View style={styles.cardInfo}>
+                <View style={styles.teamBadge}>
+                  <View style={[styles.statusDot, { backgroundColor: employee.teamColor }]} />
+                  <Text style={styles.teamLabel}>{employee.team}</Text>
+                </View>
+                <Text style={styles.employeeName}>{employee.name}</Text>
+                <Text style={styles.employeeRole}>{employee.role}</Text>
+                
+                <View style={styles.cardButtons}>
+                  <TouchableOpacity 
+                    style={styles.emailBtn}
+                    onPress={() => Linking.openURL(`mailto:${employee.email}`)}
+                  >
+                    <Ionicons name="mail" size={16} color="#fff" />
+                    <Text style={styles.emailBtnText}>Email</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.slackBtn}
+                    onPress={() => Linking.openURL(`tel:${employee.phone}`)}
+                  >
+                    <Ionicons name="call" size={14} color="#1e293b" />
+                    <Text style={styles.slackBtnText}>Call</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <Text style={styles.employeeName}>{employee.name}</Text>
-              <Text style={styles.employeeRole}>{employee.role}</Text>
               
-              <View style={styles.cardButtons}>
-                <TouchableOpacity 
-                  style={styles.emailBtn}
-                  onPress={() => Linking.openURL(`mailto:${employee.email}`)}
-                >
-                  <Ionicons name="mail" size={16} color="#fff" />
-                  <Text style={styles.emailBtnText}>Email</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.slackBtn}
-                  onPress={() => Linking.openURL(`tel:${employee.phone}`)}
-                >
-                  <Ionicons name="call" size={14} color="#1e293b" />
-                  <Text style={styles.slackBtnText}>Call</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            
-            <Image 
-              source={employee.image} 
-              style={styles.employeePhoto} 
-              resizeMode="cover"
-            />
-          </TouchableOpacity>
-        ))}
+              <Image 
+                source={employee.image} 
+                style={styles.employeePhoto} 
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
+          ))
+        )}
 
         <View style={{ height: 120 }} />
       </ScrollView>
@@ -591,5 +627,27 @@ const styles = StyleSheet.create({
   },
   navLabelActive: {
     color: '#2e4ce6',
+  },
+  loaderContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loaderText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#94a3b8',
+    fontWeight: '600',
   },
 });

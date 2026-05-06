@@ -671,12 +671,12 @@ exports.approveActivity = async (req, res) => {
 // 16. Get Directors List (infiApDirectors page)
 exports.getDirectors = async (req, res) => {
     try {
-        const users = await User.find({}).select("name profilePicture email phone department designation role");
+        const users = await User.find({}).select("name profileImage email phone department designation role");
         
         const directorsData = users.map(u => ({
             id: u._id,
             name: u.name || "Unknown",
-            profile: u.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(u.name || "U"),
+            profile: u.profileImage || "https://ui-avatars.com/api/?name=" + encodeURIComponent(u.name || "U"),
             roal: u.designation || u.role || "Employee",
             "work roal": u.department || "General",
             contact: {
