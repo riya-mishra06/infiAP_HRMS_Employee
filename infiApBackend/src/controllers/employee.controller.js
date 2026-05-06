@@ -105,6 +105,33 @@ exports.getDashboardHome = async (req, res) => {
             date: { $gte: startOfMonth, $lte: endOfMonth }
         });
 
+        let balance = await LeaveBalance.findOne({ userId });
+        if (!balance) {
+            balance = { CL: 6, PL: 6, SL: 6 };
+        }
+
+        const lateInCount = punches.filter(p => {
+            const time = p.PunchTime.getHours() * 60 + p.PunchTime.getMinutes();
+            return time > 570; // 9:30 AM
+        }).length;
+
+        const earlyOutPunches = await Punch.find({
+            userId,
+            PunchType: 2,
+            PunchTime: { $gte: startOfMonth, $lte: endOfMonth }
+        });
+        const earlyOutCount = earlyOutPunches.filter(p => {
+            const time = p.PunchTime.getHours() * 60 + p.PunchTime.getMinutes();
+            return time < 1080; // 6:00 PM
+        }).length;
+
+        const halfDayCount = await LeaveApplication.countDocuments({
+            EmployeeID: userId,
+            ApprovalStatusID: 2,
+            IsHalfDay: true,
+            StartDate: { $gte: startOfMonth, $lte: endOfMonth }
+        });
+
         const dashboardData = {
             greeting: {
                 message: `Welcome, ${currentUser?.name || "Employee"}!`,
@@ -123,14 +150,14 @@ exports.getDashboardHome = async (req, res) => {
                 location: "Mumbai Office"
             },
             leaveBalance: {
-                privilegeLeave: 6,
-                casualLeave: 6,
-                sickLeave: 6,
-                totalBalance: 18,
+                privilegeLeave: balance.PL,
+                casualLeave: balance.CL,
+                sickLeave: balance.SL,
+                totalBalance: balance.PL + balance.CL + balance.SL,
                 earlyOutRecord: 0,
-                lateIn: "0/5",
-                earlyOut: "0/5",
-                halfDay: 0
+                lateIn: `${lateInCount}/5`,
+                earlyOut: `${earlyOutCount}/5`,
+                halfDay: halfDayCount
             },
             attendanceSummary: {
                 present: presentDays,
@@ -171,8 +198,8 @@ exports.empPunch = async (req, res) => {
                 message: "Latitude and Longitude are required for punch location."
             });
         }
-        
-        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f"; 
+
+        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
 
         const punch = await Punch.create({
             userId,
@@ -190,11 +217,11 @@ exports.empPunch = async (req, res) => {
         const year = d.getFullYear();
         const month = formatDoubleDigit(d.getMonth() + 1);
         const day = formatDoubleDigit(d.getDate());
-        
+
         let hours = d.getHours();
         const ampm = hours >= 12 ? 'PM' : 'AM';
         hours = hours % 12;
-        hours = hours ? hours : 12; 
+        hours = hours ? hours : 12;
         const mins = formatDoubleDigit(d.getMinutes());
         const secs = formatDoubleDigit(d.getSeconds());
 
@@ -224,26 +251,26 @@ exports.empPunch = async (req, res) => {
 // 3. Get User recent Punch Status
 exports.getPunchStatus = async (req, res) => {
     try {
-        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f"; 
+        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
 
         const latestPunch = await Punch.findOne({ userId }).sort({ PunchTime: -1 });
 
-        let punchType = 3; 
+        let punchType = 3;
         let punchTime = null;
 
         if (latestPunch) {
             punchType = latestPunch.PunchType;
             const formatDoubleDigit = (n) => n < 10 ? `0${n}` : n;
             const d = latestPunch.PunchTime;
-            
+
             const year = d.getFullYear();
             const month = formatDoubleDigit(d.getMonth() + 1);
             const day = formatDoubleDigit(d.getDate());
-            
+
             let hours = d.getHours();
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
-            hours = hours ? hours : 12; 
+            hours = hours ? hours : 12;
             const mins = formatDoubleDigit(d.getMinutes());
             const secs = formatDoubleDigit(d.getSeconds());
 
@@ -266,10 +293,10 @@ exports.getPunchStatus = async (req, res) => {
 // 4. Get Employee Leave Balance
 exports.getEmployeeLeaveBalance = async (req, res) => {
     try {
-        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f"; 
+        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
 
         let balance = await LeaveBalance.findOne({ userId });
-        
+
         if (!balance) {
             balance = { CL: 15, PL: 15, SL: 13, WFH: 7 }; // default logic for now if not found
         }
@@ -425,14 +452,14 @@ exports.getAttendanceSummary = async (req, res) => {
 exports.getMissedPunches = async (req, res) => {
     try {
         const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
-        
+
         // This query would ideally check dates where there is an IN but no OUT, or OUT but no IN
         // For simplicity, we are returning the mocked response that matches the UI for now, 
         // as a complex aggregation is required.
         const startOfMonth = moment().startOf('month').toDate();
         const endOfMonth = moment().endOf('month').toDate();
         // const punches = await Punch.find({ userId, PunchTime: { $gte: startOfMonth, $lte: endOfMonth } }).sort({ PunchTime: 1});
-        
+
         // Mocking the data based on UI req
         res.status(200).json({
             status: "Success",
@@ -499,7 +526,7 @@ exports.getDOB = async (req, res) => {
         const tDay = today.getDate();
 
         const allUsers = await User.find({ dob: { $exists: true } });
-        
+
         const todays_birthdays = [];
         const current_month_birthdays = [];
 
@@ -507,9 +534,9 @@ exports.getDOB = async (req, res) => {
             if (!u.dob) return;
             const uM = u.dob.getMonth() + 1;
             const uD = u.dob.getDate();
-            
-            const dobStr = `${uD < 10 ? '0'+uD : uD}-${uM < 10 ? '0'+uM : uM}-${u.dob.getFullYear()}`;
-            
+
+            const dobStr = `${uD < 10 ? '0' + uD : uD}-${uM < 10 ? '0' + uM : uM}-${u.dob.getFullYear()}`;
+
             if (uM === tMonth && uD === tDay) {
                 todays_birthdays.push({ name: u.name, dob: dobStr });
             } else if (uM === tMonth) {
@@ -538,7 +565,7 @@ exports.getDOB = async (req, res) => {
 exports.applyLeave = async (req, res) => {
     try {
         const { LeaveType, Reason, StartDate, EndDate, IsHalfDay, IsFirstHalf } = req.body;
-        const EmployeeID = req.user._id; 
+        const EmployeeID = req.user._id;
         const normalizedStartDate = normalizeLeaveDate(StartDate);
         const normalizedEndDate = normalizeLeaveDate(EndDate);
 
@@ -595,10 +622,10 @@ exports.applyLeave = async (req, res) => {
 // 13. Get Employee Leaves
 exports.getEmployeeLeaves = async (req, res) => {
     try {
-        const EmployeeID = req.user._id; 
+        const EmployeeID = req.user._id;
 
         const leaves = await LeaveApplication.find({ EmployeeID }).sort({ createdAt: -1 });
-        
+
         const data = dedupeLeaveApplications(leaves).map(mapLeaveApplication);
 
         res.status(200).json({
@@ -652,10 +679,10 @@ exports.approveActivity = async (req, res) => {
                 ApprovalStatusID: 1, // 1: Approved
                 ApprovalStatus: "Approved",
                 ApproverID: approverID,
-                ApprovalUsername: "Approver", 
+                ApprovalUsername: "Approver",
             });
         }
-        
+
         // Similarly handle other ProgramIDs like Missed Punch, WFH...
 
         res.status(200).json({
@@ -672,7 +699,7 @@ exports.approveActivity = async (req, res) => {
 exports.getDirectors = async (req, res) => {
     try {
         const users = await User.find({}).select("name profileImage email phone department designation role");
-        
+
         const directorsData = users.map(u => ({
             id: u._id,
             name: u.name || "Unknown",
@@ -908,7 +935,7 @@ exports.getAttendanceStats = async (req, res) => {
         res.status(200).json({ status: "Success", statusCode: 200, data: stats });
     } catch (error) {
         res.status(500).json({ status: "Error", message: "Failed to get attendance stats", error: error.message });
-}
+    }
 };
 
 // 26. Work Hours Summary
@@ -1093,7 +1120,7 @@ exports.getLeaveBalances = async (req, res) => {
     try {
         const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
         let balance = await LeaveBalance.findOne({ userId });
-        if (!balance) balance = { CL: 15, PL: 15, SL: 13 };
+        if (!balance) balance = { CL: 6, PL: 6, SL: 6 };
 
         const data = {
             privilegeLeave: balance.PL,
@@ -1279,7 +1306,7 @@ exports.getPayrollHistory = async (req, res) => {
 exports.getPayrollDetails = async (req, res) => {
     try {
         const { id } = req.body; // e.g. 2026-03
-        
+
         // Mocking detailed breakdown for a specific period
         const details = {
             employee: {
@@ -1512,7 +1539,7 @@ exports.getAttendanceHistory = async (req, res) => {
     try {
         const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
         const { month, year } = req.query;
-        
+
         // Default to current month if not provided
         let startDate, endDate;
         if (month && year) {
@@ -1531,10 +1558,10 @@ exports.getAttendanceHistory = async (req, res) => {
 
         // Group by date and separate check-ins and check-outs
         const attendanceMap = {};
-        
+
         punches.forEach(punch => {
             const dateKey = punch.PunchTime.toISOString().split('T')[0];
-            
+
             if (!attendanceMap[dateKey]) {
                 attendanceMap[dateKey] = {
                     date: dateKey,
@@ -1583,7 +1610,7 @@ exports.getAttendanceHistory = async (req, res) => {
                 const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
                 const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
                 duration = `${diffHours}h ${diffMinutes}m`;
-                
+
                 // Check if late (after 10:00 AM)
                 if (record.checkInTime.getHours() > 10 || (record.checkInTime.getHours() === 10 && record.checkInTime.getMinutes() > 0)) {
                     status = 'Late';
@@ -1633,10 +1660,10 @@ exports.getAttendanceHistory = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ 
-            status: "Error", 
-            message: "Failed to get attendance history", 
-            error: error.message 
+        res.status(500).json({
+            status: "Error",
+            message: "Failed to get attendance history",
+            error: error.message
         });
     }
 };

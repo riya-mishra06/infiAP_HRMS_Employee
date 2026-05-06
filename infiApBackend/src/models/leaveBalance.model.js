@@ -8,9 +8,9 @@ const leaveBalanceSchema = new mongoose.Schema(
             required: true,
             unique: true
         },
-        CL: { type: Number, default: 15 }, // Casual Leave
-        PL: { type: Number, default: 15 }, // Privilege Leave
-        SL: { type: Number, default: 13 }, // Sick Leave
+        CL: { type: Number, default: 6 }, // Casual Leave
+        PL: { type: Number, default: 6 }, // Privilege Leave
+        SL: { type: Number, default: 6 }, // Sick Leave
         WFH: { type: Number, default: 7 }, // Work From Home days
     },
     { timestamps: true }

@@ -330,6 +330,16 @@ export type DashboardHomeResponse = {
       subMessage: string;
       today?: string;
     };
+    leaveBalance: {
+      privilegeLeave: number;
+      casualLeave: number;
+      sickLeave: number;
+      totalBalance: number;
+      earlyOutRecord: number;
+      lateIn: string;
+      earlyOut: string;
+      halfDay: number;
+    };
     attendanceSummary: {
       present: number;
       leaves: number;
