@@ -113,7 +113,7 @@ exports.editEmployee = async (req, res) => {
 exports.getAllEmployees = async (req, res) => {
     try {
         const { department, role, search, page = 1, limit = 20 } = req.query;
-        const filter = { role: { $ne: "main_admin" } };
+        const filter = { role: { $nin: ["main_admin", "superadmin"] } };
         if (department) filter.department = department;
         if (role) filter.designation = role;
         if (search) {

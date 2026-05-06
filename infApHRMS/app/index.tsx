@@ -13,5 +13,5 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={isAuthenticated ? '/(employee)/' : '/(auth)/sign-in'} />;
+  return <Redirect href={isAuthenticated ? '/(employee)' : '/(auth)/sign-in'} />;
 }

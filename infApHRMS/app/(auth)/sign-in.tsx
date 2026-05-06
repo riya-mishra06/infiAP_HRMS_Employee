@@ -80,7 +80,7 @@ export default function SignIn() {
       });
 
       syncUserFromApi(response.user);
-      router.replace('/(employee)/');
+      router.replace('/(employee)');
     } catch (error) {
       Alert.alert('Sign In Failed', error instanceof Error ? error.message : 'Unable to sign in right now.');
     } finally {

@@ -23,7 +23,7 @@ const sanitizeUser = (user) => ({
     _id: user._id,
     name: user.name,
     email: user.email,
-    role: user.role,
+    role: user.role === "main_admin" ? "superadmin" : user.role,
     department: user.department || "",
     designation: user.designation || "",
     joiningDate: user.joiningDate,
@@ -33,11 +33,33 @@ const sanitizeUser = (user) => ({
     profileImage: user.profileImage || "",
 });
 
+const ROLE_ALIASES = {
+    employee: "employee",
+    user: "employee",
+    manager: "manager",
+    hr: "hr",
+    human_resources: "hr",
+    "human resources": "hr",
+    admin: "admin",
+    superadmin: "superadmin",
+    main_admin: "superadmin",
+    "main admin": "superadmin",
+};
+
+const normalizeRole = (role) => {
+    if (!role) {
+        return "employee";
+    }
+
+    const normalizedRole = String(role).trim().toLowerCase().replace(/-/g, "_");
+    return ROLE_ALIASES[normalizedRole] || null;
+};
+
 const buildAuthResponse = (loggedInUser, accessToken) => ({
     message: "Login successful",
     require2FA: false,
     token: accessToken,
-    role: loggedInUser.role,
+    role: loggedInUser.role === "main_admin" ? "superadmin" : loggedInUser.role,
     user: sanitizeUser(loggedInUser),
 });
 
@@ -66,7 +88,14 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: "Name, email, and password are required" });
         }
 
-        const existingUser = await User.findOne({ email });
+        const normalizedEmail = String(email).trim().toLowerCase();
+        const normalizedRole = normalizeRole(role);
+
+        if (!normalizedRole) {
+            return res.status(400).json({ message: "Invalid role selected" });
+        }
+
+        const existingUser = await User.findOne({ email: normalizedEmail });
 
         if (existingUser) {
             return res.status(409).json({ message: "User with this email already exists" });
@@ -75,10 +104,10 @@ const registerUser = async (req, res) => {
         const verificationToken = crypto.randomBytes(32).toString("hex");
 
         const user = await User.create({
-            name,
-            email,
+            name: String(name).trim(),
+            email: normalizedEmail,
             password,
-            role: role || "employee", // Default to employee if role not provided
+            role: normalizedRole,
             verificationToken,
             isEmailVerified: false,
         });
@@ -86,7 +115,7 @@ const registerUser = async (req, res) => {
         let emailMessage = "User registered successfully.";
 
         try {
-            const emailSent = await sendVerificationEmail(email, verificationToken);
+            const emailSent = await sendVerificationEmail(normalizedEmail, verificationToken);
             emailMessage = emailSent
                 ? "User registered successfully. Please check your email for verification."
                 : "User registered successfully. Email verification is skipped in local development.";
@@ -149,6 +178,30 @@ const loginUser = async (req, res) => {
         }
 
         const { emailSent } = await issueLoginOtpChallenge(user);
+
+        if (!emailSent && process.env.NODE_ENV !== "production") {
+            user.twoFactorOTP = undefined;
+            user.twoFactorOTPExpires = undefined;
+            user.firstLogin2FAVerified = true;
+            await user.save({ validateBeforeSave: false });
+
+            const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+            const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+
+            const options = {
+                httpOnly: true,
+                secure: false,
+            };
+
+            const responseBody = buildAuthResponse(loggedInUser, accessToken);
+            responseBody.message = "Login successful. 2FA skipped because email is not configured in local development.";
+
+            return res
+                .status(200)
+                .cookie("accessToken", accessToken, options)
+                .cookie("refreshToken", refreshToken, options)
+                .json(responseBody);
+        }
 
         return res.status(200).json({
             message: emailSent

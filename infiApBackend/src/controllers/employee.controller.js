@@ -671,29 +671,19 @@ exports.approveActivity = async (req, res) => {
 // 16. Get Directors List (infiApDirectors page)
 exports.getDirectors = async (req, res) => {
     try {
-        // Mocking directors data since there is no standalone Director model
-        const directorsData = [
-            {
-                name: "Shruti Desai",
-                profile: "/img/profile_shruti.png",
-                roal: "Director",
-                "work roal": "Director of Engineering",
-                contact: {
-                    email: "shruti.desai@example.com",
-                    slack: "@shrutidesai"
-                }
-            },
-            {
-                name: "Rahul Mehta",
-                profile: "/img/profile_rahul.png",
-                roal: "Managing Director",
-                "work roal": "Head of Strategy",
-                contact: {
-                    email: "rahul.mehta@example.com",
-                    slack: "@rahulmehta"
-                }
+        const users = await User.find({}).select("name profilePicture email phone department designation role");
+        
+        const directorsData = users.map(u => ({
+            id: u._id,
+            name: u.name || "Unknown",
+            profile: u.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(u.name || "U"),
+            roal: u.designation || u.role || "Employee",
+            "work roal": u.department || "General",
+            contact: {
+                email: u.email || "no-email@example.com",
+                phone: u.phone || "+910000000000"
             }
-        ];
+        }));
 
         res.status(200).json({
             status: "Success",
@@ -701,7 +691,7 @@ exports.getDirectors = async (req, res) => {
             data: directorsData
         });
     } catch (error) {
-        res.status(500).json({ status: "Error", message: "Failed to fetch directors", error: error.message });
+        res.status(500).json({ status: "Error", message: "Failed to fetch employees", error: error.message });
     }
 };
 

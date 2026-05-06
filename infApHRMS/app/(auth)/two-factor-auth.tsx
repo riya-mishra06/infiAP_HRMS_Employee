@@ -29,7 +29,7 @@ export default function TwoFactorAuth() {
   const [pendingUserId, setPendingUserId] = useState<string>('');
   const CODE_LENGTH = 6;
 
-  const dashboardRoute = '/(employee)/';
+  const dashboardRoute = '/(employee)' as const;
   const dashboardLabel = 'Employee Dashboard';
 
   const progressWidth = useRef(new Animated.Value(0)).current;

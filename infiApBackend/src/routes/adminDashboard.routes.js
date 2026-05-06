@@ -6,7 +6,7 @@ const { verifyRole } = require("../middlewares/role.middleware");
 
 // All admin dashboard routes require authentication and Admin/MainAdmin role
 router.use(verifyJWT);
-router.use(verifyRole(["admin", "main_admin"]));
+router.use(verifyRole(["admin", "superadmin"]));
 
 // --- Summary & Insights ---
 router.get("/summary", adminDashboardController.getSummaryStats);

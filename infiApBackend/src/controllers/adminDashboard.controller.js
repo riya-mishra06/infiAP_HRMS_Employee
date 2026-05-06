@@ -696,7 +696,7 @@ exports.getAnalyticsReport = async (req, res) => {
 exports.getCreateDepartmentForm = async (req, res) => {
     try {
         const [potentialHeads, totalDepartments, totalTeams, totalStaff] = await Promise.all([
-            User.find({ role: { $ne: "main_admin" } })
+            User.find({ role: { $nin: ["main_admin", "superadmin"] } })
                 .select("name email designation role")
                 .sort({ name: 1 })
                 .lean(),

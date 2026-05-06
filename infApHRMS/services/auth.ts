@@ -468,3 +468,27 @@ export const fetchEmployeeLeaves = async () => {
     headers,
   });
 };
+
+export type DirectoryEmployee = {
+  id: string;
+  name: string;
+  profile: string;
+  roal: string;
+  'work roal': string;
+  contact: {
+    email: string;
+    phone: string;
+  };
+};
+
+export const fetchAllEmployees = async () => {
+  const headers = await getOptionalAuthHeaders();
+  return request<{
+    status: string;
+    statusCode: number;
+    data: DirectoryEmployee[];
+  }>('/directors', {
+    method: 'GET',
+    headers,
+  });
+};

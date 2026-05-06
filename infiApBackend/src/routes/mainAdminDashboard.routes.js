@@ -5,7 +5,7 @@ const { verifyJWT } = require("../middlewares/auth.middleware");
 const { verifyRole } = require("../middlewares/role.middleware");
 
 router.use(verifyJWT);
-router.use(verifyRole(["main_admin"]));
+router.use(verifyRole(["superadmin"]));
 
 router.get("/home-summary", mainAdminDashboardController.getHomeSummary);
 router.get("/platform-activity", mainAdminDashboardController.getPlatformActivityGraph);

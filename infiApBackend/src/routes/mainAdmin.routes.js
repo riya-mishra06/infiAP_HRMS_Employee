@@ -6,7 +6,7 @@ const { verifyRole } = require("../middlewares/role.middleware");
 
 // Protect all main-admin write endpoints.
 router.use(verifyJWT);
-router.use(verifyRole(["main_admin"]));
+router.use(verifyRole(["superadmin"]));
 
 // Company Setup
 router.post("/company", mainAdminController.createCompany);

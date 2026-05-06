@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import MapView, { Marker, Region } from 'react-native-maps';
 import { router } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
@@ -28,10 +29,25 @@ type CurrentLocation = {
   localityLine: string;
 };
 
+const DEFAULT_MAP_DELTA = 0.005;
+const MIN_MAP_DELTA = 0.001;
+const MAX_MAP_DELTA = 0.08;
+
+const createLocationRegion = (location: Pick<CurrentLocation, 'latitude' | 'longitude'>): Region => ({
+  latitude: location.latitude,
+  longitude: location.longitude,
+  latitudeDelta: DEFAULT_MAP_DELTA,
+  longitudeDelta: DEFAULT_MAP_DELTA,
+});
+
 export default function AttendanceLogging() {
+  const mapRef = useRef<MapView | null>(null);
   const [selectedMode, setSelectedMode] = useState('office');
   const [isConfirming, setIsConfirming] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<CurrentLocation | null>(null);
+  const [mapRegion, setMapRegion] = useState<Region | null>(null);
+  const [followLocation, setFollowLocation] = useState(true);
+  const [mapType, setMapType] = useState<'standard' | 'satellite' | 'hybrid'>('standard');
   const [locationLoading, setLocationLoading] = useState(true);
   const [locationError, setLocationError] = useState('');
 
@@ -63,11 +79,28 @@ export default function AttendanceLogging() {
           return;
         }
 
-        setCurrentLocation({
+        const nextLocation = {
           latitude: location.latitude,
           longitude: location.longitude,
           addressLine: formatExactLocationLabel(location),
           localityLine: location.localityLabel,
+        };
+
+        setCurrentLocation(nextLocation);
+        setMapRegion((previousRegion) => {
+          const nextRegion = previousRegion
+            ? {
+                ...previousRegion,
+                latitude: nextLocation.latitude,
+                longitude: nextLocation.longitude,
+              }
+            : createLocationRegion(nextLocation);
+
+          if (followLocation) {
+            mapRef.current?.animateToRegion(nextRegion, 550);
+          }
+
+          return followLocation || !previousRegion ? nextRegion : previousRegion;
         });
       } catch (error: any) {
         if (isActive) {
@@ -95,7 +128,7 @@ export default function AttendanceLogging() {
       isActive = false;
       clearInterval(locationRefreshInterval);
     };
-  }, []);
+  }, [followLocation]);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: logoScale.value }],
@@ -110,12 +143,20 @@ export default function AttendanceLogging() {
     setLocationLoading(true);
     try {
       const location = await getExactCurrentLocation();
-      setCurrentLocation({
+      const nextLocation = {
         latitude: location.latitude,
         longitude: location.longitude,
         addressLine: formatExactLocationLabel(location),
         localityLine: location.localityLabel,
-      });
+      };
+      const nextRegion = mapRegion
+        ? { ...mapRegion, latitude: nextLocation.latitude, longitude: nextLocation.longitude }
+        : createLocationRegion(nextLocation);
+
+      setCurrentLocation(nextLocation);
+      setMapRegion(nextRegion);
+      setFollowLocation(true);
+      mapRef.current?.animateToRegion(nextRegion, 550);
       setLocationError('');
     } catch (error: any) {
       const errorMsg = error?.message || 'Unable to fetch the current location.';
@@ -123,6 +164,42 @@ export default function AttendanceLogging() {
     } finally {
       setLocationLoading(false);
     }
+  };
+
+  const handleRecenterMap = () => {
+    if (!currentLocation) {
+      return;
+    }
+
+    const nextRegion = mapRegion
+      ? { ...mapRegion, latitude: currentLocation.latitude, longitude: currentLocation.longitude }
+      : createLocationRegion(currentLocation);
+
+    setFollowLocation(true);
+    setMapRegion(nextRegion);
+    mapRef.current?.animateToRegion(nextRegion, 450);
+  };
+
+  const handleZoom = (direction: 'in' | 'out') => {
+    if (!mapRegion) {
+      return;
+    }
+
+    const zoomFactor = direction === 'in' ? 0.55 : 1.65;
+    const nextRegion = {
+      ...mapRegion,
+      latitudeDelta: Math.max(MIN_MAP_DELTA, Math.min(MAX_MAP_DELTA, mapRegion.latitudeDelta * zoomFactor)),
+      longitudeDelta: Math.max(MIN_MAP_DELTA, Math.min(MAX_MAP_DELTA, mapRegion.longitudeDelta * zoomFactor)),
+    };
+
+    setMapRegion(nextRegion);
+    mapRef.current?.animateToRegion(nextRegion, 250);
+  };
+
+  const cycleMapType = () => {
+    setMapType((previousType) => (
+      previousType === 'standard' ? 'satellite' : previousType === 'satellite' ? 'hybrid' : 'standard'
+    ));
   };
 
   const handleConfirm = async () => {
@@ -133,7 +210,7 @@ export default function AttendanceLogging() {
 
     setIsConfirming(true);
     setLocationError(''); // Clear any previous errors
-    
+
     try {
       const response = await submitEmployeePunch({
         PunchType: 1,
@@ -141,7 +218,7 @@ export default function AttendanceLogging() {
         Longitude: currentLocation.longitude,
         WorkMode: selectedMode === 'wfh' ? 2 : selectedMode === 'meeting' ? 3 : selectedMode === 'offsite' ? 4 : 1,
       });
-      
+
       // Check if response indicates success
       if (response && (response.status === 'Success' || response.status === 'success' || response.PunchTime)) {
         router.back();
@@ -158,39 +235,32 @@ export default function AttendanceLogging() {
 
   return (
     <View style={styles.root}>
-      <Header 
-        title="Attendance Logging" 
-        showBack={true} 
+      <Header
+        title="Attendance Logging"
+        showBack={true}
         rightElement={
-          <TouchableOpacity 
+          <TouchableOpacity
             style={{ padding: 4 }}
             onPress={handleRefreshLocation}
             disabled={locationLoading}
           >
-            <Ionicons 
-              name={locationLoading ? "sync" : "refresh"} 
-              size={24} 
-              color="#1e293b" 
+            <Ionicons
+              name={locationLoading ? "sync" : "refresh"}
+              size={24}
+              color="#1e293b"
             />
           </TouchableOpacity>
         }
       />
 
-      <ScrollView 
-        style={styles.root} 
+      <ScrollView
+        style={styles.root}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
           {/* Branding Section */}
           <Animated.View style={[styles.branding, logoAnimatedStyle]}>
-            <View style={styles.logoContainer}>
-              <View style={styles.logoIcon}>
-                <Ionicons name="flash" size={20} color="#fff" />
-              </View>
-              <Text style={styles.logoText}>InfiAP</Text>
-            </View>
-            <Text style={styles.sessionTitle}>Check-In Session</Text>
             <Text style={styles.sessionSub}>Please verify your location to proceed.</Text>
           </Animated.View>
 
@@ -223,16 +293,78 @@ export default function AttendanceLogging() {
 
           {/* Map Section */}
           <View style={styles.mapContainer}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=800&h=400&fit=crop' }}
-              style={styles.mapImage}
-            />
-            <View style={styles.markerContainer}>
-              <Animated.View style={[styles.ripple, rippleAnimatedStyle]} />
-              <View style={styles.marker}>
-                <Ionicons name="person" size={16} color="#fff" />
+            {currentLocation && mapRegion ? (
+              <MapView
+                ref={mapRef}
+                style={styles.mapImage}
+                initialRegion={mapRegion}
+                mapType={mapType}
+                onPanDrag={() => setFollowLocation(false)}
+                onRegionChangeComplete={(region) => setMapRegion(region)}
+                showsUserLocation={true}
+                showsMyLocationButton={true}
+                zoomEnabled={true}
+                scrollEnabled={true}
+                pitchEnabled={true}
+                rotateEnabled={true}
+              >
+                <Marker
+                  coordinate={{
+                    latitude: currentLocation.latitude,
+                    longitude: currentLocation.longitude,
+                  }}
+                  title="You are here"
+                  description={currentLocation.addressLine}
+                >
+                  <View style={styles.mapMarkerContainer}>
+                    <Animated.View style={[styles.mapRipple, rippleAnimatedStyle]} />
+                    <View style={styles.mapMarker} />
+                  </View>
+                </Marker>
+              </MapView>
+            ) : (
+              <View style={[styles.mapImage, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#e2e8f0' }]}>
+                {locationLoading ? (
+                  <ActivityIndicator size="large" color="#4f46e5" />
+                ) : (
+                  <Ionicons name="map-outline" size={48} color="#94a3b8" />
+                )}
               </View>
-            </View>
+            )}
+            {currentLocation && mapRegion ? (
+              <>
+                <View style={styles.mapTopControls} pointerEvents="box-none">
+                  <TouchableOpacity
+                    style={[styles.mapPillButton, followLocation && styles.mapPillButtonActive]}
+                    onPress={() => (followLocation ? setFollowLocation(false) : handleRecenterMap())}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="navigate" size={15} color={followLocation ? '#fff' : '#1e293b'} />
+                    <Text style={[styles.mapPillText, followLocation && styles.mapPillTextActive]}>
+                      {followLocation ? 'Live' : 'Pan'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.mapIconButton} onPress={cycleMapType} activeOpacity={0.85}>
+                    <Ionicons name="layers-outline" size={18} color="#1e293b" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.mapZoomControls}>
+                  <TouchableOpacity style={styles.mapControlButton} onPress={() => handleZoom('in')} activeOpacity={0.85}>
+                    <Ionicons name="add" size={22} color="#1e293b" />
+                  </TouchableOpacity>
+                  <View style={styles.mapControlDivider} />
+                  <TouchableOpacity style={styles.mapControlButton} onPress={() => handleZoom('out')} activeOpacity={0.85}>
+                    <Ionicons name="remove" size={22} color="#1e293b" />
+                  </TouchableOpacity>
+                  <View style={styles.mapControlDivider} />
+                  <TouchableOpacity style={styles.mapControlButton} onPress={handleRecenterMap} activeOpacity={0.85}>
+                    <Ionicons name="locate-outline" size={20} color="#1e293b" />
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : null}
           </View>
 
           {/* Location Details Card */}
@@ -419,33 +551,107 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  markerContainer: {
+  mapTopControls: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -20,
-    marginLeft: -20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
+    top: 12,
+    left: 12,
+    right: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  marker: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  mapPillButton: {
+    minWidth: 72,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  mapPillButtonActive: {
     backgroundColor: '#4f46e5',
+  },
+  mapPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#1e293b',
+  },
+  mapPillTextActive: {
+    color: '#fff',
+  },
+  mapIconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  mapZoomControls: {
+    position: 'absolute',
+    right: 12,
+    bottom: 12,
+    width: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    overflow: 'hidden',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  mapControlButton: {
+    width: 42,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapControlDivider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginHorizontal: 8,
+  },
+  mapMarkerContainer: {
+    width: 80,
+    height: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#fff',
   },
-  ripple: {
+  mapMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#4f46e5',
+    borderWidth: 4,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+    zIndex: 2,
+  },
+  mapRipple: {
     position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(79, 70, 229, 0.4)',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(79, 70, 229, 0.2)',
+    zIndex: 1,
   },
   locationCard: {
     backgroundColor: '#fff',

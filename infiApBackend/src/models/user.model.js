@@ -10,18 +10,19 @@ const userSchema = new mongoose.Schema(
         },
         email: {
             type: String,
-            required: true,
-            unique: true,
+            required: [true, "Email is required"],
+            unique: [true, "Email already exists"],
             lowercase: true,
-            trim: true
+            trim: true,
+            match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Please use a valid email address"]
         },
         password: {
             type: String,
-            required: true
+            required: [true, "Password is required"]
         },
         role: {
             type: String,
-            enum: ["employee", "manager", "hr", "admin", "main_admin"],
+            enum: ["employee","hr", "admin", "superadmin"],
             default: "employee"
         },
         companyId: {

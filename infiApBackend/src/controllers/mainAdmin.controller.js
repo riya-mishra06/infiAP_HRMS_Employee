@@ -41,7 +41,12 @@ const createCompanyUser = async (req, res, targetRole) => {
     try {
         const { name, email, password, role, companyId } = req.body;
         // fallback role if not passed or not matching the explicit target:
-        const userRole = role || targetRole;
+        const normalizedRole = String(role || targetRole).trim().toLowerCase().replace(/-/g, "_");
+        const userRole = normalizedRole === "main_admin" ? "superadmin" : normalizedRole;
+
+        if (!["admin", "hr", "superadmin"].includes(userRole)) {
+            return res.status(400).json({ message: "Invalid role selected" });
+        }
 
         const existingUser = await User.findOne({ email });
         if (existingUser) return res.status(409).json({ message: "User email already exists" });

@@ -428,7 +428,7 @@ exports.getRegisteredCompanies = async (req, res) => {
         roleCounts.forEach((entry) => {
             const key = String(entry._id.companyId);
             if (!roleCountMap.has(key)) {
-                roleCountMap.set(key, { admin: 0, hr: 0, employee: 0, manager: 0, main_admin: 0 });
+                roleCountMap.set(key, { admin: 0, hr: 0, employee: 0, manager: 0, superadmin: 0 });
             }
             roleCountMap.get(key)[entry._id.role] = entry.count;
         });
@@ -437,7 +437,7 @@ exports.getRegisteredCompanies = async (req, res) => {
         const lastActivityMap = new Map(lastActivityByCompany.map((entry) => [String(entry._id), entry.lastUserActivityAt]));
 
         const formattedCompanies = companies.map((company) => {
-            const roleStats = roleCountMap.get(String(company._id)) || { admin: 0, hr: 0, employee: 0, manager: 0, main_admin: 0 };
+            const roleStats = roleCountMap.get(String(company._id)) || { admin: 0, hr: 0, employee: 0, manager: 0, superadmin: 0 };
             const registrationStatus = roleStats.admin > 0 || roleStats.hr > 0 ? "active" : "pending_setup";
 
             return {
@@ -708,7 +708,7 @@ exports.getPreviousUsersInfo = async (req, res) => {
         const search = String(req.query.search || "").trim();
 
         const filter = {};
-        if (["employee", "manager", "hr", "admin", "main_admin"].includes(role)) {
+        if (["employee", "manager", "hr", "admin", "superadmin"].includes(role)) {
             filter.role = role;
         }
 

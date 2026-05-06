@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, TextInput, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, TextInput, Modal, Pressable, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BottomNav } from '../../components/BottomNav';
@@ -19,8 +19,10 @@ const EMPLOYEES = [
     status: 'active',
     bio: 'Creates thoughtful experiences with a strong focus on clarity, storytelling, and user trust.',
     rating: '4.8',
-    earned: '$45k+',
-    rate: '$50/hr',
+    email: 'sarah.jenkins@example.com',
+    phone: '+919876543210',
+    earned: '₹25k+',
+    rate: '₹156/hr',
   },
   {
     id: '2',
@@ -32,8 +34,10 @@ const EMPLOYEES = [
     status: 'inactive',
     bio: 'Builds reliable systems and leads platform architecture for high-scale internal products.',
     rating: '4.9',
-    earned: '$52k+',
-    rate: '$65/hr',
+    email: 'marcus.zhao@example.com',
+    phone: '+919876543211',
+    earned: '₹25k+',
+    rate: '₹156/hr',
   },
   {
     id: '3',
@@ -45,8 +49,10 @@ const EMPLOYEES = [
     status: 'active',
     bio: 'Leads growth strategy across campaigns, retention loops, and performance storytelling.',
     rating: '4.7',
-    earned: '$41k+',
-    rate: '$48/hr',
+    email: 'elena.rodriguez@example.com',
+    phone: '+919876543212',
+    earned: '₹25k+',
+    rate: '₹156/hr',
   },
   {
     id: '4',
@@ -58,8 +64,10 @@ const EMPLOYEES = [
     status: 'active',
     bio: 'Crafts fast, polished interfaces and turns product ideas into scalable frontend systems.',
     rating: '4.9',
-    earned: '$49k+',
-    rate: '$58/hr',
+    email: 'david.chen@example.com',
+    phone: '+919876543213',
+    earned: '₹25k+',
+    rate: '₹156/hr',
   }
 ];
 
@@ -150,17 +158,19 @@ export default function DirectoryPage() {
               <Text style={styles.employeeRole}>{employee.role}</Text>
               
               <View style={styles.cardButtons}>
-                <TouchableOpacity style={styles.emailBtn}>
+                <TouchableOpacity 
+                  style={styles.emailBtn}
+                  onPress={() => Linking.openURL(`mailto:${employee.email}`)}
+                >
                   <Ionicons name="mail" size={16} color="#fff" />
                   <Text style={styles.emailBtnText}>Email</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.slackBtn}>
-                  <Image 
-                    source={{ uri: 'https://cdn.iconscout.com/icon/free/png-256/free-slack-logo-icon-download-in-svg-png-gif-file-formats--technology-social-media-vol-6-pack-logos-icons-2945091.png' }}
-                    style={{ width: 14, height: 14 }}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.slackBtnText}>Slack</Text>
+                <TouchableOpacity 
+                  style={styles.slackBtn}
+                  onPress={() => Linking.openURL(`tel:${employee.phone}`)}
+                >
+                  <Ionicons name="call" size={14} color="#1e293b" />
+                  <Text style={styles.slackBtnText}>Call</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -232,12 +242,20 @@ export default function DirectoryPage() {
                   </View>
 
                   <View style={styles.modalActions}>
-                    <TouchableOpacity style={styles.primaryAction} activeOpacity={0.9}>
+                    <TouchableOpacity 
+                      style={styles.primaryAction} 
+                      activeOpacity={0.9}
+                      onPress={() => Linking.openURL(`mailto:${selectedEmployee.email}`)}
+                    >
                       <Ionicons name="mail-outline" size={20} color="#111827" />
                       <Text style={styles.primaryActionText}>Get In Touch</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.secondaryAction} activeOpacity={0.9}>
-                      <Ionicons name="bookmark-outline" size={20} color="#ffffff" />
+                    <TouchableOpacity 
+                      style={styles.secondaryAction} 
+                      activeOpacity={0.9}
+                      onPress={() => Linking.openURL(`tel:${selectedEmployee.phone}`)}
+                    >
+                      <Ionicons name="call-outline" size={20} color="#ffffff" />
                     </TouchableOpacity>
                   </View>
                 </View>

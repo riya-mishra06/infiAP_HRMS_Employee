@@ -11,6 +11,18 @@ const compression = require("compression");
 
 const app = express();
 
+app.get("/health", (req, res) => {
+  const mongoose = require("mongoose");
+  const dbState = mongoose.connection.readyState;
+
+  res.status(dbState === 1 ? 200 : 503).json({
+    status: dbState === 1 ? "ok" : "degraded",
+    db: dbState === 1 ? "connected" : "disconnected",
+    uptime: process.uptime(),
+    env: process.env.NODE_ENV,
+  });
+});
+
 // 1. Gzip Compression for performance
 app.use(compression());
 
@@ -59,6 +71,7 @@ const notificationsRouter = require("./routes/notifications.routes");
 
 // Routes Declaration
 app.use("/api/v1/auth", authRouter);
+app.use("/api/auth", authRouter);
 app.use("/api/v1/main-admin", mainAdminRouter);
 app.use("/api/v1", employeeRouter);
 app.use("/api/v1", leaveRouter);
