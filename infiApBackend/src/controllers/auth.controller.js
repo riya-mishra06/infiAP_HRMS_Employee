@@ -254,14 +254,13 @@ exports.loginUser = async (req, res) => {
  */
 exports.verifyLoginOTP = async (req, res) => {
     try {
-        const { email, otp } = req.body;
+        const { email, userId, otp } = req.body;
 
-        if (!email || !otp) {
-            return res.status(400).json({ message: "Email and OTP are required" });
+        if ((!email && !userId) || !otp) {
+            return res.status(400).json({ message: "Email or User ID, and OTP are required" });
         }
 
-        const normalizedEmail = String(email).trim().toLowerCase();
-        const user = await User.findOne({ email: normalizedEmail });
+        const user = await User.findOne(userId ? { _id: userId } : { email: String(email).trim().toLowerCase() });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -301,14 +300,13 @@ exports.verifyLoginOTP = async (req, res) => {
  */
 exports.resendLoginOTP = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, userId } = req.body;
 
-        if (!email) {
-            return res.status(400).json({ message: "Email is required" });
+        if (!email && !userId) {
+            return res.status(400).json({ message: "Email or User ID is required" });
         }
 
-        const normalizedEmail = String(email).trim().toLowerCase();
-        const user = await User.findOne({ email: normalizedEmail });
+        const user = await User.findOne(userId ? { _id: userId } : { email: String(email).trim().toLowerCase() });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
