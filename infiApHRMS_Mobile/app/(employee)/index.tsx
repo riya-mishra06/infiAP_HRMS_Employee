@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, ActivityIndicator, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { BottomNav } from '../../components/BottomNav';
@@ -244,6 +244,13 @@ export default function EmployeeDashboard() {
     earlyOut: "0/5",
     halfDay: 0
   });
+  const [missedPunches, setMissedPunches] = useState<any[]>([]);
+  const [birthdays, setBirthdays] = useState({
+    countThisWeek: 0,
+    message: "",
+    list: [] as any[]
+  });
+  const [isBirthdayModalVisible, setIsBirthdayModalVisible] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollIndex = useRef(0);
@@ -278,6 +285,20 @@ export default function EmployeeDashboard() {
         if (greeting?.today) {
           setWelcomeDate(greeting.today.toUpperCase());
         }
+        // Update Attendance Summary
+        if (homeResponse.data.attendanceSummary) {
+          setAttendanceSummary(homeResponse.data.attendanceSummary);
+        }
+
+        // Update Missed Punches
+        if (homeResponse.data.missedPunches) {
+          setMissedPunches(homeResponse.data.missedPunches);
+        }
+        // Update Birthdays
+        if (homeResponse.data.birthdays) {
+          setBirthdays(homeResponse.data.birthdays);
+        }
+
         if (homeResponse.data.leaveBalance) {
           setLeaveBalance(homeResponse.data.leaveBalance);
         }
@@ -471,41 +492,27 @@ export default function EmployeeDashboard() {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.missedPunchesCarousel}
-                snapToInterval={212} // card width (200) + gap (12)
+                snapToInterval={212}
                 decelerationRate="fast"
               >
-                <View style={styles.missedPunchCard}>
-                  <View style={styles.missedPunchRow}>
-                    <Text style={styles.missedPunchDate}>Mar 2, 2026</Text>
-                    <Ionicons name="warning-outline" size={16} color="#ef4444" />
+                {missedPunches.length > 0 ? (
+                  missedPunches.map((item, index) => (
+                    <View key={index} style={styles.missedPunchCard}>
+                      <View style={styles.missedPunchRow}>
+                        <Text style={styles.missedPunchDate}>{item.date}</Text>
+                        <Ionicons name="warning-outline" size={16} color="#ef4444" />
+                      </View>
+                      <Text style={styles.missedPunchTitle}>{item.type}</Text>
+                      <TouchableOpacity onPress={() => router.push('/(employee)/attendance-correction')}>
+                        <Text style={styles.missedPunchAction}>APPLY PUNCH</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                ) : (
+                  <View style={[styles.missedPunchCard, { width: itemWidth, justifyContent: 'center', alignItems: 'center' }]}>
+                    <Text style={[styles.missedPunchTitle, { color: '#666', fontSize: 12 }]}>No Missed Punches</Text>
                   </View>
-                  <Text style={styles.missedPunchTitle}>Missing Out</Text>
-                  <Text style={styles.missedPunchAction}>APPLY PUNCH</Text>
-                </View>
-                <View style={styles.missedPunchCard}>
-                  <View style={styles.missedPunchRow}>
-                    <Text style={styles.missedPunchDate}>Mar 3, 2026</Text>
-                    <Ionicons name="warning-outline" size={16} color="#ef4444" />
-                  </View>
-                  <Text style={styles.missedPunchTitle}>Missing Out</Text>
-                  <Text style={styles.missedPunchAction}>APPLY PUNCH</Text>
-                </View>
-                <View style={styles.missedPunchCard}>
-                  <View style={styles.missedPunchRow}>
-                    <Text style={styles.missedPunchDate}>Mar 4, 2026</Text>
-                    <Ionicons name="warning-outline" size={16} color="#ef4444" />
-                  </View>
-                  <Text style={styles.missedPunchTitle}>Missing Out</Text>
-                  <Text style={styles.missedPunchAction}>APPLY PUNCH</Text>
-                </View>
-                <View style={styles.missedPunchCard}>
-                  <View style={styles.missedPunchRow}>
-                    <Text style={styles.missedPunchDate}>Mar 5, 2026</Text>
-                    <Ionicons name="warning-outline" size={16} color="#ef4444" />
-                  </View>
-                  <Text style={styles.missedPunchTitle}>Missing Out</Text>
-                  <Text style={styles.missedPunchAction}>APPLY PUNCH</Text>
-                </View>
+                )}
               </ScrollView>
 
 
@@ -531,28 +538,78 @@ export default function EmployeeDashboard() {
                 <Ionicons name="ribbon" size={100} color="rgba(255,255,255,0.05)" style={styles.eomWatermark} />
               </View>
 
-              {/* Birthdays */}
-              <View style={styles.birthdayCard}>
+              <TouchableOpacity 
+                style={styles.birthdayCard}
+                onPress={() => setIsBirthdayModalVisible(true)}
+              >
                 <View style={styles.birthdayHeader}>
                   <Text style={styles.birthdayTitle}>Birthdays</Text>
                   <View style={styles.birthdayTag}>
-                    <Text style={styles.birthdayTagText}>3 This Week</Text>
+                    <Text style={styles.birthdayTagText}>{birthdays.countThisWeek} This Week</Text>
                   </View>
                 </View>
                 <View style={styles.avatarsRow}>
-                  <Image source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50&h=50&fit=crop' }} style={[styles.avatarOverlap, { zIndex: 3 }]} />
-                  <Image source={{ uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&h=50&fit=crop' }} style={[styles.avatarOverlap, { zIndex: 2, marginLeft: -12 }]} />
-                  <Image source={{ uri: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=50&h=50&fit=crop' }} style={[styles.avatarOverlap, { zIndex: 1, marginLeft: -12 }]} />
-                  <View style={[styles.avatarOverlap, styles.avatarMore, { marginLeft: -12 }]}>
-                    <Text style={styles.avatarMoreText}>+3</Text>
-                  </View>
+                  {birthdays.list.slice(0, 3).map((item, index) => (
+                    <Image 
+                      key={index} 
+                      source={{ uri: item.profileImage }} 
+                      style={[styles.avatarOverlap, { zIndex: 10 - index, marginLeft: index === 0 ? 0 : -12 }]} 
+                    />
+                  ))}
+                  {birthdays.list.length > 3 && (
+                    <View style={[styles.avatarOverlap, styles.avatarMore, { marginLeft: -12 }]}>
+                      <Text style={styles.avatarMoreText}>+{birthdays.list.length - 3}</Text>
+                    </View>
+                  )}
+                  <Text style={styles.birthdayMessage}>
+                    {birthdays.message}
+                  </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </Animated.View>
         <BottomNav />
       </View>
+
+      {/* Birthday List Modal */}
+      <Modal
+        visible={isBirthdayModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsBirthdayModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Upcoming Birthdays</Text>
+              <TouchableOpacity onPress={() => setIsBirthdayModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.birthdayList}>
+              {birthdays.list.length > 0 ? (
+                birthdays.list.map((item, index) => (
+                  <View key={index} style={styles.birthdayListItem}>
+                    <Image source={{ uri: item.profileImage }} style={styles.listAvatar} />
+                    <View style={styles.listInfo}>
+                      <Text style={styles.listName}>{item.name}</Text>
+                      <Text style={styles.listDept}>{item.department}</Text>
+                    </View>
+                    <Text style={styles.listDate}>{item.date}</Text>
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyBirthday}>
+                  <Ionicons name="gift-outline" size={48} color="#ccc" />
+                  <Text style={styles.emptyText}>No birthdays coming up this week!</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </GestureHandlerRootView>
   );
 }
@@ -1220,5 +1277,80 @@ const styles = StyleSheet.create({
   birthdayMsg: {
     fontSize: 13,
     color: '#64748b',
+  },
+  birthdayMessage: {
+    marginLeft: 12,
+    fontSize: 12,
+    color: '#666',
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    minHeight: '50%',
+    maxHeight: '80%',
+    padding: 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  birthdayList: {
+    flex: 1,
+  },
+  birthdayListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  listAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  listInfo: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  listName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  listDept: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  listDate: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#3b82f6',
+  },
+  emptyBirthday: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999',
+    marginTop: 12,
+    textAlign: 'center',
   },
 });

@@ -26,6 +26,8 @@ const Login = () => {
         password: '',
     });
 
+    const [selectedRole, setSelectedRole] = useState('admin');
+
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
         setLocalError('');
@@ -37,7 +39,7 @@ const Login = () => {
         setLocalError('');
         setIsSubmitting(true);
 
-        const result = await login(formData.email, formData.password);
+        const result = await login(formData.email, formData.password, selectedRole);
 
         setIsSubmitting(false);
 
@@ -159,6 +161,21 @@ const Login = () => {
                             </div>
                             <span className="text-[11px] font-semibold text-[#6D79A2] group-hover:text-[#4E63F0] transition-colors">Remember me</span>
                         </label>
+                    </div>
+
+                    {/* Role select */}
+                    <div className="mt-2">
+                        <label className="text-[10px] font-black text-[#8E98BC] uppercase tracking-[0.2em] ml-1">Role</label>
+                        <select
+                            value={selectedRole}
+                            onChange={(e) => setSelectedRole(e.target.value)}
+                            className="w-full mt-2 bg-[#F3F6FC] border border-[#E4E9F5] rounded-xl py-3 px-4 text-sm font-medium text-[#2D3865]"
+                        >
+                            <option value="admin">Admin</option>
+                            <option value="Main Admin">Main Admin</option>
+                            <option value="hr">HR</option>
+                            <option value="employee">Employee</option>
+                        </select>
                     </div>
 
                     {/* Sign In Button */}

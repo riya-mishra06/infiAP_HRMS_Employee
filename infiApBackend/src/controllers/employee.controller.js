@@ -107,12 +107,18 @@ exports.getDashboardHome = async (req, res) => {
 
         let balance = await LeaveBalance.findOne({ userId });
         if (!balance) {
-            balance = { CL: 6, PL: 6, SL: 6 };
+            balance = await LeaveBalance.create({ userId, CL: 6, PL: 6, SL: 6 });
+        } else if (balance.CL === 15 || balance.PL === 15) {
+            // Update legacy 15-day defaults to the new 6-day baseline
+            balance.CL = 6;
+            balance.PL = 6;
+            balance.SL = 6;
+            await balance.save();
         }
 
         const lateInCount = punches.filter(p => {
             const time = p.PunchTime.getHours() * 60 + p.PunchTime.getMinutes();
-            return time > 570; // 9:30 AM
+            return time > 600; // 10:00 AM
         }).length;
 
         const earlyOutPunches = await Punch.find({
@@ -132,6 +138,45 @@ exports.getDashboardHome = async (req, res) => {
             StartDate: { $gte: startOfMonth, $lte: endOfMonth }
         });
 
+        // Dynamic Missed Punches logic
+        const missedPunches = [];
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+        // Check if today is a missed punch (No check-in after 10:30 AM)
+        const todayStr = now.toISOString().split('T')[0];
+        const hasTodayPunch = punches.some(p => p.PunchTime.toISOString().split('T')[0] === todayStr);
+        
+        if (!hasTodayPunch && currentTimeInMinutes > 630) { // 10:30 AM
+            missedPunches.push({ 
+                date: now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), 
+                type: "Missed Check-in" 
+            });
+        }
+
+        // Birthdays logic
+        const allUsers = await User.find({ dob: { $exists: true } }).select("name dob profileImage department");
+        const upcomingBirthdays = allUsers.filter(u => {
+            const birthDate = new Date(u.dob);
+            const todayDate = new Date();
+            birthDate.setFullYear(todayDate.getFullYear());
+            
+            // If birthday already passed this year, check for next year
+            if (birthDate < todayDate) {
+                birthDate.setFullYear(todayDate.getFullYear() + 1);
+            }
+            
+            const diffTime = Math.abs(birthDate.getTime() - todayDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= 7;
+        }).map(u => ({
+            name: u.name,
+            date: moment(u.dob).format("MMM DD"),
+            department: u.department || "General",
+            profileImage: u.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random`
+        }));
+
         const dashboardData = {
             greeting: {
                 message: `Welcome, ${currentUser?.name || "Employee"}!`,
@@ -146,8 +191,8 @@ exports.getDashboardHome = async (req, res) => {
                 }
             ],
             checkInInfo: {
-                lastCheck: "09:02 AM",
-                location: "Mumbai Office"
+                lastCheck: punches.length > 0 ? moment(punches[punches.length - 1].PunchTime).format("hh:mm A") : "N/A",
+                location: "Office"
             },
             leaveBalance: {
                 privilegeLeave: balance.PL,
@@ -164,17 +209,17 @@ exports.getDashboardHome = async (req, res) => {
                 leaves: approvedLeaves,
                 holiday: holidays
             },
-            missedPunches: [
-                { date: "Mar 2, 2026", type: "Missing Out" },
-                { date: "Mar 3, 2026", type: "Missing Out" }
-            ],
+            missedPunches: missedPunches,
             approvalsActivities: [
                 { title: "Leave Requests", description: "2 Pending Approvals" },
                 { title: "Upcoming WFH", description: "Approved for Mar 15-16" }
             ],
             birthdays: {
-                countThisWeek: 3,
-                message: "Wish your colleagues a very happy birthday!"
+                countThisWeek: upcomingBirthdays.length,
+                message: upcomingBirthdays.length > 0 
+                    ? `Wish your colleagues a very happy birthday!` 
+                    : "No birthdays this week.",
+                list: upcomingBirthdays
             }
         };
 
@@ -296,9 +341,13 @@ exports.getEmployeeLeaveBalance = async (req, res) => {
         const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
 
         let balance = await LeaveBalance.findOne({ userId });
-
         if (!balance) {
-            balance = { CL: 15, PL: 15, SL: 13, WFH: 7 }; // default logic for now if not found
+            balance = await LeaveBalance.create({ userId, CL: 6, PL: 6, SL: 6 });
+        } else if (balance.CL === 15 || balance.PL === 15) {
+            balance.CL = 6;
+            balance.PL = 6;
+            balance.SL = 6;
+            await balance.save();
         }
 
         const leaveBalanceData = [

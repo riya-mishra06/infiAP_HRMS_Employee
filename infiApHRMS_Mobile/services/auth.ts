@@ -345,6 +345,16 @@ export type DashboardHomeResponse = {
       leaves: number;
       holiday: number;
     };
+    birthdays: {
+      countThisWeek: number;
+      message: string;
+      list: Array<{
+        name: string;
+        date: string;
+        department: string;
+        profileImage: string;
+      }>;
+    };
   };
 };
 

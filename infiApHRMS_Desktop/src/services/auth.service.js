@@ -2,8 +2,10 @@ import apiClient from "./apiClient";
 
 export const authService = {
   // Step 1: Login (sends OTP to email)
-  login: async (email, password) => {
-    const res = await apiClient.post("/auth/login", { email, password });
+  login: async (email, password, role) => {
+    const payload = { email, password };
+    if (role) payload.role = role;
+    const res = await apiClient.post("/auth/login", payload);
     return res.data;
   },
 

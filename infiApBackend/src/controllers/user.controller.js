@@ -23,7 +23,7 @@ const sanitizeUser = (user) => ({
     _id: user._id,
     name: user.name,
     email: user.email,
-    role: user.role === "main_admin" ? "superadmin" : user.role,
+    role: user.role === "main_admin" ? "admin" : user.role,
     department: user.department || "",
     designation: user.designation || "",
     joiningDate: user.joiningDate,
@@ -41,9 +41,9 @@ const ROLE_ALIASES = {
     human_resources: "hr",
     "human resources": "hr",
     admin: "admin",
-    superadmin: "superadmin",
-    main_admin: "superadmin",
-    "main admin": "superadmin",
+    main_admin: "main admin",
+    admin: "main admin",
+    "admin": "main admin",
 };
 
 const normalizeRole = (role) => {

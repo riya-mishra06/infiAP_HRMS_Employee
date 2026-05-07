@@ -86,11 +86,11 @@ export const AuthProvider = ({ children }) => {
   }, [hydrate]);
 
   // ── Login → triggers 2FA ────────────────────────────────────────────────
-  const login = async (email, password) => {
+  const login = async (email, password, role) => {
     try {
       setError(null);
       setLoading(true);
-      const data = await authService.login(email, password);
+      const data = await authService.login(email, password, role);
 
       if (data.require2FA || data.requires2FA) {
         setPending2FA({
