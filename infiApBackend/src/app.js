@@ -2,14 +2,70 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
+const helmet = require("helmet");
 
 dotenv.config({
   path: "./.env",
 });
 
 const compression = require("compression");
+const { generalLimiter } = require("./middlewares/security.middleware");
 
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
+
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
+
+const configuredOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const isLocalOrigin = (origin) =>
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+
+const allowCorsOrigin = (origin, callback) => {
+  if (!origin) {
+    return callback(null, true);
+  }
+
+  if (configuredOrigins.includes(origin)) {
+    return callback(null, true);
+  }
+
+  if (!isProduction && isLocalOrigin(origin)) {
+    return callback(null, true);
+  }
+
+  return callback(null, false);
+};
+
+app.use(
+  helmet({
+    hsts: isProduction
+      ? {
+          maxAge: 15552000,
+          includeSubDomains: true,
+          preload: true,
+        }
+      : false,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        baseUri: ["'self'"],
+        frameAncestors: ["'none'"],
+        objectSrc: ["'none'"],
+        imgSrc: ["'self'", "data:"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        connectSrc: ["'self'"],
+      },
+    },
+  })
+);
 
 app.get("/health", (req, res) => {
   const mongoose = require("mongoose");
@@ -28,9 +84,12 @@ app.use(compression());
 
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "*",
+  origin: allowCorsOrigin,
   credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 }));
+
+app.use("/api", generalLimiter);
 
 // 301 Redirect Middleware (Example: force https/www if needed)
 app.use((req, res, next) => {
@@ -89,10 +148,13 @@ app.get("/", (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    message: err.message || "Internal Server Error",
-    error: process.env.NODE_ENV === "development" ? err : {},
+  console.error(err.stack || err);
+
+  const statusCode = err.status || 500;
+  const message = statusCode >= 500 ? "Internal Server Error" : err.message || "Request failed";
+
+  res.status(statusCode).json({
+    message,
   });
 });
 

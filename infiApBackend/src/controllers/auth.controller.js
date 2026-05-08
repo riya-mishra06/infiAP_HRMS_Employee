@@ -76,12 +76,19 @@ const sanitizeUser = (user) => ({
 });
 
 // Cookie options — works for both web (cookies) and mobile (token in body)
+const isProduction = process.env.NODE_ENV === "production";
+
 const getCookieOptions = () => ({
-    httpOnly: false, // Allow JS access for development proxy troubleshooting
-    secure: false,   // Development uses HTTP
-    sameSite: "lax",
-    path: "/",     // Cookie available on all paths
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
     maxAge: 24 * 60 * 60 * 1000, // 1 day
+});
+
+const getClearCookieOptions = () => ({
+    ...getCookieOptions(),
+    maxAge: 0,
 });
 
 const buildAuthResponse = (user, accessToken, refreshToken, message = "Login successful") => ({
@@ -483,17 +490,10 @@ exports.logout = async (req, res) => {
         // Invalidate refresh token in DB
         await User.findByIdAndUpdate(userId, { $unset: { refreshToken: 1 } });
 
-        const clearOptions = {
-            httpOnly: false,
-            secure: false,
-            sameSite: "lax",
-            path: "/",
-        };
-
         return res
             .status(200)
-            .clearCookie("accessToken", clearOptions)
-            .clearCookie("refreshToken", clearOptions)
+            .clearCookie("accessToken", getClearCookieOptions())
+            .clearCookie("refreshToken", getClearCookieOptions())
             .json({ message: "Logged out successfully" });
     } catch (error) {
         console.error("Logout Error:", error);
