@@ -776,13 +776,19 @@ exports.getDirectors = async (req, res) => {
 // 17. Get Profile Header Info
 exports.getProfileHeader = async (req, res) => {
     try {
-        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
+        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f"; // Fallback only if unauthenticated in test
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ status: "Error", message: "User not found" });
+        }
+
         const headerData = {
-            name: "Sneha Desai",
-            role: "Frontend Developer",
-            department: "Engineering",
-            employeeId: "EMP1024",
-            profileImage: "/img/sneha_profile.png",
+            name: user.name || "Unknown",
+            role: user.designation || user.role || "Employee",
+            department: user.department || "General",
+            employeeId: user.employeeId || "N/A",
+            profileImage: user.profileImage || null,
             isOnline: true
         };
         res.status(200).json({ status: "Success", statusCode: 200, data: headerData });
@@ -794,13 +800,22 @@ exports.getProfileHeader = async (req, res) => {
 // 18. Get Personal Information
 exports.getPersonalInformation = async (req, res) => {
     try {
+        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ status: "Error", message: "User not found" });
+        }
+
+        const dobString = user.dob ? new Date(user.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : "Not Provided";
+
         const personalData = {
-            fullName: "Sneha Desai",
-            dob: "14 May 1995",
-            phone: "+91 98765 43210",
-            email: "sneha.d@example.com",
-            address: "123, Tech Heights, Bangalore, India",
-            emergencyContact: "Rohan Desai (Father) - +91 98765 00000"
+            fullName: user.name || "Unknown",
+            dob: dobString,
+            phone: user.phone || "Not Provided",
+            email: user.email || "Not Provided",
+            address: user.address || "Not Provided",
+            emergencyContact: "Not Provided"
         };
         res.status(200).json({ status: "Success", statusCode: 200, data: personalData });
     } catch (error) {
@@ -811,13 +826,22 @@ exports.getPersonalInformation = async (req, res) => {
 // 19. Get Professional Information
 exports.getProfessionalInformation = async (req, res) => {
     try {
+        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
+        const user = await User.findById(userId).populate('reportingManager', 'name');
+        
+        if (!user) {
+            return res.status(404).json({ status: "Error", message: "User not found" });
+        }
+
+        const joiningDateString = user.joiningDate ? new Date(user.joiningDate).toLocaleDateString('en-GB', { day: 'short', month: 'short', year: 'numeric' }) : "Not Provided";
+
         const professionalData = {
-            department: "Engineering",
-            role: "Frontend Developer",
-            manager: "Arjun Mehta",
-            joiningDate: "Jan 10, 2022",
-            employmentType: "Full-Time",
-            workLocation: "Hybrid (Bangalore)"
+            department: user.department || "General",
+            role: user.designation || user.role || "Employee",
+            manager: user.reportingManager ? user.reportingManager.name : "Unassigned",
+            joiningDate: joiningDateString,
+            employmentType: user.employmentType || "Full-Time",
+            workLocation: "Remote/Office"
         };
         res.status(200).json({ status: "Success", statusCode: 200, data: professionalData });
     } catch (error) {
@@ -828,11 +852,18 @@ exports.getProfessionalInformation = async (req, res) => {
 // 20. Get Account Information
 exports.getAccountInformation = async (req, res) => {
     try {
+        const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ status: "Error", message: "User not found" });
+        }
+
         const accountData = {
-            employeeId: "EMP1024",
-            status: "Active",
-            username: "sneha_desai_infiap",
-            workEmail: "sneha.desai@infiap.com"
+            employeeId: user.employeeId || "N/A",
+            status: user.status || "Active",
+            username: user.email ? user.email.split('@')[0] : "unknown",
+            workEmail: user.email || "Not Provided"
         };
         res.status(200).json({ status: "Success", statusCode: 200, data: accountData });
     } catch (error) {

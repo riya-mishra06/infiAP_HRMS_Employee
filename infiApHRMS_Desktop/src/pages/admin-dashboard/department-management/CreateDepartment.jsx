@@ -10,10 +10,15 @@ import {
   Check
 } from 'lucide-react';
 import { useAdminDashboard } from '../../../context/AdminDashboardContext';
+import { useEmployeeContext } from '../../../context/EmployeeContext';
+
+import { useAuth } from '../../../context/AuthContext';
 
 const CreateDepartment = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { addDepartment } = useAdminDashboard();
+  const { employees } = useEmployeeContext();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -25,7 +30,7 @@ const CreateDepartment = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await addDepartment(formData);
-    navigate('/admin/departments');
+    navigate(role === 'HR' ? '/departments' : '/admin/departments');
   };
 
   return (
@@ -33,7 +38,7 @@ const CreateDepartment = () => {
       
       {/* Back Link */}
       <button 
-        onClick={() => navigate('/admin/departments')}
+        onClick={() => navigate(role === 'HR' ? '/departments' : '/admin/departments')}
         className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 font-black text-[10px] uppercase tracking-widest mb-10 transition-colors mr-auto ml-[15%]"
       >
         <ArrowLeft size={16} />
@@ -94,9 +99,11 @@ const CreateDepartment = () => {
                     required
                   >
                     <option value="" disabled>Select a manager from system</option>
-                    <option value="rahul">Rahul Sharma</option>
-                    <option value="priya">Priya Kapur</option>
-                    <option value="amit">Amit Verma</option>
+                    {employees.map(emp => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} ({emp.department} - {emp.role})
+                      </option>
+                    ))}
                   </select>
                   <ChevronDown className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={24} />
                 </div>
@@ -146,7 +153,7 @@ const CreateDepartment = () => {
               </button>
               <button 
                 type="button"
-                onClick={() => navigate('/admin/departments')}
+                onClick={() => setFormData({ name: '', description: '', manager: '', location: '', teams: '' })}
                 className="w-full md:w-auto px-12 py-6 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-[24px] font-black text-[10px] uppercase tracking-[0.25em] transition-all"
               >
                 Cancel

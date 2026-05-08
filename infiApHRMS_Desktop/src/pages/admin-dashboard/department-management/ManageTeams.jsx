@@ -15,10 +15,14 @@ import {
   Bell
 } from 'lucide-react';
 
+import { useAuth } from '../../../context/AuthContext';
+
 const ManageTeams = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { teams, fetchTeams } = useAdminDashboard();
   const [activeTab, setActiveTab] = useState('All Teams');
+  const [activeTeamDetails, setActiveTeamDetails] = useState(null);
 
   useEffect(() => {
     fetchTeams();
@@ -30,13 +34,13 @@ const ManageTeams = () => {
   const filteredTeams = activeTab === 'All Teams' ? teams : teams.filter(t => t.type === activeTab);
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 relative">
       
       {/* Dynamic Header Section */}
       <div className="bg-white rounded-[40px] p-10 border border-slate-50 shadow-soft flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div className="flex items-center gap-6">
           <button 
-            onClick={() => navigate('/admin/departments')}
+            onClick={() => navigate(role === 'HR' ? '/departments' : '/admin/departments')}
             className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
           >
             <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
@@ -44,9 +48,9 @@ const ManageTeams = () => {
           <div>
             <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 text-left">Department Teams</h1>
             <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none text-left flex items-center gap-2">
-              Engineering Department
+              Organizational Teams
               <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-              <span className="text-indigo-500">20 Teams Total</span>
+              <span className="text-indigo-500">{teams.length} Teams Total</span>
             </p>
           </div>
         </div>
@@ -116,7 +120,10 @@ const ManageTeams = () => {
                     <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Members</p>
                   </div>
                 </div>
-                <button className="flex-1 py-5 bg-slate-50 text-slate-500 hover:bg-indigo-600 hover:text-white transition-all rounded-[20px] font-black text-[10px] uppercase tracking-widest shadow-lg shadow-transparent hover:shadow-indigo-100 flex items-center justify-center gap-3">
+                <button 
+                  onClick={() => setActiveTeamDetails(team)}
+                  className="flex-1 py-5 bg-slate-50 text-slate-500 hover:bg-indigo-600 hover:text-white transition-all rounded-[20px] font-black text-[10px] uppercase tracking-widest shadow-lg shadow-transparent hover:shadow-indigo-100 flex items-center justify-center gap-3"
+                >
                   View Team Details
                   <ChevronRight size={16} />
                 </button>
@@ -126,11 +133,18 @@ const ManageTeams = () => {
               <div className="space-y-6 pt-8 border-t border-slate-50">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block px-2">Key Members Nodes</label>
                 <div className="space-y-4">
-                  {team.keyMembers.map((member, midx) => (
+                  {team.keyMembers?.length > 0 ? team.keyMembers.map((member, midx) => (
                     <div key={midx} className="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-white border border-transparent hover:border-slate-100 rounded-2xl transition-all cursor-pointer group/member">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm transition-transform group-hover/member:scale-110">
-                          <img src={member.img} alt={member.name} />
+                          <img 
+                            src={member.img} 
+                            alt={member.name} 
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'U')}&background=random&color=fff`;
+                            }}
+                          />
                         </div>
                         <div>
                           <p className="text-sm font-black text-slate-800 group-hover/member:text-indigo-600 transition-colors">{member.name}</p>
@@ -142,7 +156,12 @@ const ManageTeams = () => {
                         <span className="text-[9px] font-black uppercase tracking-[0.2em]">{member.status}</span>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="p-6 bg-slate-50 border border-slate-100 border-dashed rounded-2xl flex flex-col items-center justify-center text-center">
+                       <Users size={24} className="text-slate-300 mb-2" />
+                       <p className="text-xs font-bold text-slate-400">No members assigned to this team yet.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -152,7 +171,7 @@ const ManageTeams = () => {
 
       {/* Floating CTA */}
       <button 
-        onClick={() => navigate('/admin/department-management/teams/create')}
+        onClick={() => navigate(role === 'HR' ? '/departments/teams/create' : '/admin/department-management/teams/create')}
         className="fixed bottom-12 right-12 flex items-center gap-4 px-10 py-5 bg-slate-900 text-white rounded-full shadow-2xl hover:shadow-indigo-200 hover:-translate-y-2 transition-all active:scale-95 group z-40"
       >
         <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center group-hover:rotate-90 transition-transform duration-500">
@@ -160,6 +179,75 @@ const ManageTeams = () => {
         </div>
         <span className="text-[10px] font-black uppercase tracking-widest">Create Team</span>
       </button>
+
+      {/* Team Details Modal */}
+      {activeTeamDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[40px] w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+             <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                <div>
+                   <h2 className="text-2xl font-black text-slate-800">{activeTeamDetails.name}</h2>
+                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">{activeTeamDetails.departmentName || 'General'} Department</p>
+                </div>
+                <button 
+                  onClick={() => setActiveTeamDetails(null)}
+                  className="w-10 h-10 bg-white border border-slate-100 text-slate-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 rounded-xl flex items-center justify-center transition-all"
+                >
+                   <ArrowLeft size={18} className="rotate-45" />
+                </button>
+             </div>
+             <div className="p-8 overflow-y-auto flex-1 space-y-8">
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="p-6 bg-indigo-50 rounded-[24px]">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-indigo-400 block mb-2">Team Lead</label>
+                      <p className="text-lg font-black text-indigo-900">{activeTeamDetails.lead}</p>
+                   </div>
+                   <div className="p-6 bg-slate-50 rounded-[24px]">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Total Members</label>
+                      <p className="text-lg font-black text-slate-800">{activeTeamDetails.members}</p>
+                   </div>
+                </div>
+                
+                <div>
+                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-4 px-2">Team Directory</label>
+                   <div className="space-y-3">
+                     {activeTeamDetails.keyMembers?.length > 0 ? activeTeamDetails.keyMembers.map((member, midx) => (
+                        <div key={midx} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
+                           <div className="flex items-center gap-4">
+                              <img 
+                                src={member.img} 
+                                alt={member.name} 
+                                className="w-10 h-10 rounded-full border border-slate-100"
+                                onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'U')}&background=random&color=fff`; }}
+                              />
+                              <div>
+                                 <p className="text-sm font-bold text-slate-800">{member.name}</p>
+                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">{member.role}</p>
+                              </div>
+                           </div>
+                           <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-green-50 text-green-600 rounded-full">{member.status}</span>
+                        </div>
+                     )) : (
+                        <div className="flex flex-col items-center justify-center p-10 bg-slate-50 border border-slate-100 border-dashed rounded-3xl text-center">
+                           <Users size={32} className="text-slate-300 mb-3" />
+                           <p className="text-lg text-slate-700 font-black mb-1">0 Team Members</p>
+                           <p className="text-xs text-slate-400 font-bold mb-6 max-w-[250px]">HR can add and assign employees to this team from the Employee directory.</p>
+                           {role === 'HR' && (
+                             <button 
+                               onClick={() => navigate('/employees/add')}
+                               className="px-8 py-4 bg-indigo-600 text-white rounded-[16px] text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:-translate-y-1 transition-all shadow-xl shadow-indigo-100"
+                             >
+                               Add Employee
+                             </button>
+                           )}
+                        </div>
+                     )}
+                   </div>
+                </div>
+             </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

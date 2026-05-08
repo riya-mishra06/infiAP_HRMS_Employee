@@ -166,13 +166,14 @@ const Sidebar = () => {
     {
       name: role === 'HR' ? 'Departments' : 'Department ',
       icon: Building2,
-      path: '/admin/department-management',
+      path: role === 'HR' ? '/departments' : '/admin/department-management',
       key: 'departments',
       hasSubmenu: true,
       roles: ['HR', 'Admin'],
       subItems: [
-        { name: 'Create Department', icon: PlusCircle, path: '/admin/department-management/create' },
-        { name: 'Manage Teams', icon: LayoutGrid, path: '/admin/department-management/teams' },
+        { name: 'View Departments', icon: Building2, path: role === 'HR' ? '/departments' : '/admin/department-management' },
+        { name: 'Create Department', icon: PlusCircle, path: role === 'HR' ? '/departments/create' : '/admin/department-management/create' },
+        { name: 'Manage Teams', icon: LayoutGrid, path: role === 'HR' ? '/departments/teams' : '/admin/department-management/teams' },
       ]
     },
     {

@@ -11,54 +11,8 @@ export const useDepartmentContext = () => {
 };
 
 export const DepartmentProvider = ({ children }) => {
-  const [departments, setDepartments] = useState([
-    {
-      name: 'Engineering',
-      sub: 'TECH',
-      head: 'Rahul Sharma',
-      teams: 5,
-      employees: 85,
-      color: 'indigo'
-    },
-    {
-      name: 'Marketing',
-      sub: 'CREATIVE',
-      head: 'Priya Kapur',
-      teams: 3,
-      employees: 42,
-      color: 'orange'
-    },
-    {
-      name: 'Human Resources',
-      sub: 'ADMIN',
-      head: 'Amit Verma',
-      teams: 2,
-      employees: 18,
-      color: 'green'
-    }
-  ]);
-
-  const [teams, setTeams] = useState([
-    {
-      name: 'Frontend Team',
-      lead: 'Sneha Desai',
-      members: 12,
-      type: 'Development',
-      keyMembers: [
-        { name: 'Arjun Mehta', role: 'Senior React Dev', status: 'ACTIVE', img: 'https://ui-avatars.com/api/?name=Arjun+Mehta&background=random' },
-        { name: 'Priya Singh', role: 'UI/UX Designer', status: 'ACTIVE', img: 'https://ui-avatars.com/api/?name=Priya+Singh&background=random' }
-      ]
-    },
-    {
-      name: 'Backend Team',
-      lead: 'Rohan Sharma',
-      members: 8,
-      type: 'Development',
-      keyMembers: [
-        { name: 'Vikas Roy', role: 'Node.js Expert', status: 'ACTIVE', img: 'https://ui-avatars.com/api/?name=Vikas+Roy&background=random' }
-      ]
-    }
-  ]);
+  const [departments, setDepartments] = useState([]);
+  const [teams, setTeams] = useState([]);
 
   const addDepartment = (newDept) => {
     // Map manager ID to name for display

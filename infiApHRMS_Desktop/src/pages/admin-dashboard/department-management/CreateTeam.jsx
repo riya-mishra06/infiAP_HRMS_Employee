@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminDashboard } from '../../../context/AdminDashboardContext';
+import { useEmployeeContext } from '../../../context/EmployeeContext';
 import { 
   Users, 
   ArrowLeft, 
@@ -11,8 +12,13 @@ import {
   Check
 } from 'lucide-react';
 
+import { useAuth } from '../../../context/AuthContext';
+
 const CreateTeam = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const { addTeam, departments, fetchDepartments } = useAdminDashboard();
+  const { employees, fetchEmployees } = useEmployeeContext();
   const [formData, setFormData] = useState({
     name: '',
     department: '',
@@ -21,12 +27,16 @@ const CreateTeam = () => {
     mission: ''
   });
 
-  const { addTeam } = useAdminDashboard();
+  useEffect(() => {
+    fetchDepartments();
+    fetchEmployees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     await addTeam(formData);
-    navigate('/admin/department-management/teams');
+    navigate(role === 'HR' ? '/departments/teams' : '/admin/department-management/teams');
   };
 
   return (
@@ -35,7 +45,7 @@ const CreateTeam = () => {
       {/* Back Link */}
       <div className="w-full max-w-[800px] mb-10">
         <button 
-          onClick={() => navigate('/admin/department-management/teams')}
+          onClick={() => navigate(role === 'HR' ? '/departments/teams' : '/admin/department-management/teams')}
           className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 font-black text-[10px] uppercase tracking-widest transition-all"
         >
           <ArrowLeft size={16} />
@@ -90,9 +100,11 @@ const CreateTeam = () => {
                       required
                     >
                       <option value="" disabled>Select Department</option>
-                      <option value="engineering">Engineering</option>
-                      <option value="marketing">Marketing</option>
-                      <option value="hr">Human Resources</option>
+                      {departments.map(dept => (
+                        <option key={dept.id || dept._id} value={dept.id || dept._id}>
+                          {dept.name} (Head: {dept.head || 'Unassigned'})
+                        </option>
+                      ))}
                     </select>
                     <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
                   </div>
@@ -108,9 +120,11 @@ const CreateTeam = () => {
                       required
                     >
                       <option value="" disabled>Select Team Lead</option>
-                      <option value="sneha">Sneha Desai</option>
-                      <option value="rohan">Rohan Sharma</option>
-                      <option value="vikas">Vikas Roy</option>
+                      {employees.map(emp => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.name} ({emp.role})
+                        </option>
+                      ))}
                     </select>
                     <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
                   </div>
@@ -161,10 +175,10 @@ const CreateTeam = () => {
               </button>
               <button 
                 type="button"
-                onClick={() => navigate('/admin/department-management/teams')}
-                className="w-full md:w-auto px-12 py-6 bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 rounded-[24px] font-black text-[10px] uppercase tracking-[0.25em] transition-all"
+                onClick={() => setFormData({ name: '', department: '', lead: '', capacity: '', mission: '' })}
+                className="w-full md:w-auto px-12 py-6 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-[24px] font-black text-[10px] uppercase tracking-[0.25em] transition-all"
               >
-                Discard
+                Cancel
               </button>
             </div>
           </form>

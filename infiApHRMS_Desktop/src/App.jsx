@@ -250,6 +250,12 @@ function App() {
                       <Route path="/profile" element={<MyProfile />} />
                       <Route path="/profile/edit" element={<EditProfile />} />
 
+                      {/* Departments (HR accessible) */}
+                      <Route path="/departments" element={<AdminDepartments />} />
+                      <Route path="/departments/create" element={<CreateDepartment />} />
+                      <Route path="/departments/teams" element={<ManageTeams />} />
+                      <Route path="/departments/teams/create" element={<CreateTeam />} />
+
                       <Route path="/attendance" element={<AttendanceDashboard />} />
                       <Route path="/attendance/records" element={<CheckInRecords />} />
                       <Route path="/attendance/monthly" element={<MonthlyAttendance />} />

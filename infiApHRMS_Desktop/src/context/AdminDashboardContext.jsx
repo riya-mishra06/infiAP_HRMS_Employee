@@ -54,23 +54,33 @@ const normalizeDepartment = (department) => ({
   id: department.id || department._id,
   name: department.name,
   sub: department.sub || 'NEW UNIT',
-  head: department.head || 'Unassigned',
-  teams: Number(department.teams) || 0,
+  head: department.head?.name || department.head || 'Unassigned',
+  teams: Number(department.teamCount) || Number(department.teams) || 0,
   employees: Number(department.employees) || 0,
   color: department.color || 'indigo',
   description: department.description || ''
 });
 
-const normalizeTeam = (team) => ({
-  id: team.id || team._id,
-  name: team.name,
-  lead: team.lead || 'Unassigned',
-  members: Number(team.members) || 0,
-  type: team.type || 'Development',
-  keyMembers: Array.isArray(team.keyMembers) ? team.keyMembers : [],
-  departmentId: team.departmentId || null,
-  departmentName: team.departmentName || ''
-});
+const normalizeTeam = (team) => {
+  const memberList = Array.isArray(team.members) ? team.members : [];
+  
+  return {
+    id: team.id || team._id,
+    name: team.name,
+    lead: team.lead?.name || team.lead || 'Unassigned',
+    members: team.totalMembers || memberList.length || 0,
+    type: team.type || team.departmentName || 'Development', // use departmentName as type for tabs if needed
+    keyMembers: memberList.map(m => ({
+      id: m._id || m.id,
+      name: m.name || 'Unknown',
+      role: m.designation || 'Member',
+      status: m.status || 'Active',
+      img: m.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name || 'U')}&background=random&color=fff`
+    })),
+    departmentId: team.departmentId || null,
+    departmentName: team.departmentName || ''
+  };
+};
 
 const normalizeJob = (job) => {
   const status = String(job.status || '').toLowerCase();
@@ -101,14 +111,14 @@ export const AdminDashboardProvider = ({ children }) => {
     announcements: 0
   });
   const [insights, setInsights] = useState(null);
-  const [departments, setDepartments] = useState(defaultDepartments);
-  const [teams, setTeams] = useState(defaultTeams);
-  const [jobs, setJobs] = useState(defaultJobs);
+  const [departments, setDepartments] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [jobs, setJobs] = useState([]);
   const [staffDirectory, setStaffDirectory] = useState([]);
   const [pendingLeaves, setPendingLeaves] = useState([]);
   const [activities, setActivities] = useState([]);
 
-  const isAdminView = ['admin', 'main admin'].includes(String(role || '').toLowerCase());
+  const isAdminView = ['admin', 'main admin', 'hr'].includes(String(role || '').toLowerCase());
 
   const fetchSummary = async () => {
     try {
@@ -144,7 +154,7 @@ export const AdminDashboardProvider = ({ children }) => {
     try {
       const res = await api.get('/admin-dashboard/departments');
       const mapped = (res.data?.data || []).map(normalizeDepartment);
-      setDepartments(mapped.length ? mapped : defaultDepartments);
+      setDepartments(mapped);
       return mapped;
     } catch (error) {
       return departments;
@@ -154,10 +164,31 @@ export const AdminDashboardProvider = ({ children }) => {
   const fetchTeams = async () => {
     try {
       const res = await api.get('/admin-dashboard/teams');
-      const mapped = (res.data?.data || []).map(normalizeTeam);
-      setTeams(mapped.length ? mapped : defaultTeams);
+      
+      let allTeams = [];
+      if (res.data?.data && Array.isArray(res.data.data.departments)) {
+         // Flatten teams from all departments
+         res.data.data.departments.forEach(dept => {
+            if (Array.isArray(dept.teams)) {
+               dept.teams.forEach(team => {
+                 allTeams.push({
+                   ...team,
+                   departmentName: dept.departmentName,
+                   departmentId: dept.departmentId
+                 });
+               });
+            }
+         });
+      } else if (Array.isArray(res.data?.data)) {
+         // Fallback if backend changes to return a flat array directly
+         allTeams = res.data.data;
+      }
+      
+      const mapped = allTeams.map(normalizeTeam);
+      setTeams(mapped);
       return mapped;
     } catch (error) {
+      console.error('Failed to fetch teams:', error);
       return teams;
     }
   };
