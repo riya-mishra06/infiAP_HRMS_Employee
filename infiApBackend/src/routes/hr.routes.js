@@ -16,6 +16,7 @@ router.get("/profile", hrController.getHRAdminProfile);
 // -> Employee
 router.get("/employees", hrController.getAllEmployees);
 router.post("/employees", verifyRole(["hr", "admin", "superadmin"]), hrController.addEmployee);
+router.put("/employees/:id/json", verifyRole(["hr", "admin", "superadmin"]), hrController.editEmployee);
 router.put("/employees/:id", verifyRole(["hr", "admin", "superadmin"]), uploadLimiter, uploadSingle, hrController.editEmployee);
 router.get("/employees/:id/profile", hrController.getEmployeeProfile);
 

@@ -53,7 +53,27 @@ export const updateProfile = async (employeeId, profileData, imageFile) => {
 // ─── 2. Employee Management ──────────────────────────────────────────────────
 export const getEmployees = (params) => get('/employees', params);
 export const createEmployee = (data) => post('/employees', data);
-export const updateEmployee = (id, data) => put(`/employees/${id}`, data);
+export const updateEmployee = (id, data) => {
+  // Check if there's a file in the data
+  const hasFile = data.profilePicture instanceof File || 
+                  (data.profilePicture && data.profilePicture.uri);
+  
+  if (hasFile) {
+    // Use FormData for file uploads
+    const formData = new FormData();
+    Object.keys(data).forEach((key) => {
+      if (data[key] !== undefined && data[key] !== null) {
+        formData.append(key, data[key]);
+      }
+    });
+    return api.put(`${HR_BASE}/employees/${id}`, formData);
+  } else {
+    // Use JSON for regular updates (no file) - use the /json route to bypass upload middleware
+    // Remove profilePicture if it's not a file
+    const { profilePicture, ...jsonData } = data;
+    return api.put(`${HR_BASE}/employees/${id}/json`, jsonData);
+  }
+};
 export const getEmployeeProfile = (id) => get(`/employees/${id}/profile`);
 
 // ─── 3. Attendance ───────────────────────────────────────────────────────────

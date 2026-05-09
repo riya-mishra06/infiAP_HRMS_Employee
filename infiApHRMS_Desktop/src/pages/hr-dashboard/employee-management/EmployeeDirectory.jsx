@@ -83,32 +83,32 @@ const EmployeeDirectory = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] w-full gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative pt-4 overflow-hidden">
 
-      {/* Dynamic Notification Toast */}
+      {/* Notification Toast */}
       {notification && (
-        <div className="fixed top-24 right-8 z-100 animate-in slide-in-from-right-8 fade-in flex items-center gap-3 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl border border-white/10">
-          <BellRing size={20} className="text-primary-400" />
-          <span className="text-sm font-bold tracking-tight uppercase tracking-widest">{notification}</span>
+        <div className="fixed top-24 right-8 z-50 animate-in slide-in-from-right-8 fade-in flex items-center gap-3 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-xl">
+          <BellRing size={20} className="text-emerald-400" />
+          <span className="text-sm font-medium">{notification}</span>
         </div>
       )}
 
-      {/* Header System */}
+      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0">
         <div>
-          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 underline decoration-indigo-300 underline-offset-4 uppercase">Staffing Command Center</h1>
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">Corporate Workforce Directory & Organizational Diagnostic Nodes</p>
+          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 underline decoration-indigo-300 underline-offset-4 uppercase">Employee Directory</h1>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">Manage Your Team Members</p>
         </div>
         <div className="flex items-center gap-3 self-start lg:self-center">
           <button
             onClick={handleExport}
-            className="px-8 py-3 bg-white border border-slate-100 text-slate-400 font-black text-[10px] uppercase rounded-2xl hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
           >
-            Bulk Export
+            Export
           </button>
           <button
             onClick={() => navigate('/employees/add')}
-            className="px-10 py-3 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 uppercase tracking-widest text-[10px]"
+            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200"
           >
-            Deploy New Identity
+            Add Employee
           </button>
         </div>
       </div>
@@ -116,13 +116,12 @@ const EmployeeDirectory = () => {
       {/* Main Workspace Grid */}
       <div className="flex-1 grid grid-cols-1 xl:grid-cols-4 gap-8 overflow-hidden min-h-0" onClick={() => setActiveActionId(null)}>
         
-        {/* 1. SIDEBAR: Live Staffing Metrics */}
-        <div className="xl:col-span-1 flex flex-col gap-6 overflow-y-auto no-scrollbar pb-10">
-           
-           <div className="card-soft bg-white p-8 border-slate-100 shadow-soft">
-              <div className="flex items-center justify-between mb-8">
-                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Dept Distribution</h3>
-                 <TrendingUp size={20} className="text-indigo-500" />
+        {/* Sidebar */}
+        <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto no-scrollbar pb-6">
+           <div className="bg-white border border-slate-200 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                 <h3 className="text-sm font-semibold text-slate-800">Department Stats</h3>
+                 <TrendingUp size={18} className="text-indigo-500" />
               </div>
               <div className="h-32 w-full">
                  <ResponsiveContainer width="100%" height="100%">
@@ -137,60 +136,34 @@ const EmployeeDirectory = () => {
               </div>
                <div className="mt-6 flex items-end justify-between">
                   <div>
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Nodes</p>
-                     <p className="text-3xl font-black text-slate-800 tracking-tighter leading-none">{employees.length} Active</p>
+                     <p className="text-xs text-slate-500 mb-1">Total Employees</p>
+                     <p className="text-2xl font-semibold text-slate-800">{employees.length}</p>
                   </div>
-                  <span className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-lg">92% CAP</span>
                </div>
-           </div>
-
-           <div className="space-y-4">
-              {[
-                { label: 'Engineering Load', value: '42%', icon: Activity, color: 'text-indigo-500' },
-                { label: 'Ops Efficiency', value: '98.2%', icon: TrendingUp, color: 'text-emerald-500' },
-              ].map((stat, i) => (
-                <div key={i} className="card-soft bg-white p-6 flex items-center gap-4 hover:border-indigo-100 transition-all cursor-crosshair">
-                   <div className={`p-3 bg-slate-50 rounded-2xl ${stat.color} shadow-inner`}><stat.icon size={20} /></div>
-                   <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">{stat.label}</p>
-                      <p className="text-2xl font-black text-slate-800 tracking-tighter leading-none">{stat.value}</p>
-                   </div>
-                </div>
-              ))}
-           </div>
-
-           <div className="card-soft bg-slate-900 p-8 border-none text-white relative overflow-hidden group mt-auto">
-              <div className="relative z-10">
-                 <User className="mb-4 text-indigo-400" size={24} />
-                  <h4 className="text-xs font-black uppercase tracking-widest leading-tight mb-2">Audit Compliance</h4>
-                  <p className="text-[10px] opacity-60 font-black leading-relaxed uppercase tracking-widest mb-6">Workforce identity nodes are currently synchronized with the global ledger.</p>
-                  <button className="w-full py-4 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] transition-all">Export Forensic Log</button>
-              </div>
-              <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-indigo-600/20 rounded-full blur-3xl group-hover:scale-150 transition-transform"></div>
            </div>
         </div>
 
-        {/* 2. MAIN HUB: Diagnostic Table */}
-        <div className="xl:col-span-3 flex flex-col min-h-0 bg-white border border-slate-100 rounded-[44px] shadow-soft overflow-hidden">
+        {/* Main Table */}
+        <div className="lg:col-span-3 flex flex-col min-h-0 bg-white border border-slate-200 rounded-2xl overflow-hidden">
            
-           {/* Command Toolbar */}
-           <div className="px-10 py-8 border-b border-slate-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-slate-50/20">
-              <div className="flex items-center gap-8">
-                 <div className="relative group max-w-sm w-full lg:w-64">
-                   <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+           {/* Toolbar */}
+           <div className="p-6 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                 <div className="relative w-full lg:w-64">
+                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                    <input 
                      type="text" 
-                     placeholder="Search identity or node..." 
-                     className="w-full bg-white border border-slate-100 focus:border-indigo-100 outline-none rounded-2xl pl-12 pr-4 py-3 text-xs font-black text-slate-600 transition-all shadow-sm uppercase tracking-tight"
+                     placeholder="Search employees..." 
+                     className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-800 transition-all"
                      value={searchQuery}
                      onChange={(e) => setSearchQuery(e.target.value)}
                    />
                  </div>
-                 <div className="flex items-center gap-3">
-                    <div className="px-4 py-2 bg-white border border-slate-100 rounded-xl flex items-center gap-2">
-                       <Filter size={14} className="text-slate-300" />
+                 <div className="flex items-center gap-2">
+                    <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-2">
+                       <Filter size={14} className="text-slate-400" />
                        <select 
-                         className="text-[10px] font-black text-slate-400 uppercase tracking-widest outline-none bg-transparent cursor-pointer"
+                         className="text-sm text-slate-600 outline-none bg-transparent cursor-pointer"
                          value={filters.department}
                          onChange={(e) => handleFilterChange('department', e.target.value)}
                        >
@@ -204,75 +177,71 @@ const EmployeeDirectory = () => {
               </div>
            </div>
 
-           {/* Workspace Table */}
+           {/* Table */}
            <div className="flex-1 overflow-y-auto no-scrollbar relative">
               <table className="w-full text-left border-collapse">
-                 <thead className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-md border-b border-slate-100">
+                 <thead className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200">
                     <tr>
-                       <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Identity Node</th>
-                       <th className="px-6 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Operational Role</th>
-                       <th className="px-6 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Lifecycle</th>
-                       <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Actions</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-slate-600">Employee</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-slate-600">Role</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-slate-600 text-center">Status</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-slate-600 text-right">Actions</th>
                     </tr>
                  </thead>
-                 <tbody className="divide-y divide-slate-50 relative z-10 font-[Inter]">
+                 <tbody className="divide-y divide-slate-100">
                     {filteredEmployees.map((emp) => (
-                       <tr key={emp.id} className="group hover:bg-indigo-50/30 transition-all">
-                          <td className="px-10 py-8">
-                             <div className="flex items-center gap-5">
-                                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-100 p-0.5 shadow-sm bg-white group-hover:scale-110 transition-all">
-                                   <img src={emp.avatar} alt="" className="w-full h-full object-cover rounded-[14px]" />
+                       <tr key={emp.id} className="group hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-4">
+                             <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0">
+                                   {emp.avatar ? (
+                                      <img src={emp.avatar} alt="" className="w-full h-full object-cover" />
+                                   ) : (
+                                      <span className="text-sm font-semibold text-slate-500">{emp.name?.charAt(0)}</span>
+                                   )}
                                 </div>
                                  <div>
-                                    <p className="text-sm font-black text-slate-800 tracking-tight leading-none mb-2 group-hover:text-indigo-600 transition-colors uppercase">{emp.name}</p>
-                                    <div className="flex items-center gap-1.5 text-indigo-400 font-black text-[9px] uppercase tracking-[0.1em]">
-                                       {emp.email}
-                                    </div>
+                                    <p className="text-sm font-medium text-slate-800">{emp.name}</p>
+                                    <p className="text-xs text-slate-500">{emp.email}</p>
                                  </div>
                              </div>
                           </td>
-                          <td className="px-6 py-8">
-                             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1">{emp.id}</p>
-                             <p className="text-sm font-black text-slate-700 tracking-tight uppercase leading-none">{emp.role}</p>
+                          <td className="px-6 py-4">
+                             <p className="text-sm font-medium text-slate-800">{emp.role}</p>
+                             <p className="text-xs text-slate-500">{emp.department}</p>
                           </td>
-                          <td className="px-6 py-8">
+                          <td className="px-6 py-4">
                              <div className="flex items-center justify-center">
-                                <span className={`px-4 py-1.5 text-[9px] font-black rounded-xl uppercase tracking-widest border flex items-center gap-2 ${
-                                   emp.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'
+                                <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                   emp.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                                 }`}>
-                                   <div className={`w-1.5 h-1.5 rounded-full ${emp.status === 'Active' ? 'bg-emerald-500 pulse-emerald' : 'bg-orange-500 animate-pulse'}`} />
                                    {emp.status}
                                 </span>
                              </div>
                           </td>
-                          <td className="px-10 py-8 text-right relative">
+                          <td className="px-6 py-4 text-right relative">
                              <button 
                                onClick={(e) => { e.stopPropagation(); setActiveActionId(activeActionId === emp.id ? null : emp.id); }}
-                               className="p-3 bg-white border border-slate-100 text-slate-400 hover:text-slate-800 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all active:scale-90"
+                               className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                              >
-                                <MoreVertical size={20} />
+                                <MoreVertical size={18} />
                              </button>
 
                              {activeActionId === emp.id && (
-                                <div className="absolute right-10 top-20 w-56 bg-slate-900 text-white rounded-[24px] shadow-2xl py-4 z-50 animate-in zoom-in-95 fade-in duration-200 border border-white/10">
+                                <div className="absolute right-6 top-12 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50 animate-in zoom-in-95 fade-in duration-200">
                                    <button 
                                      onClick={() => navigate(`/employees/profile/${emp.id}`)}
-                                     className="w-full text-left px-6 py-3 text-[11px] font-black uppercase tracking-widest hover:bg-white/10 flex items-center gap-3 transition-all"
+                                     className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
                                    >
-                                      <ExternalLink size={16} className="text-indigo-400" />
-                                      View Intelligence
+                                      <ExternalLink size={16} className="text-slate-400" />
+                                      View Profile
                                    </button>
                                    <button 
                                      onClick={() => navigate(`/employees/edit/${emp.id}`)}
-                                     className="w-full text-left px-6 py-3 text-[11px] font-black uppercase tracking-widest hover:bg-white/10 flex items-center gap-3 transition-all"
+                                     className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
                                    >
-                                      <Edit3 size={16} className="text-orange-400" />
-                                      Modify Identity
-                                   </button>
-                                   <div className="h-px bg-white/5 my-2 mx-6"></div>
-                                   <button className="w-full text-left px-6 py-3 text-[11px] font-black uppercase tracking-widest hover:bg-white/10 flex items-center gap-3 transition-all text-slate-400">
-                                      <FileText size={16} />
-                                      Export Dataset
+                                      <Edit3 size={16} className="text-slate-400" />
+                                      Edit
                                    </button>
                                 </div>
                              )}
@@ -283,16 +252,9 @@ const EmployeeDirectory = () => {
               </table>
            </div>
 
-           {/* Persistence Footer */}
-           <div className="px-10 py-6 bg-slate-900 border-t border-white/5 flex items-center justify-between text-white shrink-0">
-              <div className="flex items-center gap-4">
-                 <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
-                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Identity Master Node Active</p>
-              </div>
-              <div className="flex items-center gap-6">
-                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Showing {filteredEmployees.length} Workforce Segments</p>
-                 <button className="px-6 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Sync Ledger</button>
-              </div>
+           {/* Footer */}
+           <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+              <p className="text-sm text-slate-600">Showing {filteredEmployees.length} employees</p>
            </div>
         </div>
       </div>

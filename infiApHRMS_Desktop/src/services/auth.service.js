@@ -2,11 +2,16 @@ import apiClient from "./apiClient";
 import { tokenStore } from "./tokenStore";
 
 export const authService = {
-  // Step 1: Login (sends OTP to email)
+  // Step 1: Login (sends OTP to email or returns token if 2FA already verified)
   login: async (email, password, role) => {
     const payload = { email, password };
     if (role) payload.role = role;
     const res = await apiClient.post("/auth/login", payload);
+    // Save token if returned directly (2FA already verified or skipped in dev)
+    if (res.data.token && !res.data.require2FA) {
+      tokenStore.setToken(res.data.token);
+      tokenStore.setRole(res.data.role);
+    }
     return res.data;
   },
 

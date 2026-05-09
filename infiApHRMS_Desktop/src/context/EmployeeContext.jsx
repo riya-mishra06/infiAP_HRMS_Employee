@@ -135,17 +135,29 @@ export const EmployeeProvider = ({ children }) => {
   const updateEmployee = async (id, updatedData) => {
     setError(null);
     try {
-      const res = await apiUpdateEmployee(id, {
-        name: updatedData.name,
-        email: updatedData.email,
-        phone: updatedData.phone,
-        department: updatedData.department,
-        designation: updatedData.role,
-        reportingManager: updatedData.manager,
-        joiningDate: updatedData.joiningDate,
-        annualSalary: updatedData.salary,
-        status: updatedData.status,
-      });
+      // Only send fields that are present in updatedData
+      const payload = {};
+      if (updatedData.name !== undefined) payload.name = updatedData.name;
+      if (updatedData.email !== undefined) payload.email = updatedData.email;
+      if (updatedData.phone !== undefined) payload.phone = updatedData.phone;
+      if (updatedData.department !== undefined) payload.department = updatedData.department;
+      if (updatedData.role !== undefined) payload.designation = updatedData.role;
+      // Only include reportingManager if it's a valid ObjectId format (24 char hex string)
+      // This prevents sending string names that cause type mismatch errors
+      if (updatedData.manager !== undefined) {
+        const managerId = updatedData.manager;
+        if (managerId && /^[0-9a-fA-F]{24}$/.test(managerId)) {
+          payload.reportingManager = managerId;
+        }
+      }
+      if (updatedData.joiningDate !== undefined) payload.joiningDate = updatedData.joiningDate;
+      if (updatedData.salary !== undefined) payload.annualSalary = updatedData.salary;
+      if (updatedData.status !== undefined) payload.status = updatedData.status;
+      if (updatedData.location !== undefined) payload.address = updatedData.location;
+
+      console.log('Updating employee:', id, 'with payload:', payload);
+      const res = await apiUpdateEmployee(id, payload);
+      console.log('Update response:', res.data);
 
       const updated = res.data?.data;
       if (updated) {
@@ -165,7 +177,9 @@ export const EmployeeProvider = ({ children }) => {
       }
       return { success: true, data: updated };
     } catch (err) {
-      const message = err.response?.data?.error || 'Failed to update employee';
+      const message = err.response?.data?.error || err.message || 'Failed to update employee';
+      console.error('Update employee error:', err);
+      console.error('Error response:', err.response?.data);
       setError(message);
       return { success: false, error: message };
     }

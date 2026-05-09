@@ -106,7 +106,11 @@ exports.editEmployee = async (req, res) => {
         const { id } = req.params;
         const updates = req.body;
         delete updates.password; // Forbid password update here
-        
+
+        // Log for debugging
+        console.log('Edit Employee - ID:', id);
+        console.log('Edit Employee - Updates:', JSON.stringify(updates, null, 2));
+
         // Handle file upload if present
         if (req.file) {
             // Convert buffer to base64 for storage (or use cloud storage in production)
@@ -114,12 +118,13 @@ exports.editEmployee = async (req, res) => {
             const mimeType = req.file.mimetype;
             updates.profileImage = `data:${mimeType};base64,${base64Image}`;
         }
-        
-        const employee = await User.findByIdAndUpdate(id, updates, { new: true });
+
+        const employee = await User.findByIdAndUpdate(id, updates, { new: true, runValidators: false });
         if (!employee) return res.status(404).json({ success: false, message: "Employee not found" });
-        
+
         res.status(200).json({ success: true, message: "Employee updated successfully", data: employee });
     } catch (error) {
+        console.error('Edit Employee Error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

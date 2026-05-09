@@ -202,7 +202,7 @@ exports.loginUser = async (req, res) => {
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
-        // 2FA already done — go straight to login
+        // 2FA already done — go straight to login (existing user who has logged in before)
         if (user.firstLogin2FAVerified) {
             const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
             const loggedInUser = await User.findById(user._id).select("-password -refreshToken -twoFactorOTP -twoFactorOTPExpires -verificationToken");
@@ -214,10 +214,10 @@ exports.loginUser = async (req, res) => {
                 .json(buildAuthResponse(loggedInUser, accessToken, refreshToken));
         }
 
-        // First login — send OTP for 2FA
+        // First login — send OTP for 2FA (only for newly created users)
         const { emailSent } = await issueLoginOtpChallenge(user);
 
-        // Development only: skip 2FA if email not configured
+        // Development only: skip 2FA if email not configured (mark as verified so it won't ask again)
         if (!emailSent && process.env.NODE_ENV !== "production") {
             user.twoFactorOTP = undefined;
             user.twoFactorOTPExpires = undefined;
