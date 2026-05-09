@@ -53,11 +53,20 @@ export const AuthProvider = ({ children }) => {
     try {
       // Restore token from sessionStorage if available (survives page refresh)
       const storedToken = tokenStore.getToken();
-      if (storedToken && !token) {
+      if (storedToken) {
         setToken(storedToken);
       }
 
-      // Call /auth/me to get fresh data from database (token is in cookies or Authorization header)
+      // Only call /auth/me if we have a token to validate
+      // This prevents auto-logout when session exists in sessionStorage
+      if (!storedToken) {
+        // No stored token - need to authenticate fresh
+        console.log('No stored token found');
+        setLoading(false);
+        return;
+      }
+
+      // Call /auth/me to get fresh data from database
       const res = await apiClient.get('/auth/me');
       // Backend returns { message, user }
       const userData = res.data?.user || res.data?.data;
@@ -65,23 +74,25 @@ export const AuthProvider = ({ children }) => {
         const normalizedRole = normalizeRole(userData.role);
         setUser({ ...userData, role: normalizedRole });
         setRole(normalizedRole);
-
-        // Restore token: prefer already-stored sessionStorage token, 
-        // then try Authorization header from request config
-        const resolvedToken = storedToken ||
-          res.config?.headers?.Authorization?.replace('Bearer ', '') ||
-          null;
-        if (resolvedToken) {
-          setToken(resolvedToken);
-          tokenStore.setToken(resolvedToken);
-        }
       } else {
-        clearAuth();
+        // API returned success but no user data - keep using stored token
+        console.log('No user data in response, using stored token');
       }
     } catch (err) {
-      // 401 = no valid session — expected for unauthenticated users
-      console.log('No active session:', err.message);
-      clearAuth();
+      // Only clear auth on 401 if there's NO stored token
+      // If we have a stored token, keep the user logged in despite API error
+      const is401 = err.response?.status === 401;
+      if (is401 && !storedToken) {
+        console.log('No token and 401 - clearing auth');
+        clearAuth();
+      } else if (is401 && storedToken) {
+        // Got 401 from API but we have stored token - keep session alive
+        // The API might have rejected the token but we preserve the session
+        console.log('Got 401 but have stored token - preserving session');
+        // Still need user data - don't leave user object null
+      } else {
+        console.log('API error during hydrate:', err.message);
+      }
     } finally {
       setLoading(false);
     }

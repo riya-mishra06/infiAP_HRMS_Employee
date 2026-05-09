@@ -16,6 +16,14 @@ import {
   Loader2
 } from 'lucide-react';
 
+// Helper function to safely format dates
+const formatDisplayDate = (dateValue) => {
+  if (!dateValue) return 'Just now';
+  const date = new Date(dateValue);
+  if (isNaN(date.getTime())) return 'Just now';
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
+
 const MyProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -280,7 +288,7 @@ const MyProfile = () => {
             </div>
             <span className="text-xs font-bold text-slate-700">
               {displayData.updatedAt
-                ? new Date(displayData.updatedAt).toLocaleDateString('en-IN', { day: 'short', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                ? formatDisplayDate(displayData.updatedAt)
                 : 'Just now'}
             </span>
           </div>
