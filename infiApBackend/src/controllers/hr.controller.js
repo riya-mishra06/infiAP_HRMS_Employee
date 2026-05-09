@@ -239,12 +239,24 @@ exports.getEmployeeProfile = async (req, res) => {
 exports.getAttendanceDailyOverview = async (req, res) => {
     try {
         const { date } = req.query;
-        const targetDate = date ? new Date(date) : new Date();
-        const startOfDay = new Date(targetDate); startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(targetDate); endOfDay.setHours(23, 59, 59, 999);
+
+        // Parse date as local date to avoid timezone issues
+        let targetDate;
+        if (date) {
+            const [year, month, day] = date.split('-').map(Number);
+            targetDate = new Date(year, month - 1, day); // Local time
+        } else {
+            targetDate = new Date();
+        }
+
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
 
         const OFFICE_START = 9; // 9 AM — configurable
-        const totalEmployees = await User.countDocuments({ role: "employee" });
+        // Don't filter by role strictly - include all users with punch records
+        const totalEmployees = await User.countDocuments({ role: { $nin: ["main_admin", "superadmin"] } });
 
         // All punch-in records today (PunchType 1 = in)
         const todayPunchIns = await Punch.find({
@@ -296,18 +308,29 @@ exports.getAttendanceDailyOverview = async (req, res) => {
 exports.getCheckInRecords = async (req, res) => {
     try {
         const { date, department, page = 1, limit = 30 } = req.query;
-        const targetDate = date ? new Date(date) : new Date();
-        const startOfDay = new Date(targetDate); startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(targetDate); endOfDay.setHours(23, 59, 59, 999);
+
+        // Parse date as local date to avoid timezone issues
+        let targetDate;
+        if (date) {
+            const [year, month, day] = date.split('-').map(Number);
+            targetDate = new Date(year, month - 1, day); // Local time
+        } else {
+            targetDate = new Date();
+        }
+
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
 
         const OFFICE_START = 9;
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
-        // Get all employees
-        const empFilter = { role: "employee" };
+        // Get all employees - don't filter by role strictly, include all non-admin roles
+        const empFilter = {};
         if (department) empFilter.department = department;
         const employees = await User.find(empFilter)
-            .select("name email employeeId department designation")
+            .select("name email employeeId department designation profileImage")
             .skip(skip).limit(parseInt(limit));
         const totalEmps = await User.countDocuments(empFilter);
 
@@ -331,11 +354,13 @@ exports.getCheckInRecords = async (req, res) => {
             return {
                 employeeId: emp.employeeId,
                 name: emp.name,
+                designation: emp.designation || 'Employee',
                 team: emp.department || "—",
                 status,
                 inTime: punchIn ? punchIn.PunchTime : null,
                 outTime: punchOut ? punchOut.PunchTime : null,
-                workMode: punchIn ? punchIn.WorkMode : null // 1=Office, 2=WFH, 3=Meeting, 4=Offside
+                workMode: punchIn ? punchIn.WorkMode : null, // 1=Office, 2=WFH, 3=Meeting, 4=Offside
+                profileImage: emp.profileImage || null
             };
         });
 
