@@ -1,226 +1,276 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { 
-  Users, 
-  TrendingUp, 
-  PieChart as PieChartIcon, 
-  Globe, 
-  Undo2, 
-  Download, 
-  Filter, 
-  BarChart3, 
-  ChevronRight, 
-  Activity,
-  LayoutDashboard,
-  BrainCircuit,
-  Database
+import {
+  AlertCircle,
+  ArrowLeft,
+  Briefcase,
+  Calendar,
+  RefreshCw,
+  Search,
+  Users
 } from 'lucide-react';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  Tooltip, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid,
-  Legend
-} from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { getAnalyticsReport } from '../../../services/hrApi';
 
+const getPayload = (response) => response?.data?.data ?? response?.data ?? {};
+
+const getArray = (value) => {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.data)) return value.data;
+  if (Array.isArray(value?.items)) return value.items;
+  if (Array.isArray(value?.records)) return value.records;
+  return [];
+};
+
+const formatNumber = (value) => {
+  const number = Number(value);
+  if (Number.isNaN(number)) return '0';
+  return number.toLocaleString();
+};
+
+const formatDate = (value) => {
+  if (!value) return 'Current';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const normalizeDepartment = (item, index) => ({
+  id: item.id || item._id || item.department || item.name || `dept-${index}`,
+  name: item.department || item.name || item.dept || `Department ${index + 1}`,
+  count: Number(item.count ?? item.value ?? item.total ?? item.employees ?? 0),
+  active: Number(item.active ?? item.activeEmployees ?? item.count ?? item.value ?? 0)
+});
+
+const normalizeTenure = (item, index) => ({
+  id: item.id || item._id || item.range || item.label || `tenure-${index}`,
+  range: item.range || item.label || item.bucket || `Range ${index + 1}`,
+  count: Number(item.count ?? item.value ?? item.total ?? 0)
+});
+
 const EmployeeReports = () => {
-    const navigate = useNavigate();
-    const [activeRange, setActiveRange] = useState('Current Year');
+  const navigate = useNavigate();
+  const [departments, setDepartments] = useState([]);
+  const [tenureBuckets, setTenureBuckets] = useState([]);
+  const [summary, setSummary] = useState({
+    totalEmployees: 0,
+    departments: 0,
+    avgTenure: 'N/A',
+    generatedAt: 'Current'
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-    const defaultDepartmentData = [
-        { name: 'Engineering', value: 142 },
-        { name: 'Design', value: 45 },
-        { name: 'Operations', value: 68 },
-        { name: 'Sales', value: 93 },
-    ];
+  const fetchEmployeeReport = async () => {
+    try {
+      setLoading(true);
+      setError('');
 
-    const defaultTenureData = [
-        { range: '0-1 Yr', count: 85 },
-        { range: '1-3 Yrs', count: 124 },
-        { range: '3-5 Yrs', count: 96 },
-        { range: '5+ Yrs', count: 43 },
-    ];
+      const response = await getAnalyticsReport();
+      const payload = getPayload(response);
+      const departmentRows = getArray(payload.departments || payload.byDepartment || payload.departmentStats)
+        .map(normalizeDepartment)
+        .filter((item) => item.name);
+      const tenureRows = getArray(payload.tenure || payload.tenureBuckets || payload.tenureBreakdown)
+        .map(normalizeTenure)
+        .filter((item) => item.range);
+      const employeeRows = getArray(payload.employees || payload.employeeReports || payload.records);
+      const totalEmployees = Number(
+        payload.totalEmployees ??
+        payload.employeesCount ??
+        employeeRows.length ??
+        departmentRows.reduce((total, item) => total + item.count, 0)
+      );
 
-    const [departmentData, setDepartmentData] = useState(defaultDepartmentData);
-    const [tenureData, setTenureData] = useState(defaultTenureData);
-    const [totalEmployees, setTotalEmployees] = useState(null);
+      setDepartments(departmentRows);
+      setTenureBuckets(tenureRows);
+      setSummary({
+        totalEmployees,
+        departments: Number(payload.totalDepartments ?? payload.departmentCount ?? departmentRows.length),
+        avgTenure: payload.averageTenure || payload.avgTenure || 'N/A',
+        generatedAt: formatDate(payload.generatedAt || payload.updatedAt)
+      });
+    } catch (err) {
+      console.error('Failed to load employee analytics report:', err);
+      setDepartments([]);
+      setTenureBuckets([]);
+      setSummary({ totalEmployees: 0, departments: 0, avgTenure: 'N/A', generatedAt: 'Current' });
+      setError('Unable to load employee analytics. Please refresh once the HR API is available.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        let isMounted = true;
+  useEffect(() => {
+    fetchEmployeeReport();
+  }, []);
 
-        const pickArray = (value) => (Array.isArray(value) ? value : []);
+  const filteredDepartments = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return departments;
+    return departments.filter((item) => item.name.toLowerCase().includes(query));
+  }, [departments, searchQuery]);
 
-        const loadReport = async () => {
-            try {
-                const res = await getAnalyticsReport();
-                const payload = res.data?.data || {};
+  const maxDepartmentCount = Math.max(...departments.map((item) => item.count), 1);
+  const maxTenureCount = Math.max(...tenureBuckets.map((item) => item.count), 1);
 
-                const departments = pickArray(payload.departments || payload.byDepartment || payload.departmentStats || payload);
-                const mappedDepartments = departments.map((item, index) => ({
-                    name: item.department || item.name || item.dept || `Dept ${index + 1}`,
-                    value: Number(item.count ?? item.value ?? item.total ?? 0)
-                })).filter((item) => item.name);
+  const cards = [
+    { label: 'Total Employees', value: summary.totalEmployees, icon: Users, color: 'text-blue-600' },
+    { label: 'Departments', value: summary.departments, icon: Briefcase, color: 'text-emerald-600' },
+    { label: 'Average Tenure', value: summary.avgTenure, icon: Calendar, color: 'text-violet-600' },
+    { label: 'Generated', value: summary.generatedAt, icon: RefreshCw, color: 'text-slate-600' }
+  ];
 
-                const tenureBuckets = pickArray(payload.tenure || payload.tenureBuckets || payload.tenureBreakdown);
-                const mappedTenure = tenureBuckets.map((item, index) => ({
-                    range: item.range || item.label || item.bucket || `Range ${index + 1}`,
-                    count: Number(item.count ?? item.value ?? 0)
-                })).filter((item) => item.range);
-
-                if (!isMounted) return;
-                if (mappedDepartments.length) setDepartmentData(mappedDepartments);
-                if (mappedTenure.length) setTenureData(mappedTenure);
-                if (payload.totalEmployees !== undefined) setTotalEmployees(payload.totalEmployees);
-            } catch (err) {
-                console.error('Failed to load employee analytics report:', err);
-            }
-        };
-
-        loadReport();
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
-
-    const computedTotal = useMemo(() => {
-        if (typeof totalEmployees === 'number') return totalEmployees;
-        return departmentData.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
-    }, [departmentData, totalEmployees]);
-
-    const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6'];
-
-    return (
-        <div className="flex flex-col min-h-[calc(100vh-120px)] w-full gap-10 animate-in fade-in slide-in-from-bottom-4 duration-700 relative pt-4 text-left pb-20">
-            
-            {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0 text-left">
-                <div className="flex items-center gap-6 text-left">
-                    <button 
-                        onClick={() => navigate('/analytics')}
-                        className="p-4 bg-white border border-slate-100 text-slate-400 hover:text-slate-800 rounded-2xl shadow-sm transition-all hover:-translate-x-1 active:scale-95 text-left"
-                    >
-                        <Undo2 size={20} />
-                    </button>
-                    <div className="text-left">
-                        <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 text-left">Employee Lifecycle Diagnostic</h1>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 text-left leading-none">Demographic Distribution & Tenure Intelligence Index</p>
-                    </div>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                    <button className="p-3 bg-white border border-slate-100 text-slate-400 rounded-2xl hover:text-slate-800 shadow-sm transition-all text-left">
-                        <Filter size={20} />
-                    </button>
-                    <button className="px-10 py-3 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 uppercase tracking-[0.2em] text-[10px] text-left">
-                        Export Dataset
-                    </button>
-                </div>
-            </div>
-
-            {/* Content Workspace */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12 gap-10 text-left">
-                
-                {/* 1. Departmental Distribution Pie */}
-                <div className="xl:col-span-4 card-soft bg-white p-10 border-slate-100 shadow-soft flex flex-col min-h-[500px] text-left">
-                    <div className="mb-10 shrink-0 text-left">
-                        <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] text-left">Node Distribution</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1 text-left">Headcount breakdown by department node</p>
-                    </div>
-                    <div className="flex-1 min-h-0 relative text-left">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={departmentData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={70}
-                                    outerRadius={110}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {departmentData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip 
-                                    contentStyle={{backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '12px'}}
-                                    itemStyle={{color: '#fff', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase'}}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] leading-none mb-1 text-center">Total</p>
-                            <p className="text-3xl font-black text-slate-800 tracking-tighter leading-none text-center">{computedTotal}</p>
-                        </div>
-                    </div>
-                    <div className="mt-8 grid grid-cols-2 gap-4 shrink-0 text-left">
-                        {departmentData.map((d, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl text-left">
-                                <div className="flex items-center gap-2 text-left">
-                                    <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[i]}}></div>
-                                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] text-left">{d.name}</span>
-                                </div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-left">{d.value}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* 2. Tenure Analytics Bar Chart */}
-                <div className="xl:col-span-5 card-soft bg-white p-10 border-slate-100 shadow-soft flex flex-col min-h-[500px] text-left">
-                    <div className="mb-10 shrink-0 text-left">
-                        <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] text-left">Tenure Intelligence</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1 text-left">Employee retention time-segments</p>
-                    </div>
-                    <div className="flex-1 min-h-0 text-left">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={tenureData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis 
-                                    dataKey="range" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fontSize: 9, fontWeight: 900, fill: '#94a3b8'}}
-                                    dy={10}
-                                />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fontSize: 9, fontWeight: 900, fill: '#94a3b8'}}
-                                />
-                                <Tooltip 
-                                    contentStyle={{backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '12px'}}
-                                    itemStyle={{color: '#fff', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase'}}
-                                    cursor={{fill: '#f1f5f9'}}
-                                />
-                                <Bar dataKey="count" fill="#6366f1" radius={[8, 8, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="mt-8 p-6 bg-slate-900 rounded-[28px] text-white flex items-center justify-between shrink-0 text-left">
-                        <div className="text-left">
-                            <p className="text-[9px] text-white/40 font-black uppercase tracking-[0.2em] text-left">Avg. Retention Node</p>
-                            <p className="text-xl font-black text-white tracking-tight text-left">3.4 Years</p>
-                        </div>
-                        <div className="flex items-center gap-2 text-emerald-400 text-left">
-                            <TrendingUp size={20} />
-                            <span className="text-[10px] font-black uppercase text-left">+4% Growth</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
+  return (
+    <div className="flex flex-col h-[calc(100vh-120px)] w-full gap-6 pt-4 overflow-hidden text-left">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 shrink-0">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/analytics')}
+            className="p-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Employee Reports</h1>
+            <p className="text-sm text-slate-500 mt-1">Live headcount, department, and tenure analytics.</p>
+          </div>
         </div>
-    );
+
+        <button
+          onClick={fetchEmployeeReport}
+          disabled={loading}
+          className="px-4 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center gap-2 self-start lg:self-center"
+        >
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          Refresh
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 shrink-0">
+        {cards.map((card) => (
+          <div key={card.label} className="bg-white border border-slate-100 rounded-2xl p-5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{card.label}</p>
+              <card.icon size={20} className={card.color} />
+            </div>
+            <p className="text-2xl font-black text-slate-900 mt-4">{typeof card.value === 'number' ? formatNumber(card.value) : card.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 flex-1 min-h-0">
+        <div className="xl:col-span-3 bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-0">
+          <div className="p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-black text-slate-900">Department Headcount</h2>
+              <p className="text-sm text-slate-500 mt-1">Only departments returned by the HR analytics API are shown.</p>
+            </div>
+            <div className="relative w-full lg:w-72">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search department"
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="m-5 p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-2xl flex items-center gap-3 text-sm font-semibold">
+              <AlertCircle size={18} />
+              {error}
+            </div>
+          )}
+
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-left">
+              <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Department</th>
+                  <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Employees</th>
+                  <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Share</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
+                  <tr>
+                    <td colSpan="3" className="px-6 py-14 text-center text-sm font-bold text-slate-500">
+                      Loading real employee analytics...
+                    </td>
+                  </tr>
+                ) : filteredDepartments.length ? (
+                  filteredDepartments.map((department) => (
+                    <tr key={department.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-6 py-5">
+                        <p className="text-sm font-black text-slate-900">{department.name}</p>
+                        <p className="text-xs text-slate-500 mt-1">{formatNumber(department.active)} active employee(s)</p>
+                      </td>
+                      <td className="px-6 py-5 text-sm font-black text-slate-900">{formatNumber(department.count)}</td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="h-2 w-40 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-slate-900 rounded-full"
+                              style={{ width: `${Math.min((department.count / maxDepartmentCount) * 100, 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-bold text-slate-500">
+                            {summary.totalEmployees ? `${((department.count / summary.totalEmployees) * 100).toFixed(1)}%` : '0%'}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="px-6 py-14 text-center">
+                      <p className="text-sm font-black text-slate-700">No department data found</p>
+                      <p className="text-xs text-slate-400 mt-1">This table only shows data returned by the HR API.</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="xl:col-span-2 bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-0">
+          <div className="p-5 border-b border-slate-100">
+            <h2 className="text-lg font-black text-slate-900">Tenure Breakdown</h2>
+            <p className="text-sm text-slate-500 mt-1">Employee count by tenure bucket.</p>
+          </div>
+
+          <div className="flex-1 overflow-auto p-5 space-y-4">
+            {loading ? (
+              <p className="py-12 text-center text-sm font-bold text-slate-500">Loading tenure data...</p>
+            ) : tenureBuckets.length ? (
+              tenureBuckets.map((bucket) => (
+                <div key={bucket.id} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-black text-slate-800">{bucket.range}</span>
+                    <span className="text-sm font-black text-slate-500">{formatNumber(bucket.count)}</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 rounded-full"
+                      style={{ width: `${Math.min((bucket.count / maxTenureCount) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="py-12 text-center">
+                <p className="text-sm font-black text-slate-700">No tenure data found</p>
+                <p className="text-xs text-slate-400 mt-1">Tenure buckets will appear when the API returns them.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default EmployeeReports;

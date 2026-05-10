@@ -37,38 +37,31 @@ const ManageTeams = () => {
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 relative">
       
       {/* Dynamic Header Section */}
-      <div className="bg-white rounded-[40px] p-10 border border-slate-50 shadow-soft flex flex-col md:flex-row md:items-center justify-between gap-8">
-        <div className="flex items-center gap-6">
-          <button 
-            onClick={() => navigate(role === 'HR' ? '/departments' : '/admin/departments')}
-            className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
-          >
-            <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
-          </button>
-          <div>
-            <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 text-left">Department Teams</h1>
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none text-left flex items-center gap-2">
-              Organizational Teams
-              <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-              <span className="text-indigo-500">{teams.length} Teams Total</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search teams or leads..." 
-              className="bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all w-[320px]"
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0">
+         <div className="flex items-center gap-6">
+            <button
+               onClick={() => navigate(role === 'HR' ? '/departments' : '/admin/departments')}
+               className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
+            >
+               <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
+            </button>
+            <div>
+          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 underline decoration-indigo-300 underline-offset-4 uppercase">
+            Employees Profile Hub
+               </h1>
+               <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">
+            Global Talent Inventory &amp; Identity Portfolio Nodes
+               </p>
+            </div>
+         </div>
+         <div className="flex items-center gap-4 relative group max-w-sm w-full">
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+            <input
+               type="text"
+               placeholder="Search teams or leads..."
+               className="w-full bg-white border border-slate-100 hover:border-slate-200 focus:border-indigo-500 outline-none rounded-2xl pl-12 pr-4 py-3.5 text-xs font-black text-slate-600 transition-all shadow-soft uppercase tracking-tight"
             />
-          </div>
-          <button className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 transition-all relative">
-            <Bell size={20} />
-            <span className="absolute top-4 right-4 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
-        </div>
+         </div>
       </div>
 
       <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-2">

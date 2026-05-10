@@ -68,7 +68,7 @@ export const EmployeeProvider = ({ children }) => {
 
       return employeeList;
     } catch (err) {
-      const message = err.response?.data?.error || 'Failed to fetch employees';
+      const message = err.response?.data?.message || err.response?.data?.error || 'Failed to fetch employees';
       setError(message);
       console.error('Fetch employees error:', message);
       return [];
@@ -125,7 +125,7 @@ export const EmployeeProvider = ({ children }) => {
       }
       return { success: true, data: created };
     } catch (err) {
-      const message = err.response?.data?.error || 'Failed to add employee';
+      const message = err.response?.data?.message || err.response?.data?.error || 'Failed to add employee';
       setError(message);
       return { success: false, error: message };
     }
@@ -177,7 +177,7 @@ export const EmployeeProvider = ({ children }) => {
       }
       return { success: true, data: updated };
     } catch (err) {
-      const message = err.response?.data?.error || err.message || 'Failed to update employee';
+      const message = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to update employee';
       console.error('Update employee error:', err);
       console.error('Error response:', err.response?.data);
       setError(message);

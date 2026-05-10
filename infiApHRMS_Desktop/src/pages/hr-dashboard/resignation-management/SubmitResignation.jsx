@@ -1,249 +1,337 @@
-import React, { useState } from 'react';
-import { 
-  Undo2, 
-  Send, 
-  ShieldCheck, 
-  Info, 
-  Calendar, 
-  Briefcase, 
-  MessageCircle,
-  AlertTriangle,
-  FileSignature
+import React, { useEffect, useState } from 'react';
+import {
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  Loader2,
+  Send
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { createResignation } from '../../../services/hrApi';
+import { useAuth } from '../../../context/AuthContext';
+import { createResignation, getHrProfile } from '../../../services/hrApi';
+
+const reasons = [
+  'Better Opportunity',
+  'Relocation',
+  'Personal Reasons',
+  'Career Change',
+  'Higher Education',
+  'Other'
+];
+
+const getProfileData = (apiData, user) => ({
+  employeeName: apiData?.header?.name || apiData?.personalInfo?.fullName || apiData?.name || user?.name || '',
+  employeeId: apiData?.professionalInfo?.employeeId || apiData?.header?.hrId || apiData?.employeeId || user?.employeeId || user?._id || '',
+  department: apiData?.professionalInfo?.department || apiData?.department || user?.department || '',
+  designation: apiData?.professionalInfo?.designation || apiData?.header?.post || apiData?.designation || user?.designation || user?.role || ''
+});
 
 const SubmitResignation = () => {
-    const navigate = useNavigate();
-    const [submitted, setSubmitted] = useState(false);
-    const [formData, setFormData] = useState({
-        employeeName: 'Alex Henderson',
-        department: 'Product Engineering',
-        noticeDate: '',
-        lastDay: '',
-        reason: '',
-        comments: ''
-    });
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState({
+    employeeName: '',
+    employeeId: '',
+    department: '',
+    designation: ''
+  });
+  const [formData, setFormData] = useState({
+    employeeName: '',
+    employeeId: '',
+    department: '',
+    designation: '',
+    noticeDate: '',
+    lastDay: '',
+    reason: '',
+    comments: ''
+  });
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [profileError, setProfileError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
-    const reasons = [
-        'Better Opportunity',
-        'Relocation',
-        'Personal Reasons',
-        'Career Change',
-        'Higher Education',
-        'Other'
-    ];
+  useEffect(() => {
+    let isMounted = true;
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitError, setSubmitError] = useState('');
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setSubmitError('');
-        try {
-            await createResignation({
-                employeeName: formData.employeeName,
-                department: formData.department,
-                noticeDate: formData.noticeDate,
-                lastWorkingDay: formData.lastDay,
-                reason: formData.reason,
-                comments: formData.comments,
-            });
-            setSubmitted(true);
-        } catch (err) {
-            setSubmitError(err.response?.data?.error || 'Failed to submit resignation');
-        } finally {
-            setIsSubmitting(false);
+    const loadProfile = async () => {
+      try {
+        setLoadingProfile(true);
+        setProfileError('');
+        const response = await getHrProfile();
+        const apiData = response.data?.data || response.data || {};
+        const loadedProfile = getProfileData(apiData, user);
+        if (isMounted) {
+          setProfile(loadedProfile);
+          setFormData((prev) => ({
+            ...prev,
+            employeeName: prev.employeeName || loadedProfile.employeeName,
+            employeeId: prev.employeeId || loadedProfile.employeeId,
+            department: prev.department || loadedProfile.department,
+            designation: prev.designation || loadedProfile.designation
+          }));
         }
+      } catch (err) {
+        console.error('Failed to load HR profile:', err);
+        if (isMounted) {
+          const fallbackProfile = getProfileData({}, user);
+          setProfile(fallbackProfile);
+          setFormData((prev) => ({
+            ...prev,
+            employeeName: prev.employeeName || fallbackProfile.employeeName,
+            employeeId: prev.employeeId || fallbackProfile.employeeId,
+            department: prev.department || fallbackProfile.department,
+            designation: prev.designation || fallbackProfile.designation
+          }));
+          setProfileError('Profile API unavailable. Showing your authenticated account details.');
+        }
+      } finally {
+        if (isMounted) setLoadingProfile(false);
+      }
     };
 
-    if (submitted) {
-        return (
-            <div className="flex flex-col min-h-[calc(100vh-120px)] w-full items-center justify-center animate-in fade-in zoom-in-95 duration-700 text-left">
-                <div className="max-w-xl w-full card-soft bg-white p-12 border-slate-100 shadow-2xl text-center relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                    <div className="relative z-10 flex flex-col items-center text-center">
-                        <div className="w-24 h-24 bg-primary-50 rounded-[32px] flex items-center justify-center text-primary-500 mb-8 border-4 border-white shadow-xl animate-bounce">
-                            <ShieldCheck size={48} strokeWidth={2.5} />
-                        </div>
-                        <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-6 text-center">Protocol Initiated</h2>
-                        <p className="text-slate-400 text-sm font-medium uppercase tracking-widest leading-relaxed mb-10 max-w-sm mx-auto text-center">
-                            Your resignation node has been successfully synchronized with the HRMS core. The exit lifecycle for <span className="text-primary-600 font-black">{formData.employeeName}</span> is now active.
-                        </p>
-                        <button 
-                            onClick={() => navigate('/resignation')}
-                            className="w-full py-5 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 uppercase tracking-[0.2em] text-[11px] active:scale-95"
-                        >
-                            Return to Exit Hub
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      await createResignation({
+        employeeName: formData.employeeName,
+        employeeId: formData.employeeId,
+        department: formData.department,
+        designation: formData.designation,
+        noticeDate: formData.noticeDate,
+        resignationDate: formData.noticeDate,
+        lastWorkingDay: formData.lastDay,
+        lastWorkingDate: formData.lastDay,
+        reason: formData.reason,
+        comments: formData.comments
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err.response?.data?.error || 'Failed to submit resignation');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
+  if (submitted) {
     return (
-        <div className="flex flex-col min-h-[calc(100vh-120px)] w-full gap-10 animate-in fade-in slide-in-from-bottom-4 duration-700 relative pt-4 text-left pb-20">
-            
-            {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0 text-left">
-                <div className="flex items-center gap-6 text-left">
-                    <button 
-                        onClick={() => navigate('/resignation')}
-                        className="p-4 bg-white border border-slate-100 text-slate-400 hover:text-slate-800 rounded-2xl shadow-sm transition-all hover:-translate-x-1 active:scale-95 text-left"
-                    >
-                        <Undo2 size={20} />
-                    </button>
-                    <div className="text-left">
-                        <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 text-left">Resignation Gateway</h1>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1 text-left leading-none">Formal Exit Protocol Initiation & Data Entry</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Form Workspace */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-10 text-left">
-                
-                {/* 1. SIDEBAR: Instructional Content */}
-                <div className="xl:col-span-4 flex flex-col gap-10 text-left">
-                    <div className="card-soft bg-slate-900 p-10 border-none text-white relative overflow-hidden group text-left">
-                        <div className="relative z-10 text-left">
-                            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-8">
-                                <FileSignature className="text-primary-400" size={32} />
-                            </div>
-                            <h3 className="text-2xl font-black uppercase tracking-tighter leading-tight mb-4 text-left">InfiAp Resignation <br/>Portal</h3>
-                            <p className="text-xs opacity-60 font-medium leading-relaxed uppercase tracking-[0.2em] mb-10 text-left">Please ensure all fields are synchronized correctly. Once submitted, the exit lifecycle enters an immutable state subject to HR verification.</p>
-                            
-                            <div className="space-y-6 text-left">
-                                {[
-                                    { icon: Info, label: 'Notice Period', val: '90 Days Required' },
-                                    { icon: AlertTriangle, label: 'Compliance', val: 'Asset Return Sync' }
-                                ].map((item, i) => (
-                                    <div key={i} className="flex items-center gap-4 py-4 border-b border-white/10 text-left">
-                                        <item.icon size={18} className="text-primary-400" />
-                                        <div className="text-left">
-                                            <p className="text-[8px] font-black uppercase text-white/40 tracking-widest text-left">{item.label}</p>
-                                            <p className="text-[10px] font-black uppercase text-left">{item.val}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-primary-600/10 rounded-full blur-[100px] group-hover:scale-150 transition-transform"></div>
-                    </div>
-
-                    <div className="card-soft bg-white p-8 border-slate-100 shadow-soft text-left">
-                        <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4 text-left">Exit Policy Note</h4>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em] leading-loose text-left">
-                            Note: Your submission will be routed to your manager and HR representitve. All recovery assets must be returned by your last working day.
-                        </p>
-                    </div>
-                </div>
-
-                {/* 2. MAIN FORM: Submission Engine */}
-                <div className="xl:col-span-8 card-soft bg-white p-12 border border-slate-100 shadow-soft flex flex-col min-h-[600px] text-left">
-                    <form onSubmit={handleSubmit} className="space-y-10 text-left">
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-left">
-                            <div className="space-y-4 text-left">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-left">Employee ID/Name</label>
-                                <div className="relative text-left">
-                                    <Briefcase className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                    <input 
-                                        type="text" 
-                                        className="w-full bg-slate-50 border border-slate-100 p-6 rounded-[24px] text-xs font-black text-slate-600 uppercase tracking-tight outline-none pl-16 text-left cursor-not-allowed"
-                                        value={formData.employeeName}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-4 text-left">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-left">Assigned Department</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full bg-slate-50 border border-slate-100 p-6 rounded-[24px] text-xs font-black text-slate-600 uppercase tracking-tight outline-none text-left cursor-not-allowed"
-                                    value={formData.department}
-                                    disabled
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-left">
-                            <div className="space-y-4 text-left">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-left">Notice Initiation Date</label>
-                                <div className="relative text-left">
-                                    <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                    <input 
-                                        type="date" 
-                                        required
-                                        className="w-full bg-slate-50 border border-slate-100 p-6 rounded-[24px] text-xs font-black text-slate-600 uppercase tracking-tight outline-none pl-16 text-left focus:border-primary-100 transition-all font-sans"
-                                        onChange={(e) => setFormData({...formData, noticeDate: e.target.value})}
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-4 text-left">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-left">Projected Last Day</label>
-                                <div className="relative text-left">
-                                    <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                    <input 
-                                        type="date" 
-                                        required
-                                        className="w-full bg-slate-50 border border-slate-100 p-6 rounded-[24px] text-xs font-black text-slate-600 uppercase tracking-tight outline-none pl-16 text-left focus:border-primary-100 transition-all font-sans"
-                                        onChange={(e) => setFormData({...formData, lastDay: e.target.value})}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 text-left">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-left">Primary Reason for Exit</label>
-                            <select 
-                                required
-                                className="w-full bg-slate-50 border border-slate-100 p-6 rounded-[24px] text-xs font-black text-slate-600 uppercase tracking-tight outline-none text-left focus:border-primary-100 transition-all"
-                                onChange={(e) => setFormData({...formData, reason: e.target.value})}
-                            >
-                                <option value="">Select a specific driver...</option>
-                                {reasons.map(r => <option key={r} value={r}>{r}</option>)}
-                            </select>
-                        </div>
-
-                        <div className="space-y-4 text-left">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-left">Qualitative Comments (Optional)</label>
-                            <div className="relative text-left">
-                                <MessageCircle className="absolute left-6 top-8 text-slate-300" size={18} />
-                                <textarea 
-                                    className="w-full h-40 bg-slate-50 border border-slate-100 p-8 pl-16 rounded-[32px] text-xs font-black text-slate-600 uppercase tracking-tight outline-none text-left focus:border-primary-100 transition-all resize-none no-scrollbar"
-                                    placeholder="Enter additional details regarding your decision..."
-                                    onChange={(e) => setFormData({...formData, comments: e.target.value})}
-                                ></textarea>
-                            </div>
-                        </div>
-
-                        <div className="pt-6 flex flex-col md:flex-row gap-4 text-left">
-                            <button 
-                                type="submit"
-                                className="flex-1 py-6 bg-primary-600 text-white font-black rounded-[28px] hover:bg-primary-700 transition-all shadow-2xl shadow-primary-200 uppercase tracking-[0.3em] text-[11px] active:scale-95 flex items-center justify-center gap-3"
-                            >
-                                <Send size={18} />
-                                Submit Resignation
-                            </button>
-                            <button 
-                                type="button"
-                                onClick={() => navigate('/resignation')}
-                                className="px-12 py-6 bg-slate-50 text-slate-400 font-black rounded-[28px] hover:bg-slate-100 transition-all uppercase tracking-widest text-[11px]"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-
-                    </form>
-                </div>
-
-            </div>
-
+      <div className="flex min-h-[calc(100vh-120px)] w-full items-center justify-center pt-4">
+        <div className="w-full max-w-lg bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 size={34} />
+          </div>
+          <h1 className="text-2xl font-black text-slate-900">Resignation Submitted</h1>
+          <p className="text-sm text-slate-500 mt-3">
+            Your resignation request has been sent to HR for review.
+          </p>
+          <button
+            onClick={() => navigate('/resignation')}
+            className="mt-8 w-full py-3 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-all"
+          >
+            Back to Resignation
+          </button>
         </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-120px)] w-full gap-6 pt-4 overflow-hidden text-left">
+      <div className="flex items-center gap-4 shrink-0">
+        <button
+          onClick={() => navigate('/resignation')}
+          className="p-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Submit Resignation</h1>
+          <p className="text-sm text-slate-500 mt-1">Submit a resignation request using your live HR profile details.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 flex-1 min-h-0">
+        <div className="xl:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm h-fit">
+          <h2 className="text-lg font-black text-slate-900">Employee Details</h2>
+          <p className="text-sm text-slate-500 mt-1">Loaded from your HR profile. You can edit these fields for another employee.</p>
+
+          {loadingProfile ? (
+            <div className="py-10 flex items-center gap-3 text-sm font-bold text-slate-500">
+              <Loader2 size={18} className="animate-spin" />
+              Loading profile...
+            </div>
+          ) : (
+            <div className="mt-6 space-y-4">
+              {profileError && (
+                <div className="p-3 bg-amber-50 border border-amber-100 text-amber-700 rounded-2xl flex items-start gap-2 text-sm font-semibold">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  {profileError}
+                </div>
+              )}
+
+              {[
+                ['Default Name', profile.employeeName || 'N/A'],
+                ['Default Employee ID', profile.employeeId || 'N/A'],
+                ['Default Department', profile.department || 'N/A'],
+                ['Default Designation', profile.designation || 'N/A']
+              ].map(([label, value]) => (
+                <div key={label} className="border-b border-slate-100 pb-3">
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{label}</p>
+                  <p className="text-sm font-bold text-slate-900 mt-1">{value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="xl:col-span-3 bg-white border border-slate-100 rounded-3xl shadow-sm overflow-auto">
+          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            {submitError && (
+              <div className="p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-2xl flex items-center gap-3 text-sm font-semibold">
+                <AlertCircle size={18} />
+                {submitError}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <label className="space-y-2">
+                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Employee Name</span>
+                <input
+                  type="text"
+                  required
+                  value={formData.employeeName}
+                  onChange={(event) => setFormData((prev) => ({ ...prev, employeeName: event.target.value }))}
+                  placeholder="Enter employee name"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Employee ID</span>
+                <input
+                  type="text"
+                  required
+                  value={formData.employeeId}
+                  onChange={(event) => setFormData((prev) => ({ ...prev, employeeId: event.target.value }))}
+                  placeholder="Enter employee ID"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <label className="space-y-2">
+                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Department</span>
+                <input
+                  type="text"
+                  required
+                  value={formData.department}
+                  onChange={(event) => setFormData((prev) => ({ ...prev, department: event.target.value }))}
+                  placeholder="Enter department"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Designation</span>
+                <input
+                  type="text"
+                  value={formData.designation}
+                  onChange={(event) => setFormData((prev) => ({ ...prev, designation: event.target.value }))}
+                  placeholder="Enter designation"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <label className="space-y-2">
+                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Notice Date</span>
+                <div className="relative">
+                  <Calendar size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="date"
+                    required
+                    value={formData.noticeDate}
+                    onChange={(event) => setFormData((prev) => ({ ...prev, noticeDate: event.target.value }))}
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                  />
+                </div>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Last Working Day</span>
+                <div className="relative">
+                  <Calendar size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="date"
+                    required
+                    value={formData.lastDay}
+                    onChange={(event) => setFormData((prev) => ({ ...prev, lastDay: event.target.value }))}
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                  />
+                </div>
+              </label>
+            </div>
+
+            <label className="space-y-2 block">
+              <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Reason</span>
+              <select
+                required
+                value={formData.reason}
+                onChange={(event) => setFormData((prev) => ({ ...prev, reason: event.target.value }))}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+              >
+                <option value="">Select reason</option>
+                {reasons.map((reason) => (
+                  <option key={reason} value={reason}>{reason}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="space-y-2 block">
+              <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Comments</span>
+              <textarea
+                value={formData.comments}
+                onChange={(event) => setFormData((prev) => ({ ...prev, comments: event.target.value }))}
+                placeholder="Add optional context for HR"
+                className="w-full h-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400 resize-none"
+              />
+            </label>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={isSubmitting || loadingProfile || !formData.employeeName || !formData.employeeId || !formData.department}
+                className="flex-1 py-3 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                Submit Resignation
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/resignation')}
+                className="px-6 py-3 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default SubmitResignation;
