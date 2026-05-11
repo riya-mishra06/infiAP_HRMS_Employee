@@ -67,7 +67,6 @@ import PayslipGeneration from './pages/admin-dashboard/payroll-management/Paysli
 import FinanceReports from './pages/admin-dashboard/payroll-management/FinanceReports';
 import RecruitmentHub from './pages/admin-dashboard/recruitment-control/RecruitmentHub';
 import RecruitmentAnalytics from './pages/admin-dashboard/recruitment-control/RecruitmentAnalytics';
-import PayrollHub from './pages/admin-dashboard/payroll-management/PayrollHub';
 import SecureDocument from './pages/admin-dashboard/payroll-management/SecureDocument';
 import LinkExpired from './pages/admin-dashboard/payroll-management/LinkExpired';
 import SharingSecurity from './pages/admin-dashboard/payroll-management/SharingSecurity';
@@ -186,13 +185,15 @@ function App() {
                       <Route path="/department-management/teams/create" element={<CreateTeam />} />
 
                       {/* Employees */}
-                      <Route path="/employees" element={<EmployeeDirectory />} />
-                      <Route path="/employees/view" element={<AdminProfileView />} />
-                      <Route path="/employees/edit" element={<AdminProfileEdit />} />
-                      <Route path="/employees/add" element={<AddEmployee />} />
+                      <Route path="employees" element={<EmployeeDirectory />} />
+                      <Route path="employees/view" element={<AdminProfileView />} />
+                      <Route path="employees/edit" element={<AdminProfileEdit />} />
+                      <Route path="employees/add" element={<AddEmployee />} />
+                      <Route path="employees/profile/:id" element={<EmployeeProfiles />} />
+                      <Route path="employees/edit/:id" element={<EditEmployee />} />
 
                       {/* Payroll */}
-                      <Route path="/payroll-management" element={<PayrollHub />} />
+                      <Route path="/payroll-management" element={<Navigate to="/admin/employees" replace />} />
                       <Route path="/payroll-management/structure" element={<SalaryStructure />} />
                       <Route path="/payroll-management/generate" element={<PayslipGeneration />} />
                       <Route path="/payroll-management/reports" element={<FinanceReports />} />

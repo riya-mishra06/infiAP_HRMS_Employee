@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Plus,
   Download,
@@ -18,13 +18,14 @@ import {
   TrendingUp,
   Filter,
   ArrowRight,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  ResponsiveContainer, 
-  XAxis, 
+import {
+  BarChart,
+  Bar,
+  ResponsiveContainer,
+  XAxis,
   Cell,
   Tooltip as RechartsTooltip
 } from 'recharts';
@@ -32,7 +33,19 @@ import { useEmployeeContext } from '../../../context/EmployeeContext';
 
 const EmployeeDirectory = () => {
   const navigate = useNavigate();
-  const { employees } = useEmployeeContext();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const { employees = [], loading, fetchEmployees } = useEmployeeContext();
+
+  // Load employees once if the directory is empty.
+  useEffect(() => {
+    if ((!employees || employees.length === 0) && typeof fetchEmployees === 'function') {
+      fetchEmployees({ limit: 50 });
+    }
+  }, [employees, fetchEmployees]);
+
+  // Determine correct paths based on route context
+  const basePath = isAdminRoute ? '/admin' : '';
 
   // --- STATE MANAGEMENT ---
   const [notification, setNotification] = useState(null);
@@ -56,7 +69,7 @@ const EmployeeDirectory = () => {
 
   // --- FILTER LOGIC ---
   const filteredEmployees = useMemo(() => {
-    return employees.filter(emp => {
+    return (employees || []).filter(emp => {
       const matchesSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         emp.email.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesDept = filters.department === 'All Departments' || emp.department === filters.department;
@@ -79,6 +92,17 @@ const EmployeeDirectory = () => {
   const handleExport = () => {
     showNotification("Employee data exported to CSV successfully.");
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+          <p className="text-slate-600 font-medium">Loading employees...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] w-full gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative pt-4 overflow-hidden">
@@ -105,7 +129,7 @@ const EmployeeDirectory = () => {
             Export
           </button>
           <button
-            onClick={() => navigate('/employees/add')}
+            onClick={() => navigate(`${basePath}/employees/add`)}
             className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200"
           >
             Add Employee
@@ -229,15 +253,15 @@ const EmployeeDirectory = () => {
 
                              {activeActionId === emp.id && (
                                 <div className="absolute right-6 top-12 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50 animate-in zoom-in-95 fade-in duration-200">
-                                   <button 
-                                     onClick={() => navigate(`/employees/profile/${emp.id}`)}
+                                   <button
+                                     onClick={() => navigate(`${basePath}/employees/profile/${emp.id}`)}
                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
                                    >
                                       <ExternalLink size={16} className="text-slate-400" />
                                       View Profile
                                    </button>
-                                   <button 
-                                     onClick={() => navigate(`/employees/edit/${emp.id}`)}
+                                   <button
+                                     onClick={() => navigate(`${basePath}/employees/edit/${emp.id}`)}
                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
                                    >
                                       <Edit3 size={16} className="text-slate-400" />

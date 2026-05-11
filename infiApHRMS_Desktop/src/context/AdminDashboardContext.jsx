@@ -50,13 +50,50 @@ const defaultJobs = [
   }
 ];
 
+const normalizeSummary = (data = {}, fallbacks = {}) => ({
+  totalDepartments: Number(data.totalDepartments ?? data.departments ?? fallbacks.departments ?? 0),
+  departments: Number(data.departments ?? data.totalDepartments ?? fallbacks.departments ?? 0),
+  totalEmployees: Number(data.totalEmployees ?? data.employees ?? fallbacks.employees ?? 0),
+  employees: Number(data.employees ?? data.totalEmployees ?? fallbacks.employees ?? 0),
+  activeJobs: Number(data.activeJobs ?? data.openJobs ?? fallbacks.activeJobs ?? 0),
+  openJobs: Number(data.openJobs ?? data.activeJobs ?? fallbacks.activeJobs ?? 0),
+  activeStaff: Number(data.activeStaff ?? fallbacks.activeStaff ?? 0),
+  teams: Number(data.teams ?? fallbacks.teams ?? 0),
+  pendingLeaves: Number(data.pendingLeaves ?? fallbacks.pendingLeaves ?? 0),
+  monthlyPayroll: Number(data.monthlyPayroll ?? 0),
+  openPositions: Number(data.openPositions ?? data.activeJobs ?? fallbacks.activeJobs ?? 0),
+  newHires: Number(data.newHires ?? 0),
+  announcements: Number(data.announcements ?? 0)
+});
+
 const normalizeDepartment = (department) => ({
   id: department.id || department._id,
-  name: department.name,
-  sub: department.sub || 'NEW UNIT',
-  head: department.head?.name || department.head || 'Unassigned',
-  teams: Number(department.teamCount) || Number(department.teams) || 0,
-  employees: Number(department.employees) || 0,
+  name: department.name || department.departmentName || 'Unnamed Department',
+  sub: String(
+    department.sub ||
+    department.category ||
+    department.departmentCategory ||
+    department.name ||
+    'Department'
+  )
+    .toUpperCase()
+    .slice(0, 18),
+  head:
+    department.head?.name ||
+    department.departmentHead?.name ||
+    department.departmentHead ||
+    department.head ||
+    'Unassigned',
+  teams:
+    Number(department.teamCount) ||
+    Number(department.numberOfTeams) ||
+    Number(department.teams) ||
+    0,
+  employees:
+    Number(department.employeeCount) ||
+    Number(department.totalEmployees) ||
+    Number(department.employees) ||
+    0,
   color: department.color || 'indigo',
   description: department.description || ''
 });
@@ -102,14 +139,14 @@ const normalizeJob = (job) => {
 export const AdminDashboardProvider = ({ children }) => {
   const { role } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [summary, setSummary] = useState({
+  const [summary, setSummary] = useState(normalizeSummary({}, {
     departments: defaultDepartments.length,
     teams: defaultTeams.length,
     activeStaff: 0,
-    openJobs: defaultJobs.length,
+    activeJobs: defaultJobs.length,
     pendingLeaves: 0,
     announcements: 0
-  });
+  }));
   const [insights, setInsights] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -121,21 +158,24 @@ export const AdminDashboardProvider = ({ children }) => {
   const isAdminView = ['admin', 'main admin', 'hr'].includes(String(role || '').toLowerCase());
 
   const fetchSummary = async () => {
+    const fallback = {
+      departments: departments.length || defaultDepartments.length,
+      teams: teams.length || defaultTeams.length,
+      employees: staffDirectory.length,
+      activeStaff: staffDirectory.length,
+      activeJobs: jobs.filter((job) => job.status === 'Active').length || defaultJobs.length,
+      pendingLeaves: pendingLeaves.length
+    };
+
     try {
       const res = await api.get('/admin-dashboard/summary');
-      setSummary(res.data?.data || summary);
-      return res.data?.data;
+      const normalized = normalizeSummary(res.data?.data || {}, fallback);
+      setSummary(normalized);
+      return normalized;
     } catch (error) {
-      const fallback = {
-        departments: departments.length,
-        teams: teams.length,
-        activeStaff: staffDirectory.length,
-        openJobs: jobs.filter((job) => job.status === 'Active').length,
-        pendingLeaves: pendingLeaves.length,
-        announcements: 0
-      };
-      setSummary(fallback);
-      return fallback;
+      const normalized = normalizeSummary({}, fallback);
+      setSummary(normalized);
+      return normalized;
     }
   };
 

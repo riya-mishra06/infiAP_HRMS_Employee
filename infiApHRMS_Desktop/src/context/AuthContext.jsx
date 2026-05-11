@@ -185,7 +185,7 @@ export const AuthProvider = ({ children }) => {
   const fetchProfile = async () => {
     try {
       const res = await apiClient.get('/auth/me');
-      const userData = res.data?.data;
+      const userData = res.data?.user || res.data?.data;
       if (userData) {
         const normalizedRole = normalizeRole(userData.role);
         setUser({ ...userData, role: normalizedRole });

@@ -159,6 +159,7 @@ const Sidebar = () => {
       hasSubmenu: true,
       roles: ['HR', 'Admin'],
       subItems: [
+        { name: 'Employee List', icon: Users, path: role === 'HR' ? '/employees' : '/admin/employees' },
         { name: 'View Profile', icon: Users, path: role === 'HR' ? '/employees/profiles' : '/admin/employees/view' },
         { name: 'Edit Profile', icon: FileSignature, path: role === 'HR' ? '/employees' : '/admin/employees/edit' },
       ]
@@ -292,7 +293,13 @@ const Sidebar = () => {
               {item.hasSubmenu ? (
                 <div className="space-y-1">
                   <button
-                    onClick={() => toggleSubmenu(item.key)}
+                    onClick={() => {
+                      if (item.key === 'employees' && role === 'Admin') {
+                        navigate('/admin/employees');
+                        return;
+                      }
+                      toggleSubmenu(item.key);
+                    }}
                     className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl transition-all duration-300 group ${location.pathname.startsWith(item.path)
                       ? (openSubmenu === item.key ? 'bg-slate-100 text-slate-900 border-l-4 border-slate-900 ml-0' : 'bg-slate-900 text-white shadow-xl shadow-slate-200')
                       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'

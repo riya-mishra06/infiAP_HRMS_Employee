@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Mail, 
@@ -70,6 +70,8 @@ const normalizeProfileData = (payload, fallbackId) => {
 const EmployeeProfiles = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith('/admin') ? '/admin' : '';
   const { employees } = useEmployeeContext();
 
   const [employee, setEmployee] = useState(null);
@@ -146,7 +148,7 @@ const EmployeeProfiles = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0">
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => navigate('/employees')}
+            onClick={() => navigate(`${basePath}/employees`)}
             className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
           >
             <ArrowLeft size={20} />
@@ -161,7 +163,7 @@ const EmployeeProfiles = () => {
           </div>
         </div>
         <button 
-          onClick={() => navigate(`/employees/edit/${employee.id}`)}
+          onClick={() => navigate(`${basePath}/employees/edit/${employee.id}`)}
           className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200"
         >
           Edit Profile

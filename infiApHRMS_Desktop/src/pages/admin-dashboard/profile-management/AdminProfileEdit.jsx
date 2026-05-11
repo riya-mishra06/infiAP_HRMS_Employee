@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -72,12 +72,14 @@ const AdminProfileEdit = () => {
     department: '',
     designation: '',
     employeeId: '',
-    joiningDate: ''
+    joiningDate: '',
+    profileImage: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const avatarInputRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -98,7 +100,8 @@ const AdminProfileEdit = () => {
           department: data.department || '',
           designation: data.designation || data.role || '',
           employeeId: data.employeeId || data._id?.slice(0, 8).toUpperCase() || '',
-          joiningDate: data.joiningDate ? data.joiningDate.split('T')[0] : ''
+          joiningDate: data.joiningDate ? data.joiningDate.split('T')[0] : '',
+          profileImage: data.profileImage || ''
         });
       } catch (err) {
         if (!isMounted) return;
@@ -112,7 +115,8 @@ const AdminProfileEdit = () => {
           department: fallback.department || '',
           designation: fallback.designation || fallback.role || '',
           employeeId: fallback.employeeId || fallback._id?.slice(0, 8).toUpperCase() || '',
-          joiningDate: fallback.joiningDate ? fallback.joiningDate.split('T')[0] : ''
+          joiningDate: fallback.joiningDate ? fallback.joiningDate.split('T')[0] : '',
+          profileImage: fallback.profileImage || ''
         });
         setError(err.response?.data?.error || 'Failed to load admin profile');
       } finally {
@@ -143,6 +147,35 @@ const AdminProfileEdit = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleAvatarChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file.');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Profile image must be 2MB or smaller.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData((prev) => ({ ...prev, profileImage: String(reader.result || '') }));
+      setError(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = () => {
+    setFormData((prev) => ({ ...prev, profileImage: '' }));
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -246,6 +279,32 @@ const AdminProfileEdit = () => {
               )}
             </div>
             <p className="text-xs font-bold text-slate-600 text-center">Current Avatar</p>
+            <div className="mt-4 flex items-center gap-2">
+              <input
+                ref={avatarInputRef}
+                id="admin-avatar-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+              <label
+                htmlFor="admin-avatar-upload"
+                className="px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                Change
+              </label>
+              {formData.profileImage && (
+                <button
+                  type="button"
+                  onClick={handleRemoveAvatar}
+                  className="px-3 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-[11px] text-slate-400">PNG or JPG up to 2MB</p>
           </div>
         </div>
 

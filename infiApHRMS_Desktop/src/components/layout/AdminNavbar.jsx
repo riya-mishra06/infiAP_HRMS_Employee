@@ -30,19 +30,22 @@ const AdminNavbar = () => {
         .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
         .join(' ')
     : 'Admin';
+  const profileImage = user?.profileImage || user?.profilePicture || user?.avatar || '';
+  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4E63F0&color=fff`;
 
   return (
     <div className="h-20 bg-white border-b border-slate-100 sticky top-0 z-10 flex items-center justify-between px-8 w-full">
-      <div className="flex items-center gap-6">
-
-
-        <h1 className="text-xl font-black text-slate-800 tracking-tight min-w-[160px]">{getPageTitle()}</h1>
+      <div className="flex items-center gap-6 min-w-0">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Admin Workspace</p>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight truncate">{getPageTitle()}</h1>
+        </div>
 
         <div className="relative group w-[380px]">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-hover:text-indigo-500 transition-colors" size={18} />
           <input
             type="text"
-            placeholder="Search documents, entities, logs..."
+            placeholder="Search live records..."
             className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-4 py-2.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 transition-all placeholder:text-slate-300"
           />
         </div>
@@ -65,8 +68,11 @@ const AdminNavbar = () => {
           </div>
           <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 p-0.5 bg-white group-hover:border-indigo-200 transition-all shadow-sm">
             <img
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4E63F0&color=fff`}
+              src={profileImage || fallbackAvatar}
               alt={displayName}
+              onError={(event) => {
+                event.currentTarget.src = fallbackAvatar;
+              }}
               className="w-full h-full object-cover rounded-[8px]"
             />
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
     ArrowLeft,
     User,
@@ -23,6 +23,8 @@ import { useEmployeeContext } from '../../../context/EmployeeContext';
 const EditEmployee = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const basePath = location.pathname.startsWith('/admin') ? '/admin' : '';
     const { employees, updateEmployee } = useEmployeeContext();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,7 +91,7 @@ const EditEmployee = () => {
                 <h2 className="text-2xl font-semibold text-slate-800 mb-2">Error</h2>
                 <p className="text-slate-500 text-sm mb-8">{error}</p>
                 <button 
-                   onClick={() => navigate('/employees')}
+                         onClick={() => navigate(`${basePath}/employees`)}
                    className="px-6 py-3 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200"
                 >
                     Back to Employees
@@ -114,7 +116,7 @@ const EditEmployee = () => {
                             Employee record has been successfully updated.
                         </p>
                         <button
-                            onClick={() => navigate('/employees')}
+                            onClick={() => navigate(`${basePath}/employees`)}
                             className="w-full py-3 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
                         >
                             Back to Employees
@@ -127,7 +129,7 @@ const EditEmployee = () => {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0">
                 <div className="flex items-center gap-4">
                     <button 
-                        onClick={() => navigate('/employees')}
+                        onClick={() => navigate(`${basePath}/employees`)}
                         className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
                     >
                         <ArrowLeft size={20} />
@@ -143,7 +145,7 @@ const EditEmployee = () => {
                 </div>
                 <div className="flex items-center gap-3 self-start lg:self-center">
                     <button
-                        onClick={() => navigate('/employees')}
+                        onClick={() => navigate(`${basePath}/employees`)}
                         className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
                     >
                         Cancel

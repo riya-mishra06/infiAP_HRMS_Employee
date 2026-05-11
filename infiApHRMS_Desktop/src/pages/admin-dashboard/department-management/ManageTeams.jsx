@@ -227,7 +227,7 @@ const ManageTeams = () => {
                            <p className="text-xs text-slate-400 font-bold mb-6 max-w-[250px]">HR can add and assign employees to this team from the Employee directory.</p>
                            {role === 'HR' && (
                              <button 
-                               onClick={() => navigate('/employees/add')}
+                               onClick={() => navigate('/admin/employees/add')}
                                className="px-8 py-4 bg-indigo-600 text-white rounded-[16px] text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:-translate-y-1 transition-all shadow-xl shadow-indigo-100"
                              >
                                Add Employee

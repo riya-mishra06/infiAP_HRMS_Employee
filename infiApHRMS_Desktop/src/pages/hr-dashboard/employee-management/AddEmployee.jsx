@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Loader2, Plus } from 'lucide-react';
 import { useEmployeeContext } from '../../../context/EmployeeContext';
 import { getCompanyDepartments } from '../../../services/adminApi';
@@ -28,6 +28,8 @@ const normalizeDepartmentName = (department) => {
 
 const AddEmployee = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith('/admin') ? '/admin' : '';
   const { addEmployee, employees, fetchEmployees, loading } = useEmployeeContext();
 
   const [formData, setFormData] = useState(emptyForm);
@@ -113,7 +115,7 @@ const AddEmployee = () => {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate('/employees')}
+              onClick={() => navigate(`${basePath}/employees`)}
               className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-slate-300 hover:text-slate-900"
               aria-label="Back to employees"
             >
@@ -134,7 +136,7 @@ const AddEmployee = () => {
             </span>
             <button
               type="button"
-              onClick={() => navigate('/employees')}
+              onClick={() => navigate(`${basePath}/employees`)}
               className="font-medium text-emerald-900 hover:underline"
             >
               View directory
