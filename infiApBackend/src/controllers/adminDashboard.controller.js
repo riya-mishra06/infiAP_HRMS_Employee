@@ -1053,7 +1053,11 @@ exports.getTeams = async (req, res) => {
 exports.updateTeam = async (req, res) => {
     try {
         const { id } = req.params;
-        const team = await Team.findByIdAndUpdate(id, req.body, { new: true });
+        const team = await Team.findByIdAndUpdate(id, req.body, { new: true })
+            .populate("departmentId", "name category numberOfTeams")
+            .populate("lead", "name email employeeId designation department profileImage status")
+            .populate("members", "name email employeeId designation department profileImage status");
+
         res.status(200).json({ success: true, data: team });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

@@ -91,19 +91,26 @@ const normalizeDepartment = (department) => ({
 
 const normalizeTeam = (team) => {
   const memberList = Array.isArray(team.members) ? team.members : [];
+  const memberIds = memberList.map((member) => (
+    typeof member === 'string' ? member : (member?._id || member?.id)
+  )).filter(Boolean);
   
   return {
     id: team.id || team._id,
     name: team.name,
     lead: team.lead?.name || team.lead || 'Unassigned',
+    leadId: team.lead?._id || team.lead?.id || team.lead || null,
     members: team.totalMembers || memberList.length || 0,
+    memberIds,
     type: team.type || team.departmentName || 'Development', // use departmentName as type for tabs if needed
     keyMembers: memberList.map(m => ({
-      id: m._id || m.id,
-      name: m.name || 'Unknown',
-      role: m.designation || 'Member',
-      status: m.status || 'Active',
-      img: m.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name || 'U')}&background=random&color=fff`
+      id: typeof m === 'string' ? m : (m?._id || m?.id),
+      name: typeof m === 'string' ? 'Assigned Employee' : (m?.name || 'Unknown'),
+      role: typeof m === 'string' ? 'Member' : (m?.designation || 'Member'),
+      status: typeof m === 'string' ? 'Active' : (m?.status || 'Active'),
+      img: typeof m === 'string'
+        ? `https://ui-avatars.com/api/?name=${encodeURIComponent('U')}&background=random&color=fff`
+        : (m?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(m?.name || 'U')}&background=random&color=fff`)
     })),
     departmentId: team.departmentId || null,
     departmentName: team.departmentName || ''
@@ -291,14 +298,10 @@ export const AdminDashboardProvider = ({ children }) => {
       await fetchSummary();
       return { success: true, data: created };
     } catch (error) {
-      const fallback = normalizeDepartment({
-        ...requestPayload,
-        id: `dept_local_${Date.now()}`,
-        sub: 'NEW UNIT',
-        employees: 0
-      });
-      setDepartments((prev) => [fallback, ...prev]);
-      return { success: false, data: fallback, error: error.response?.data?.error || 'Failed to create department' };
+      return {
+        success: false,
+        error: error.response?.data?.message || error.response?.data?.error || 'Failed to create department'
+      };
     }
   };
 
@@ -327,6 +330,22 @@ export const AdminDashboardProvider = ({ children }) => {
       });
       setTeams((prev) => [fallback, ...prev]);
       return { success: false, data: fallback, error: error.response?.data?.error || 'Failed to create team' };
+    }
+  };
+
+  const updateTeam = async (teamId, payload) => {
+    try {
+      const res = await api.patch(`/admin-dashboard/teams/${teamId}`, payload);
+      const updated = normalizeTeam(res.data?.data || payload);
+      setTeams((prev) => prev.map((team) => (team.id === teamId ? updated : team)));
+      await fetchTeams();
+      await fetchSummary();
+      return { success: true, data: updated };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.response?.data?.error || 'Failed to update team'
+      };
     }
   };
 
@@ -417,6 +436,7 @@ export const AdminDashboardProvider = ({ children }) => {
         fetchActivities,
         addDepartment,
         addTeam,
+        updateTeam,
         addJob
       }}
     >

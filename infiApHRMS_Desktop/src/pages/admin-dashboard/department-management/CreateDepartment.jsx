@@ -19,6 +19,8 @@ const CreateDepartment = () => {
   const { role } = useAuth();
   const { addDepartment } = useAdminDashboard();
   const { employees } = useEmployeeContext();
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -29,8 +31,17 @@ const CreateDepartment = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await addDepartment(formData);
-    navigate(role === 'HR' ? '/departments' : '/admin/departments');
+    setError('');
+    setIsSubmitting(true);
+    const result = await addDepartment(formData);
+    setIsSubmitting(false);
+
+    if (result?.success) {
+      navigate(role === 'HR' ? '/departments' : '/admin/departments');
+      return;
+    }
+
+    setError(result?.error || 'Failed to create department. Please try again.');
   };
 
   return (
@@ -61,6 +72,12 @@ const CreateDepartment = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-12">
+            {error && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-8">
               {/* Department Name */}
               <div className="space-y-4">
@@ -146,10 +163,11 @@ const CreateDepartment = () => {
             <div className="flex flex-col md:flex-row items-center gap-6 pt-8">
               <button 
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full md:flex-1 py-6 bg-linear-to-r from-[#4E63F0] to-[#6855E8] text-white rounded-[24px] font-black text-[10px] uppercase tracking-[0.25em] shadow-2xl shadow-indigo-100 hover:shadow-indigo-300 hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-4"
               >
                 <Check size={20} strokeWidth={3} />
-                Create Department
+                {isSubmitting ? 'Creating...' : 'Create Department'}
               </button>
               <button 
                 type="button"

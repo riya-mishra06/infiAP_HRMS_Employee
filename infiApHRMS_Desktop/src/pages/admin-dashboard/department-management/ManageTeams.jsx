@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminDashboard } from '../../../context/AdminDashboardContext';
+import { useEmployeeContext } from '../../../context/EmployeeContext';
 import { 
   Users, 
   Search, 
@@ -20,18 +21,68 @@ import { useAuth } from '../../../context/AuthContext';
 const ManageTeams = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const { teams, fetchTeams } = useAdminDashboard();
+  const { teams, fetchTeams, updateTeam } = useAdminDashboard();
+  const { employees, fetchEmployees } = useEmployeeContext();
   const [activeTab, setActiveTab] = useState('All Teams');
   const [activeTeamDetails, setActiveTeamDetails] = useState(null);
+  const [selectedMemberId, setSelectedMemberId] = useState('');
+  const [savingMember, setSavingMember] = useState(false);
+  const [memberError, setMemberError] = useState('');
 
   useEffect(() => {
     fetchTeams();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!employees || employees.length === 0) {
+      fetchEmployees?.({ limit: 100 });
+    }
+  }, [employees, fetchEmployees]);
+
+  const employeeOptions = useMemo(() => {
+    return (employees || [])
+      .filter((employee) => employee.id)
+      .sort((left, right) => String(left.name || '').localeCompare(String(right.name || '')));
+  }, [employees]);
+
   const tabs = ['All Teams', 'Development', 'QA & Testing', 'Design'];
 
   const filteredTeams = activeTab === 'All Teams' ? teams : teams.filter(t => t.type === activeTab);
+
+  const openTeamDetails = (team) => {
+    setActiveTeamDetails(team);
+    setSelectedMemberId('');
+    setMemberError('');
+  };
+
+  const handleAddMember = async () => {
+    if (!activeTeamDetails?.id || !selectedMemberId) return;
+
+    const existingMemberIds = new Set(activeTeamDetails.memberIds || []);
+    if (existingMemberIds.has(selectedMemberId)) {
+      setMemberError('This employee is already in the team.');
+      return;
+    }
+
+    setSavingMember(true);
+    setMemberError('');
+
+    const nextMemberIds = [...existingMemberIds, selectedMemberId];
+    const result = await updateTeam(activeTeamDetails.id, { members: nextMemberIds });
+
+    setSavingMember(false);
+
+    if (!result?.success) {
+      setMemberError(result?.error || 'Failed to add employee to team.');
+      return;
+    }
+
+    const refreshed = result.data;
+    setActiveTeamDetails((prev) => prev ? { ...prev, ...refreshed } : prev);
+    setSelectedMemberId('');
+    fetchTeams();
+  };
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 relative">
@@ -114,7 +165,7 @@ const ManageTeams = () => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => setActiveTeamDetails(team)}
+                  onClick={() => openTeamDetails(team)}
                   className="flex-1 py-5 bg-slate-50 text-slate-500 hover:bg-indigo-600 hover:text-white transition-all rounded-[20px] font-black text-[10px] uppercase tracking-widest shadow-lg shadow-transparent hover:shadow-indigo-100 flex items-center justify-center gap-3"
                 >
                   View Team Details
@@ -200,6 +251,39 @@ const ManageTeams = () => {
                       <p className="text-lg font-black text-slate-800">{activeTeamDetails.members}</p>
                    </div>
                 </div>
+
+                <div className="rounded-[24px] border border-slate-100 bg-slate-50/80 p-6 space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-2">Add employee to team</label>
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <select
+                        value={selectedMemberId}
+                        onChange={(event) => setSelectedMemberId(event.target.value)}
+                        className="flex-1 bg-white border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-indigo-500"
+                      >
+                        <option value="">Select employee</option>
+                        {employeeOptions
+                          .filter((employee) => !(activeTeamDetails.memberIds || []).includes(employee.id))
+                          .map((employee) => (
+                            <option key={employee.id} value={employee.id}>
+                              {employee.name} - {employee.department || 'General'}
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={handleAddMember}
+                        disabled={!selectedMemberId || savingMember}
+                        className="px-5 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {savingMember ? 'Adding...' : 'Add Employee'}
+                      </button>
+                    </div>
+                    {memberError && (
+                      <p className="mt-3 text-sm font-medium text-red-600">{memberError}</p>
+                    )}
+                  </div>
+                </div>
                 
                 <div>
                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-4 px-2">Team Directory</label>
@@ -227,7 +311,7 @@ const ManageTeams = () => {
                            <p className="text-xs text-slate-400 font-bold mb-6 max-w-[250px]">HR can add and assign employees to this team from the Employee directory.</p>
                            {role === 'HR' && (
                              <button 
-                               onClick={() => navigate('/admin/employees/add')}
+                                 onClick={() => navigate('/admin/employees/add')}
                                className="px-8 py-4 bg-indigo-600 text-white rounded-[16px] text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:-translate-y-1 transition-all shadow-xl shadow-indigo-100"
                              >
                                Add Employee
