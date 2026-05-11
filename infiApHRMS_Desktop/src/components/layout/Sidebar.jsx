@@ -217,12 +217,6 @@ const Sidebar = () => {
       roles: ['Admin']
     },
     {
-      name: 'Security Documents',
-      icon: ShieldAlert,
-      path: '/admin/security',
-      roles: ['Admin']
-    },
-    {
       name: 'Performance',
       icon: BarChart3,
       path: '/performance',

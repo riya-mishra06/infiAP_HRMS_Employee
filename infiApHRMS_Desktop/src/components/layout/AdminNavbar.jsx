@@ -16,7 +16,6 @@ const AdminNavbar = () => {
     if (path.includes('/payroll-management')) return 'Payroll';
     if (path.includes('/recruitment-control')) return 'Recruitment';
     if (path.includes('/policies')) return 'Company Policies';
-    if (path.includes('/security')) return 'Security Documents';
     if (path.includes('/settings')) return 'System Settings';
     if (path.includes('/departments')) return 'Departments';
     if (path.includes('/employees')) return 'Employees';

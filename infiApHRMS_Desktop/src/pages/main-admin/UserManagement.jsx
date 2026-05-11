@@ -639,7 +639,7 @@ const UserManagement = () => {
          name: adminForm.fullName,
          email: adminForm.email,
          password: 'TemporaryPassword123!', // Admin created users should reset this
-         role: adminForm.role === 'Full Admin' ? 'Main Admin' : 'admin'
+         role: 'admin'
       });
 
       if (res.success) {

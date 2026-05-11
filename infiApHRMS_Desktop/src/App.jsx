@@ -74,7 +74,6 @@ import CandidateTracking from './pages/admin-dashboard/recruitment-control/Candi
 import InterviewManagement from './pages/admin-dashboard/recruitment-control/InterviewManagement';
 import CreateJob from './pages/admin-dashboard/recruitment-control/CreateJob';
 import CompanyPolicies from './pages/admin-dashboard/policies/CompanyPolicies';
-import SecurityDocuments from './pages/admin-dashboard/security/SecurityDocuments';
 import SystemSettings from './pages/admin-dashboard/settings/SystemSettings';
 
 // Main Admin (Super Admin) Pages
@@ -209,7 +208,6 @@ function App() {
                       <Route path="/recruitment-control/interviews" element={<InterviewManagement />} />
 
                       <Route path="/policies" element={<CompanyPolicies />} />
-                      <Route path="/security" element={<SecurityDocuments />} />
                       <Route path="/settings" element={<SystemSettings />} />
                     </Routes>
                   </AdminLayout>

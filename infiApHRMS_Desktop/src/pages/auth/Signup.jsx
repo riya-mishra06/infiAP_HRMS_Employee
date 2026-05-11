@@ -30,7 +30,6 @@ const Signup = () => {
 
     const roles = [
         { name: 'admin', label: 'Admin', desc: 'Standard administrative node' },
-        { name: 'Main Admin', label: 'Main Admin', desc: 'Full system synchronization' },
         { name: 'hr', label: 'HR', desc: 'Personnel lifecycle management' }
     ];
 

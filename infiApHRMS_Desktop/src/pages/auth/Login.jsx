@@ -172,7 +172,6 @@ const Login = () => {
                             className="w-full mt-2 bg-[#F3F6FC] border border-[#E4E9F5] rounded-xl py-3 px-4 text-sm font-medium text-[#2D3865]"
                         >
                             <option value="admin">Admin</option>
-                            <option value="Main Admin">Main Admin</option>
                             <option value="hr">HR</option>
                             <option value="employee">Employee</option>
                         </select>
