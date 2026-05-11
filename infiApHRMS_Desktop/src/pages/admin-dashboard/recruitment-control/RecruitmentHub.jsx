@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Briefcase, 
@@ -7,26 +7,75 @@ import {
   CheckCircle2, 
   Plus, 
   MoreVertical,
-  Search
+  Search,
+  ArrowRight
 } from 'lucide-react';
-import { useAdminDashboard } from '../../../context/AdminDashboardContext';
+import { hrService } from '../../../services/hr.service';
 
 const RecruitmentHub = () => {
   const navigate = useNavigate();
-  const { jobs, totals, fetchJobs, summary, insights, loading } = useAdminDashboard();
+  const [jobs, setJobs] = useState([]);
+  const [stats, setStats] = useState({ openJobs: 0, totalCandidates: 0, interviewCount: 0, filledRoles: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let isMounted = true;
+
+    const loadRecruitmentData = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const [dashboardRes, jobsRes] = await Promise.all([
+          hrService.getRecruitmentDashboard(),
+          hrService.getRecruitmentJobs()
+        ]);
+
+        if (!isMounted) return;
+
+        const dashboardData = dashboardRes?.data || {};
+        const jobsData = Array.isArray(jobsRes?.data) ? jobsRes.data : [];
+
+        setStats({
+          openJobs: Number(dashboardData.openJobs) || 0,
+          totalCandidates: Number(dashboardData.totalCandidates) || 0,
+          interviewCount: Number(dashboardData.interviewCount) || 0,
+          filledRoles: Number(dashboardData.filledRoles) || 0
+        });
+
+        setJobs(jobsData.map((job) => ({
+          id: job._id || job.id,
+          title: job.title || 'Untitled Role',
+          department: job.department || 'General',
+          location: job.location || 'Remote',
+          type: job.type || 'Full-time',
+          status: job.status || 'Open',
+          applicants: Number(job.applicants) || 0,
+          deadline: job.deadline || job.closingDate || null
+        })));
+      } catch (requestError) {
+        if (!isMounted) return;
+        setError(requestError.response?.data?.message || 'Failed to load recruitment data');
+        setJobs([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadRecruitmentData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const overviewStats = useMemo(() => ([
-    { label: 'Open Jobs', value: String(summary.activeJobs ?? totals.activeCount), icon: Briefcase },
-    { label: 'Applicants', value: String(totals.totalApplicants), icon: Users },
-    { label: 'New Hires', value: String(insights?.newHires ?? 0), icon: CheckCircle2 },
-    { label: 'Pending Leaves', value: String(insights?.pendingLeaves ?? 0), icon: Calendar },
-  ]), [summary.activeJobs, totals.activeCount, totals.totalApplicants, insights?.newHires, insights?.pendingLeaves]);
-
+    { label: 'Open Jobs', value: String(stats.openJobs), icon: Briefcase },
+    { label: 'Applicants', value: String(stats.totalCandidates), icon: Users },
+    { label: 'Interviews', value: String(stats.interviewCount), icon: CheckCircle2 },
+    { label: 'Filled Roles', value: String(stats.filledRoles), icon: Calendar },
+  ]), [stats.openJobs, stats.totalCandidates, stats.interviewCount, stats.filledRoles]);
 
 
   return (
@@ -70,46 +119,64 @@ const RecruitmentHub = () => {
              <h2 className="text-xs font-black text-slate-800 uppercase tracking-widest leading-none">Active job postings</h2>
              <span className="bg-slate-50 text-slate-600 text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">{jobs.length} live</span>
           </div>
+          {error ? <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">{error}</span> : null}
         </div>
 
         {loading ? (
           <div className="rounded-3xl border border-slate-100 bg-white p-8 text-sm font-bold text-slate-500">Loading live jobs...</div>
-        ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {jobs.map((job) => (
-            <div key={job.id} className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group relative overflow-hidden">
-              <div className="flex justify-between items-start mb-6 relative z-10">
-                <div>
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight mb-1 group-hover:text-indigo-600 transition-colors uppercase">{job.title}</h3>
-                  <p className="text-sm text-slate-500">{job.department} • {job.location || 'Remote'}</p>
-                </div>
-                <button className="text-slate-200 hover:text-slate-400 transition-colors p-2 hover:bg-slate-50 rounded-xl">
-                  <MoreVertical size={20} />
-                </button>
-              </div>
-              
-              <div className="flex items-center justify-between mb-6 relative z-10 text-sm font-medium text-slate-500">
-                <span>{job.applicants} applicants</span>
-                <span className="font-black uppercase tracking-widest text-emerald-600">{job.status}</span>
-              </div>
-
-              <div className="flex items-center gap-4 relative z-10">
-                <button 
-                  onClick={() => navigate('/admin/recruitment-control/tracking')}
-                  className="flex-1 py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-700 transition-all active:scale-95"
-                >
-                  View Applicants
-                </button>
-                <button 
-                  onClick={() => navigate('/admin/recruitment-control/create')}
-                  className="px-6 py-4 border border-slate-200 text-slate-500 hover:border-slate-900 hover:text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95"
-                >
-                  Edit
-                </button>
-              </div>
+        ) : jobs.length === 0 ? (
+          <div className="rounded-[28px] border border-dashed border-slate-200 bg-white p-10 text-center space-y-4">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300">
+              <Briefcase size={22} />
             </div>
-          ))}
-        </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">No live roles yet</h3>
+              <p className="text-sm text-slate-500 mt-2">Create a job posting to populate this view with active recruitment data.</p>
+            </div>
+            <button
+              onClick={() => navigate('/admin/recruitment-control/create')}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 transition-all active:scale-95"
+            >
+              Create Job
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {jobs.map((job) => (
+              <div key={job.id} className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group relative overflow-hidden">
+                <div className="flex justify-between items-start mb-6 relative z-10">
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight mb-1 group-hover:text-indigo-600 transition-colors uppercase">{job.title}</h3>
+                    <p className="text-sm text-slate-500">{job.department} • {job.location || 'Remote'}</p>
+                  </div>
+                  <button className="text-slate-200 hover:text-slate-400 transition-colors p-2 hover:bg-slate-50 rounded-xl">
+                    <MoreVertical size={20} />
+                  </button>
+                </div>
+                
+                <div className="flex items-center justify-between mb-6 relative z-10 text-sm font-medium text-slate-500">
+                  <span>{job.applicants} applicants</span>
+                  <span className="font-black uppercase tracking-widest text-emerald-600">{job.status}</span>
+                </div>
+
+                <div className="flex items-center gap-4 relative z-10">
+                  <button 
+                    onClick={() => navigate('/admin/recruitment-control/tracking')}
+                    className="flex-1 py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-700 transition-all active:scale-95"
+                  >
+                    View Applicants
+                  </button>
+                  <button 
+                    onClick={() => navigate('/admin/recruitment-control/create')}
+                    className="px-6 py-4 border border-slate-200 text-slate-500 hover:border-slate-900 hover:text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
         <button 

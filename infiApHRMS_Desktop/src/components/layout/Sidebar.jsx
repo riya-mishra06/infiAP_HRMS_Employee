@@ -62,6 +62,7 @@ const Sidebar = () => {
     if (location.pathname.startsWith('/attendance')) return 'attendance';
     if (location.pathname.startsWith('/leave')) return 'leave';
     if (location.pathname.startsWith('/recruitment')) return 'recruitment';
+    if (location.pathname.startsWith('/admin/recruitment-control')) return 'recruitment';
     if (location.pathname.startsWith('/payroll')) return 'payroll';
     if (location.pathname.startsWith('/performance')) return 'performance';
     if (location.pathname.startsWith('/analytics')) return 'analytics';
@@ -200,7 +201,7 @@ const Sidebar = () => {
     {
       name: role === 'HR' ? 'Recruitment' : 'Recruitment',
       icon: Briefcase,
-      path: role === 'HR' ? '/recruitment' : '/admin/recruitment-control/posting',
+      path: role === 'HR' ? '/recruitment' : '/admin/recruitment-control/hub',
       roles: ['HR', 'Admin']
     },
     {

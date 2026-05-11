@@ -54,7 +54,7 @@ const CreateJob = () => {
       {/* Premium Navigation Header */}
       <div className="flex items-center justify-between mb-12">
         <button 
-          onClick={() => navigate('/admin/recruitment-control/posting')}
+          onClick={() => navigate('/admin/recruitment-control/hub')}
           className="p-4 bg-white rounded-2xl text-slate-400 hover:text-slate-800 transition-all shadow-soft active:scale-95 group"
         >
           <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
