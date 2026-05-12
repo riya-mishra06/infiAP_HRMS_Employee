@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getLeaveRequests, approveLeave } from '../../../services/hrApi';
-import { API_CONFIG } from '../../../../config';
+import { API_CONFIG } from '../../../config.js';
 
 const LeaveApproval = () => {
     const navigate = useNavigate();
