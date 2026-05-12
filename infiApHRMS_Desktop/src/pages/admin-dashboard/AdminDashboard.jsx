@@ -124,41 +124,41 @@ const AdminDashboard = () => {
    const stats = useMemo(() => [
       {
          label: 'Departments',
-         value: String(summary.totalDepartments ?? departments.length),
+         value: String(departments.length > 0 ? departments.length : summary.totalDepartments),
          icon: Building2,
          helper: 'Live departments'
       },
       {
          label: 'Employees',
-         value: String(summary.totalEmployees ?? staffDirectory.length),
+         value: String(staffDirectory.length > 0 ? staffDirectory.length : summary.totalEmployees),
          icon: Users,
          helper: 'Live employee directory'
       },
       {
          label: 'Open Jobs',
-         value: String(summary.activeJobs ?? jobs.filter((job) => job.status === 'Active').length),
+         value: String(jobs.filter((job) => job.status === 'Active').length || summary.activeJobs),
          icon: Briefcase,
          helper: 'Live hiring queue'
       },
       {
          label: 'Pending Leaves',
-         value: String(insights?.pendingLeaves ?? pendingLeaves.length),
+         value: String(insights?.pendingLeaves || pendingLeaves.length || 0),
          icon: CalendarDays,
          helper: 'Awaiting review'
       },
       {
          label: 'New Hires',
-         value: String(insights?.newHires ?? 0),
+         value: String(insights?.newHires || 0),
          icon: Sparkles,
          helper: 'This month'
       },
       {
          label: 'Monthly Payroll',
-         value: formatCurrency(insights?.monthlyPayroll ?? 0),
+         value: formatCurrency(insights?.monthlyPayroll || 0),
          icon: BarChart3,
          helper: 'Current month spend'
       }
-   ], [summary.totalDepartments, summary.totalEmployees, summary.activeJobs, departments.length, staffDirectory.length, jobs, insights?.pendingLeaves, pendingLeaves.length, insights?.newHires, insights?.monthlyPayroll]);
+   ], [departments.length, staffDirectory.length, jobs, summary.totalDepartments, summary.totalEmployees, summary.activeJobs, insights]);
 
    const recentDepartments = departments.slice(0, 4);
    const recentJobs = jobs.slice(0, 4);
@@ -339,15 +339,15 @@ const AdminDashboard = () => {
                <div className="space-y-4 text-sm text-slate-600 font-medium">
                   <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                      <span>Open positions</span>
-                     <span className="font-black text-slate-900">{String(insights?.openPositions ?? summary.openJobs ?? 0).padStart(2, '0')}</span>
+                     <span className="font-black text-slate-900">{String(insights?.openPositions || jobs.filter(j => j.status === 'Active').length || 0).padStart(2, '0')}</span>
                   </div>
                   <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                      <span>Monthly payroll</span>
-                     <span className="font-black text-slate-900">{formatCurrency(insights?.monthlyPayroll ?? 0)}</span>
+                     <span className="font-black text-slate-900">{formatCurrency(insights?.monthlyPayroll || 0)}</span>
                   </div>
                   <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                      <span>Teams</span>
-                     <span className="font-black text-slate-900">{String(summary.teams ?? teams.length).padStart(2, '0')}</span>
+                     <span className="font-black text-slate-900">{String(teams.length || summary.teams || 0).padStart(2, '0')}</span>
                   </div>
                   <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                      <span>Prepared by</span>

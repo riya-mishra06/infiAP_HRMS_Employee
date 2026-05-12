@@ -1,4 +1,6 @@
-const BASE_URL = "/api/v1"; // Using proxy
+import API_CONFIG from '../config';
+
+const BASE_URL = API_CONFIG.baseURL + "/api/v1";
 
 export const API = {
   BASE: BASE_URL,
