@@ -226,7 +226,7 @@ export const AdminDashboardProvider = ({ children }) => {
       setTeams(mapped);
       return mapped;
     } catch (error) {
-      console.error('Failed to fetch teams:', error);
+      // Silent error - using fallback data
       return teams;
     }
   };

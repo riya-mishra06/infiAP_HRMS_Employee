@@ -2,6 +2,7 @@ const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendVerificationEmail, sendLoginOTPEmail } = require("../services/email.service");
+const logger = require("../utils/logger");
 
 // ===== Token Generation =====
 
@@ -111,7 +112,7 @@ const issueLoginOtpChallenge = async (user) => {
     try {
         emailSent = await sendLoginOTPEmail(user.email, otp);
     } catch (mailError) {
-        console.warn("OTP email send failed:", mailError.message);
+        logger.warn("OTP email send failed", { error: mailError.message });
     }
 
     return { emailSent };
@@ -162,7 +163,7 @@ exports.registerUser = async (req, res) => {
                 ? "User registered successfully. Please check your email for verification."
                 : "User registered successfully. Email verification skipped (email not configured).";
         } catch (mailError) {
-            console.warn("Verification email skipped:", mailError.message);
+            logger.warn("Verification email skipped", { error: mailError.message });
         }
 
         const createdUser = await User.findById(user._id).select("-password -refreshToken -twoFactorOTP -twoFactorOTPExpires -verificationToken");
@@ -172,7 +173,7 @@ exports.registerUser = async (req, res) => {
             user: sanitizeUser(createdUser),
         });
     } catch (error) {
-        console.error("Register Error:", error);
+        logger.error("Register Error", { error: error.message });
         return res.status(500).json({ message: "Server error during registration" });
     }
 };
@@ -249,7 +250,7 @@ exports.loginUser = async (req, res) => {
             userId: user._id,
         });
     } catch (error) {
-        console.error("Login Error:", error);
+        logger.error("Login Error", { error: error.message });
         return res.status(500).json({ message: "Server error during login" });
     }
 };
@@ -295,7 +296,7 @@ exports.verifyLoginOTP = async (req, res) => {
             .cookie("refreshToken", refreshToken, getCookieOptions())
             .json(buildAuthResponse(loggedInUser, accessToken, refreshToken, "2FA verified. Login successful."));
     } catch (error) {
-        console.error("OTP Verification Error:", error);
+        logger.error("OTP Verification Error", { error: error.message });
         return res.status(500).json({ message: "Server error during OTP verification" });
     }
 };
@@ -332,7 +333,7 @@ exports.resendLoginOTP = async (req, res) => {
             emailSent,
         });
     } catch (error) {
-        console.error("Resend OTP Error:", error);
+        logger.error("Resend OTP Error", { error: error.message });
         return res.status(500).json({ message: "Server error while resending OTP" });
     }
 };
@@ -373,7 +374,7 @@ exports.forgotPassword = async (req, res) => {
             user.resetPasswordToken = undefined;
             user.resetPasswordExpires = undefined;
             await user.save({ validateBeforeSave: false });
-            console.warn("Reset email failed:", mailError.message);
+            logger.warn("Reset email failed", { error: mailError.message });
             return res.status(500).json({ message: "Failed to send reset email. Please try again." });
         }
 
@@ -382,7 +383,7 @@ exports.forgotPassword = async (req, res) => {
             message: "If this email exists, a reset link has been sent.",
         });
     } catch (error) {
-        console.error("Forgot Password Error:", error);
+        logger.error("Forgot Password Error", { error: error.message });
         return res.status(500).json({ message: "Server error while processing forgot password" });
     }
 };
@@ -425,7 +426,7 @@ exports.resetPassword = async (req, res) => {
 
         return res.status(200).json({ message: "Password reset successful. Please login with your new password." });
     } catch (error) {
-        console.error("Reset Password Error:", error);
+        logger.error("Reset Password Error", { error: error.message });
         return res.status(500).json({ message: "Server error while resetting password" });
     }
 };
@@ -469,7 +470,7 @@ exports.refreshAccessToken = async (req, res) => {
                 refreshToken,             // for React Native
             });
     } catch (error) {
-        console.error("Refresh Token Error:", error);
+        logger.error("Refresh Token Error", { error: error.message });
         return res.status(401).json({ message: "Failed to refresh access token" });
     }
 };
@@ -496,7 +497,7 @@ exports.logout = async (req, res) => {
             .clearCookie("refreshToken", getClearCookieOptions())
             .json({ message: "Logged out successfully" });
     } catch (error) {
-        console.error("Logout Error:", error);
+        logger.error("Logout Error", { error: error.message });
         return res.status(500).json({ message: "Server error during logout" });
     }
 };
@@ -519,7 +520,7 @@ exports.getMe = async (req, res) => {
             user: sanitizeUser(user),
         });
     } catch (error) {
-        console.error("Get Me Error:", error);
+        logger.error("Get Me Error", { error: error.message });
         return res.status(500).json({ message: "Server error fetching user" });
     }
 };

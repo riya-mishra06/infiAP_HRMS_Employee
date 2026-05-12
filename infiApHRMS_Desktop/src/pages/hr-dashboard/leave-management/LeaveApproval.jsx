@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  XCircle,
   ShieldCheck,
   AlertCircle,
   MoreHorizontal,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getLeaveRequests, approveLeave } from '../../../services/hrApi';
+import { API_CONFIG } from '../../../../config';
 
 const LeaveApproval = () => {
     const navigate = useNavigate();
@@ -30,13 +31,13 @@ const LeaveApproval = () => {
         try {
           const res = await getLeaveRequests({ status: 'Pending', limit: 1 });
           const leaves = res.data?.data || [];
-          console.log('Leave requests response:', res);
-          console.log('Leaves array:', leaves);
+          // debug log removed
+          // debug log removed
           if (leaves.length > 0) {
             const leave = leaves[0];
-            console.log('Leave data:', leave);
-            console.log('EmployeeID:', leave.EmployeeID);
-            console.log('ProfileImage:', leave.EmployeeID?.profileImage);
+            // debug log removed
+            // debug log removed
+            // debug log removed
             const start = new Date(leave.StartDate);
             const end = new Date(leave.EndDate);
             const diffTime = Math.abs(end - start);
@@ -56,7 +57,7 @@ const LeaveApproval = () => {
             });
           }
         } catch (err) {
-          console.error('Failed to fetch leave request:', err);
+          // debug error removed
         } finally {
           setLoading(false);
         }
@@ -72,7 +73,7 @@ const LeaveApproval = () => {
         setStatus('Approved');
         setTimeout(() => navigate('/leave/requests'), 1000);
       } catch (err) {
-        console.error('Failed to approve:', err);
+        // debug error removed
       } finally {
         setSubmitting(false);
       }
@@ -86,7 +87,7 @@ const LeaveApproval = () => {
         setStatus('Rejected');
         setTimeout(() => navigate('/leave/requests'), 1000);
       } catch (err) {
-        console.error('Failed to reject:', err);
+        // debug error removed
       } finally {
         setSubmitting(false);
       }
@@ -136,9 +137,9 @@ const LeaveApproval = () => {
         // If it's a base64 string, return it as is
         if (image.startsWith('data:image')) return image;
         // If it's a relative path starting with /uploads, prefix with backend URL
-        if (image.startsWith('/uploads')) return `http://localhost:3000${image}`;
+        if (image.startsWith('/uploads')) return `${API_CONFIG.baseURL}${image}`;
         // If it's a relative path without /, prefix with backend URL
-        if (!image.startsWith('http')) return `http://localhost:3000/uploads/${image}`;
+        if (!image.startsWith('http')) return `${API_CONFIG.baseURL}/uploads/${image}`;
         return image;
     };
 

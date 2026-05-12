@@ -134,7 +134,7 @@ const CompanyPolicies = () => {
       const data = res?.data?.data || res?.data || [];
       setPolicies(data);
     } catch (err) {
-      console.log('No policies found');
+      // debug log removed
       setPolicies([]);
     } finally {
       setLoading(false);

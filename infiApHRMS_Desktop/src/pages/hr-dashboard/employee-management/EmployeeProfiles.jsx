@@ -87,7 +87,7 @@ const EmployeeProfiles = () => {
             const profile = normalizeProfileData(res.data, id);
             setEmployee(profile);
       } catch (err) {
-            console.error('Failed to load profile:', err);
+            // debug error removed
         const ctxEmp = employees.find(emp => String(emp.id) === String(id) || String(emp.employeeId) === String(id));
 
         if (ctxEmp) {

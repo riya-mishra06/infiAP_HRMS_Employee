@@ -74,7 +74,7 @@ const CorrectionWorkflow = () => {
             });
         }
       } catch (err) {
-        console.error('Failed to load correction data:', err);
+        // debug error removed
       } finally {
         setLoading(false);
       }

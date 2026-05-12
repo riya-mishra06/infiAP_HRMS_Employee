@@ -107,7 +107,7 @@ const AnalyticsManagement = () => {
         }
       ]);
     } catch (err) {
-      console.error('Analytics data fetch failed:', err);
+      // debug error removed
       setError('Unable to load analytics data. Please refresh once the HR API is available.');
       setSummary({ employees: 0, attendanceRecords: 0, performanceRecords: 0, averageAttendance: 0 });
       setDatasets([]);

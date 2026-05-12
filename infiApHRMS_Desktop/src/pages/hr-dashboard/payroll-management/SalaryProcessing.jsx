@@ -48,7 +48,7 @@ const SalaryProcessing = () => {
             }));
             setEmployees(formatted);
         } catch (err) {
-            console.error('Failed to fetch salaries', err);
+            // debug error removed
             // Fallback
             setEmployees([
                 { id: 'EMP-001', name: 'Mark Wilson', dept: 'Engineering', gross: 145000, tax: 18500, pf: 12000, net: 114500, status: 'Pending' },

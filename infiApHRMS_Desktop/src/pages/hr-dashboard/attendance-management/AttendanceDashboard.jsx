@@ -71,25 +71,25 @@ const AttendanceDashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        console.log('Fetching attendance for date:', selectedDate);
+        // debug log removed
 
         const [overviewRes, recordsRes, correctionsRes] = await Promise.all([
           getAttendanceDailyOverview({ date: selectedDate }).catch((err) => {
-            console.error('Overview API error:', err);
+            // debug error removed
             return { data: { data: null } };
           }),
           getAttendanceRecords({ date: selectedDate, limit: 50 }).catch((err) => {
-            console.error('Records API error:', err);
+            // debug error removed
             return { data: { data: [] } };
           }),
           getAttendanceCorrectionRequests({ status: 'Pending' }).catch((err) => {
-            console.error('Corrections API error:', err);
+            // debug error removed
             return { data: { data: [] } };
           }),
         ]);
 
-        console.log('Overview response:', overviewRes.data);
-        console.log('Records response:', recordsRes.data);
+        // debug log removed
+        // debug log removed
 
         // Set stats from API
         const overview = overviewRes.data?.data;
@@ -104,7 +104,7 @@ const AttendanceDashboard = () => {
 
         // Map records from API
         const records = recordsRes.data?.data || [];
-        console.log('Raw records:', records);
+        // debug log removed
 
         const mappedRecords = records.map((r, i) => ({
           id: r.employeeId || `log-${i}`,
@@ -119,7 +119,7 @@ const AttendanceDashboard = () => {
           avatar: r.profileImage || null,
         }));
 
-        console.log('Mapped records:', mappedRecords);
+        // debug log removed
         setAttendanceLogs(mappedRecords);
 
         // Map corrections from API
@@ -133,7 +133,7 @@ const AttendanceDashboard = () => {
           avatar: c.userId?.profileImage || null,
         })));
       } catch (err) {
-        console.error('Attendance fetch failed:', err);
+        // debug error removed
       } finally {
         setLoading(false);
       }
@@ -168,7 +168,7 @@ const AttendanceDashboard = () => {
     try {
       await reviewAttendanceCorrection({ correctionId: id, action: action.toLowerCase() });
     } catch (err) {
-      console.error('Correction review failed:', err);
+      // debug error removed
     }
     setCorrectionRequests(prev => prev.filter(req => req.id !== id));
     showNotification(`Attendance request for ${name} ${action} successfully.`);

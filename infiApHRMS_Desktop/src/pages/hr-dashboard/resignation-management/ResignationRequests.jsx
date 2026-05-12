@@ -42,7 +42,7 @@ const ResignationRequests = () => {
             }));
             setRequests(formatted);
         } catch (err) {
-            console.error('Failed to fetch resignation requests:', err);
+            // debug error removed
             setRequests([]);
         } finally {
             setLoading(false);

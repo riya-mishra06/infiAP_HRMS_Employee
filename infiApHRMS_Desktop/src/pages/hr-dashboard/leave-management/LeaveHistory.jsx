@@ -47,7 +47,7 @@ const LeaveHistory = () => {
                 }));
                 setHistoricalRecords(formatted);
             } catch (err) {
-                console.error("Failed to fetch leave history:", err);
+                // debug error removed
                 setHistoricalRecords([
                     { id: 'HIST-001', name: 'Arjun Mehta', type: 'Annual Leave', range: 'Nov 12 - Nov 18, 2023', status: 'Approved', dept: 'Engineering', verifiedBy: 'System Auto' },
                     { id: 'HIST-002', name: 'Priya Sharma', type: 'Sick Leave', range: 'Oct 28, 2023', status: 'Approved', dept: 'Product & Design', verifiedBy: 'Sneha Desai' },

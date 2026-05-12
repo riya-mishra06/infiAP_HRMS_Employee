@@ -72,7 +72,7 @@ const Applications = () => {
                     setApplicants(mapped);
                 }
             } catch (err) {
-                console.error('Failed to load applications:', err);
+                // debug error removed
                 if (isMounted) setError('Failed to load applications. Please try again.');
             } finally {
                 if (isMounted) setLoading(false);
@@ -102,7 +102,7 @@ const Applications = () => {
             setApplicants((prev) => prev.map((app) => app.id === id ? { ...app, status: newStatus } : app));
             showNotification(`Candidate moved to ${newStatus}`);
         } catch (err) {
-            console.error('Candidate action failed:', err);
+            // debug error removed
             showNotification(`Failed to update candidate`);
         }
     };

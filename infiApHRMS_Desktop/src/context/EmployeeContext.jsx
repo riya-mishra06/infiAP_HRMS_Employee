@@ -70,7 +70,7 @@ export const EmployeeProvider = ({ children }) => {
     } catch (err) {
       const message = err.response?.data?.message || err.response?.data?.error || 'Failed to fetch employees';
       setError(message);
-      console.error('Fetch employees error:', message);
+      // Silent error - already set in state
       return [];
     } finally {
       setLoading(false);
@@ -155,9 +155,9 @@ export const EmployeeProvider = ({ children }) => {
       if (updatedData.status !== undefined) payload.status = updatedData.status;
       if (updatedData.location !== undefined) payload.address = updatedData.location;
 
-      console.log('Updating employee:', id, 'with payload:', payload);
+      // Debug: updating employee
       const res = await apiUpdateEmployee(id, payload);
-      console.log('Update response:', res.data);
+      // Debug: update response
 
       const updated = res.data?.data;
       if (updated) {
@@ -178,8 +178,8 @@ export const EmployeeProvider = ({ children }) => {
       return { success: true, data: updated };
     } catch (err) {
       const message = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to update employee';
-      console.error('Update employee error:', err);
-      console.error('Error response:', err.response?.data);
+      // Silent error
+      // Silent error
       setError(message);
       return { success: false, error: message };
     }
@@ -191,7 +191,7 @@ export const EmployeeProvider = ({ children }) => {
       const res = await apiGetEmployeeProfile(id);
       return res.data?.data || null;
     } catch (err) {
-      console.error('Get profile error:', err);
+      // Silent error
       return null;
     }
   };

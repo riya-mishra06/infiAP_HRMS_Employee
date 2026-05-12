@@ -110,7 +110,7 @@ const PerformanceInsights = () => {
                 if (riskMapped.length) setTurnoverRisk(riskMapped);
                 if (forecastMapped.length) setForecastData(forecastMapped);
             } catch (err) {
-                console.error('Failed to load performance insights:', err);
+                // debug error removed
             }
         };
 

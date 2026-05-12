@@ -50,7 +50,7 @@ const LeaveRequests = () => {
             }));
             setRequests(formatted);
         } catch (error) {
-            console.error('Failed to fetch leave requests', error);
+            // debug error removed
             // Fallback mock data
             setRequests([
                 { id: 'LR-9021', name: 'Sarah Chen', dept: 'Engineering', type: 'Sick Leave', range: 'Oct 12 - Oct 14', days: 3, status: 'Pending', reason: 'Medical - Requires surgery recovery time following minor procedure.', avatar: 'https://i.pravatar.cc/150?u=sarah' },

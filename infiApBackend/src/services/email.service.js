@@ -1,3 +1,5 @@
+const logger = require('../utils/logger');
+
 const RESEND_API_URL = process.env.RESEND_API_URL || "https://api.resend.com/emails";
 const DEFAULT_FROM_EMAIL = "InfiAP HRMS <onboarding@resend.dev>";
 
@@ -19,7 +21,7 @@ const isConfiguredForEmail = () => {
 
 const sendEmail = async ({ to, subject, html }) => {
     if (!isConfiguredForEmail()) {
-        console.warn("Resend not configured. Skipping email delivery.");
+        logger.warn("Resend not configured. Skipping email delivery.");
         return false;
     }
 
@@ -39,7 +41,7 @@ const sendEmail = async ({ to, subject, html }) => {
 
     if (!response.ok) {
         const errorText = await response.text();
-        console.error("Resend API error:", errorText);
+        logger.error("Resend API error", { error: errorText });
         throw new Error("Could not send email");
     }
 
@@ -61,12 +63,12 @@ const sendVerificationEmail = async (email, token) => {
         });
 
         if (emailSent) {
-            console.log(`Verification email sent to ${email}`);
+            logger.info("Verification email sent", { email });
         }
 
         return emailSent;
     } catch (error) {
-        console.error("Error sending verification email:", error);
+        logger.error("Error sending verification email", { error: error.message });
         throw new Error("Could not send verification email");
     }
 };
@@ -85,12 +87,12 @@ const sendLoginOTPEmail = async (email, otp) => {
         });
 
         if (emailSent) {
-            console.log(`Login OTP email sent to ${email}`);
+            logger.info("Login OTP email sent", { email });
         }
 
         return emailSent;
     } catch (error) {
-        console.error("Error sending login OTP email:", error);
+        logger.error("Error sending login OTP email", { error: error.message });
         throw new Error("Could not send login OTP email");
     }
 };
@@ -109,10 +111,9 @@ const sendBookingConfirmationEmail = async (email, name, date) => {
                 <p>Best Regards,<br>AbhiProject Team</p>
             `,
         });
-        console.log(`Booking confirmation email sent to ${email}`);
+        logger.info("Booking confirmation email sent", { email });
     } catch (error) {
-        console.error("Error sending booking email:", error);
-        // Don't throw error here so booking process doesn't fail if email fails
+        logger.error("Error sending booking email", { error: error.message });
     }
 };
 
@@ -132,9 +133,9 @@ const sendMeetingLinkEmail = async (email, name, date, link) => {
                 <p>Best Regards,<br>AbhiProject Team</p>
             `,
         });
-        console.log(`Meeting link email sent to ${email}`);
+        logger.info("Meeting link email sent", { email });
     } catch (error) {
-        console.error("Error sending meeting link email:", error);
+        logger.error("Error sending meeting link email", { error: error.message });
     }
 };
 

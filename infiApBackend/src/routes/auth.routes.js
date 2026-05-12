@@ -13,15 +13,16 @@ const {
 } = require("../controllers/auth.controller");
 const { verifyJWT } = require("../middlewares/auth.middleware");
 const { authLimiter } = require("../middlewares/security.middleware");
+const { validate, registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, verifyOTPSchema } = require("../middlewares/validation.middleware");
 
 // ===== Public Routes =====
-router.post("/signup", authLimiter, registerUser);
-router.post("/register", authLimiter, registerUser);
-router.post("/login", authLimiter, loginUser);
-router.post("/resend-2fa", authLimiter, resendLoginOTP);
-router.post("/verify-2fa", authLimiter, verifyLoginOTP);
-router.post("/forgot-password", authLimiter, forgotPassword);
-router.post("/reset-password", authLimiter, resetPassword);
+router.post("/signup", authLimiter, validate(registerSchema), registerUser);
+router.post("/register", authLimiter, validate(registerSchema), registerUser);
+router.post("/login", authLimiter, validate(loginSchema), loginUser);
+router.post("/resend-2fa", authLimiter, validate(forgotPasswordSchema), resendLoginOTP);
+router.post("/verify-2fa", authLimiter, validate(verifyOTPSchema), verifyLoginOTP);
+router.post("/forgot-password", authLimiter, validate(forgotPasswordSchema), forgotPassword);
+router.post("/reset-password", authLimiter, validate(resetPasswordSchema), resetPassword);
 router.post("/refresh-token", authLimiter, refreshAccessToken);
 
 // ===== Protected Routes =====

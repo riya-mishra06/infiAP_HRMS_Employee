@@ -1,4 +1,5 @@
 const imageKit = require("@imagekit/nodejs");
+const logger = require('../utils/logger');
 
 const imagekit = new imageKit({
     publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
@@ -13,10 +14,10 @@ async function uploadFile(buffer) {
             file: buffer.toString('base64'),
             fileName: `blog_${Date.now()}.jpg`
         });
-        console.log("ImageKit upload response:", response);
+        logger.info("ImageKit upload success", { fileName: response.name });
         return response;
     } catch (error) {
-        console.error("ImageKit upload error:", error);
+        logger.error("ImageKit upload error", { error: error.message });
         throw error;
     }
 }

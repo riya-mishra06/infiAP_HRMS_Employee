@@ -55,7 +55,7 @@ const InterviewFeedback = () => {
             });
             setSubmitted(true);
         } catch (err) {
-            console.error('Failed to submit interview feedback:', err);
+            // debug error removed
         }
     };
 

@@ -74,7 +74,7 @@ const PendingApproval = () => {
 
       setRequests([...leaveRequests, ...attendanceRequests]);
     } catch (err) {
-      console.error('Error fetching pending requests:', err);
+      // debug error removed
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ const PendingApproval = () => {
       setShowModal(false);
       setApproval({ approved: null, remarks: '' });
     } catch (err) {
-      console.error('Action failed:', err);
+      // debug error removed
     } finally {
       setActionLoading(false);
     }

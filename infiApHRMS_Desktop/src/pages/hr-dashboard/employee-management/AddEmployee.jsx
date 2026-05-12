@@ -56,7 +56,7 @@ const AddEmployee = () => {
         }
       } catch (error) {
         if (isMounted) setDepartments([]);
-        console.error('Failed to load departments:', error);
+        // debug error removed
       } finally {
         if (isMounted) setIsLoadingDepartments(false);
       }

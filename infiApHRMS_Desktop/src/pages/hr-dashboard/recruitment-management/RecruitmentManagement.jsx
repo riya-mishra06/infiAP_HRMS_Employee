@@ -132,7 +132,7 @@ const RecruitmentManagement = () => {
           setCurrentActions(actions);
         }
       } catch (err) {
-        console.error('Failed to load recruitment pipeline:', err);
+        // debug error removed
       }
     };
 

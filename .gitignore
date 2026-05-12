@@ -12,6 +12,8 @@ yarn.lock
 # OS files
 .DS_Store
 Thumbs.db
+CLAUDE.md
+.claude
 
 # IDE
 .vscode/

@@ -8,6 +8,7 @@ const Payroll = require("../models/payroll.model");
 const Resignation = require("../models/resignation.model");
 const Holiday = require("../models/holiday.model");
 const Job = require("../models/job.model");
+const logger = require("../utils/logger");
 
 // ---> Welcome Page Greeting <---
 exports.getDashboardSummary = async (req, res) => {
@@ -109,8 +110,8 @@ exports.editEmployee = async (req, res) => {
         delete updates.password; // Forbid password update here
 
         // Log for debugging
-        console.log('Edit Employee - ID:', id);
-        console.log('Edit Employee - Updates:', JSON.stringify(updates, null, 2));
+        logger.info('Edit Employee', { id });
+        logger.info('Edit Employee updates', { updates: Object.keys(updates) });
 
         // Handle file upload if present
         if (req.file) {
@@ -125,7 +126,7 @@ exports.editEmployee = async (req, res) => {
 
         res.status(200).json({ success: true, message: "Employee updated successfully", data: employee });
     } catch (error) {
-        console.error('Edit Employee Error:', error);
+        logger.error('Edit Employee Error', { error: error.message });
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -343,11 +344,11 @@ exports.getCheckInRecords = async (req, res) => {
             PunchTime: { $gte: startOfDay, $lte: endOfDay }
         }).lean();
 
-        console.log('getCheckInRecords — date:', date, 'startOfDay:', startOfDay.toISOString(), 'endOfDay:', endOfDay.toISOString());
-        console.log('getCheckInRecords — total punches found:', todayPunches.length);
-        console.log('getCheckInRecords — total employees:', employees.length);
+        logger.info('getCheckInRecords request', { date });
+        logger.info('getCheckInRecords punches found', { count: todayPunches.length });
+        logger.info('getCheckInRecords employees', { count: employees.length });
         if (todayPunches.length > 0) {
-            console.log('getCheckInRecords — sample punch:', todayPunches[0]);
+            logger.info('getCheckInRecords sample punch found');
         }
 
         // Build records per employee
@@ -358,7 +359,7 @@ exports.getCheckInRecords = async (req, res) => {
                 return punchUserId === empIdStr;
             });
 
-            console.log(`Employee ${emp.name} (${empIdStr}) has ${empPunches.length} punches`);
+            logger.info('Employee punches', { name: emp.name, count: empPunches.length });
 
             const punchIn = empPunches.find(p => p.PunchType === 1);
             const punchOut = empPunches.filter(p => p.PunchType === 2).pop(); // last out
@@ -392,7 +393,7 @@ exports.getCheckInRecords = async (req, res) => {
             };
         });
 
-        console.log('getCheckInRecords — returning records:', records);
+        logger.info('getCheckInRecords returning', { count: records.length });
 
         res.status(200).json({
             success: true,
@@ -400,7 +401,7 @@ exports.getCheckInRecords = async (req, res) => {
             pagination: { total: totalEmps, page: parseInt(page), limit: parseInt(limit), totalPages: Math.ceil(totalEmps / parseInt(limit)) }
         });
     } catch (error) {
-        console.error('getCheckInRecords error:', error);
+        logger.error('getCheckInRecords error', { error: error.message });
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -500,7 +501,7 @@ exports.getMonthlyAttendance = async (req, res) => {
             data: { year: y, month: m + 1, daysInMonth, records }
         });
     } catch (error) {
-        console.error('getMonthlyAttendance error:', error);
+        logger.error('getMonthlyAttendance error', { error: error.message });
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -1516,7 +1517,7 @@ exports.processSalary = async (req, res) => {
 
         res.status(201).json({ success: true, message: "Salary record saved", data: payroll });
     } catch (error) {
-        console.error("processSalary error:", error);
+        logger.error("processSalary error", { error: error.message });
         res.status(500).json({ success: false, message: error.message });
     }
 };

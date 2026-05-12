@@ -53,7 +53,7 @@ const ExitProcess = () => {
                 const data = res.data?.[0]; // most recent exit
                 if (data) setExitData(data);
             } catch (err) {
-                console.error('Failed to load exit process data:', err);
+                // debug error removed
             } finally {
                 setLoading(false);
             }

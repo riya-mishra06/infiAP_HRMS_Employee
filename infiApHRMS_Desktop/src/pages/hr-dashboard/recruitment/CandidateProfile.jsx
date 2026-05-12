@@ -101,7 +101,7 @@ const CandidateProfile = () => {
                     setCandidate(mapped);
                 }
             } catch (err) {
-                console.error('Failed to load candidate profile:', err);
+                // debug error removed
             } finally {
                 if (isMounted) setLoading(false);
             }

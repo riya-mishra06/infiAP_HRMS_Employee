@@ -66,16 +66,6 @@ const Dashboard = () => {
             const todayLeaves = todayLeavesRes?.success ? (todayLeavesRes.data || []) : [];
             const pendingLeaveList = pendingLeavesRes?.success ? (pendingLeavesRes.data || []) : [];
 
-            console.log('Dashboard API responses:', {
-               summary,
-               recruitment,
-               attendance,
-               leaveStats,
-               attendanceNotifications,
-               todayLeaves,
-               pendingLeaveList
-            });
-
             const employees = toNumber(summary.totalEmployees, summary.employeeCount, summary.employees);
             const activeJobs = toNumber(recruitment.openJobs, recruitment.totalOpenJobs, recruitment.jobs, recruitment.count);
             const attendanceToday = toNumber(attendance.presentToday, attendance.presentCount, summary.presentCount, attendance.count, attendance.present);

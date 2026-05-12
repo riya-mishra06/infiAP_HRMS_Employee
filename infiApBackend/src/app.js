@@ -3,6 +3,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
+const logger = require("./utils/logger");
 
 dotenv.config({
   path: "./.env",
@@ -148,7 +149,7 @@ app.get("/", (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack || err);
+  logger.error("Server error", { error: err.message, stack: err.stack });
 
   const statusCode = err.status || 500;
   const message = statusCode >= 500 ? "Internal Server Error" : err.message || "Request failed";

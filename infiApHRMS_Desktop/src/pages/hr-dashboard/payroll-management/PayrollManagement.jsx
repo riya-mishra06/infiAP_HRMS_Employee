@@ -113,17 +113,17 @@ const PayrollManagement = () => {
     try {
       const [empRes, salaryRes, payrollRes] = await Promise.all([
         getEmployees(),
-        getSalaryList({ month: currentMonthLabel, year: currentYear }).catch((err) => { console.log('getSalaryList error:', err); return null; }),
-        getPayroll({ month: currentMonthLabel, year: currentYear }).catch((err) => { console.log('getPayroll error:', err); return null; })
+        getSalaryList({ month: currentMonthLabel, year: currentYear }).catch(() => null),
+        getPayroll({ month: currentMonthLabel, year: currentYear }).catch(() => null)
       ]);
 
       const employees = empRes?.data?.data || empRes?.data || [];
       const salaryList = salaryRes?.data?.data || salaryRes?.data || [];
       const payrollList = payrollRes?.data?.data || payrollRes?.data || [];
 
-      console.log('Employees count:', employees.length);
-      console.log('Salary records count:', salaryList.length);
-      console.log('Payroll records count:', payrollList.length);
+      // debug log removed
+      // debug log removed
+      // debug log removed
 
       // Build map of salary and payroll by userId for fast lookup
       const salaryMap = new Map();
@@ -179,7 +179,7 @@ const PayrollManagement = () => {
       const chartData = Object.entries(deptExpenses).map(([name, value]) => ({ name, value }));
       setExpenseData(chartData.length ? chartData : []);
     } catch (err) {
-      console.error('Failed to fetch payroll data:', err);
+      // debug error removed
       setError('Failed to load payroll data. Please try again.');
     } finally {
       setLoading(false);
@@ -271,7 +271,7 @@ const PayrollManagement = () => {
         year: Number(assignForm.year),
         status: 'Pending'
       };
-      console.log('Assign salary payload:', payload);
+      // debug log removed
       await processSalary(payload);
       const net = (Number(assignForm.basicSalary) || 0) - (Number(assignForm.deductions) || 0);
       setPayrollEntries((prev) =>
@@ -294,7 +294,7 @@ const PayrollManagement = () => {
       // Re-fetch to confirm persistence in DB
       await fetchPayrollData();
     } catch (err) {
-      console.error('Failed to assign salary:', err);
+      // debug error removed
       const msg = err?.response?.data?.message || err?.message || 'Failed to assign salary';
       showNotification(msg);
     } finally {
@@ -319,7 +319,7 @@ const PayrollManagement = () => {
         deductions: Number(entry.deductions),
         status: 'Processed'
       };
-      console.log('Process salary payload:', payload);
+      // debug log removed
       await processSalary(payload);
       setPayrollEntries((prev) =>
         prev.map((e) => (e.id === id ? { ...e, status: 'Processed', processedAt: new Date().toISOString() } : e))
@@ -328,7 +328,7 @@ const PayrollManagement = () => {
       // Re-fetch to confirm persistence in DB
       await fetchPayrollData();
     } catch (err) {
-      console.error('Failed to process salary:', err);
+      // debug error removed
       const msg = err?.response?.data?.message || err?.message || 'Failed to process salary';
       showNotification(msg);
     } finally {

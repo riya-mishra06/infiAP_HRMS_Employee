@@ -103,7 +103,7 @@ const AttendanceAnalytics = () => {
                 if (peakMapped.length) setPeakData(peakMapped);
                 if (trendMapped.length) setWeeklyTrend(trendMapped);
             } catch (err) {
-                console.error('Failed to load attendance analytics:', err);
+                // debug error removed
             }
         };
 

@@ -83,7 +83,7 @@ const CheckInRecords = () => {
       try {
         const res = await getAttendanceRecords({ date: selectedDate, limit: 100 });
         const data = res.data?.data || [];
-        console.log('CheckInRecords raw data:', data);
+        // debug log removed
 
         const mapped = data.map((r, i) => ({
           id: r._id || r.employeeId || `rec-${i}`,
@@ -109,7 +109,7 @@ const CheckInRecords = () => {
         setRecords(mapped);
         if (mapped.length > 0) setSelectedRecordId(mapped[0].id);
       } catch (err) {
-        console.error('Failed to fetch check-in records:', err);
+        // debug error removed
       } finally {
         setLoading(false);
       }

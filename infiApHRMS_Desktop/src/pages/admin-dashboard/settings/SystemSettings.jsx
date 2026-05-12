@@ -163,7 +163,7 @@ const SystemSettings = () => {
         setConfig(prev => ({ ...prev, ...res.data.data }));
       }
     } catch (err) {
-      console.error('Failed to fetch settings:', err);
+      // debug error removed
     } finally {
       setLoading(false);
     }
@@ -183,7 +183,7 @@ const SystemSettings = () => {
       await updateCompanySettings(config);
       showNotification('Settings saved successfully!');
     } catch (err) {
-      console.error('Failed to save settings:', err);
+      // debug error removed
       showNotification('Failed to save settings', 'error');
     } finally {
       setSaving(false);

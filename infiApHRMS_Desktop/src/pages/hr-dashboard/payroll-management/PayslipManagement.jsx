@@ -43,7 +43,7 @@ const PayslipManagement = () => {
             }));
             setPayslips(formatted);
         } catch (err) {
-            console.error('Failed to fetch payslips:', err);
+            // debug error removed
             setPayslips([
                 { id: 'PS-1024-001', name: 'Mark Wilson', date: `${new Date().toLocaleString('default', { month: 'short' })} ${new Date().getFullYear()}`, amount: 114500, status: 'Generated', type: 'Monthly' },
                 { id: 'PS-1024-002', name: 'Sarah Chen', date: `${new Date().toLocaleString('default', { month: 'short' })} ${new Date().getFullYear()}`, amount: 99100, status: 'Generated', type: 'Monthly' },

@@ -38,7 +38,7 @@ const MyProfile = () => {
       
       try {
         const response = await getHrProfile();
-        console.log('Profile API response:', response);
+        // debug log removed
         
         // Check if response has data
         if (!response.data || !response.data.data) {
@@ -62,10 +62,10 @@ const MyProfile = () => {
           updatedAt: apiData?.updatedAt || new Date().toISOString()
         };
         
-        console.log('Normalized profile:', normalizedProfile);
+        // debug log removed
         setProfile(normalizedProfile);
       } catch (err) {
-        console.error('Error fetching profile:', err);
+        // debug error removed
         setError(err.message || 'Failed to load profile');
         // Fallback to user data from auth context
         if (user) {

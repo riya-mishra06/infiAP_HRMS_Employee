@@ -77,7 +77,7 @@ const AdminDashboard = () => {
          setSelectedEmployee(null);
          setAssignModalOpen(true);
       } catch (err) {
-         console.error('Failed to load employees:', err);
+         // debug error removed
          showNotification('Failed to load employees');
       }
    };
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
          showNotification(`Salary assigned to ${selectedEmployee.name}`);
          closeAssignModal();
       } catch (err) {
-         console.error('Failed to assign salary:', err);
+         // debug error removed
          const msg = err?.response?.data?.message || err?.message || 'Failed to assign salary';
          showNotification(msg);
       } finally {

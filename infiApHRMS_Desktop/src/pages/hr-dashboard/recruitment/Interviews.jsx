@@ -109,7 +109,7 @@ const Interviews = () => {
                     setInterviews(mapped);
                 }
             } catch (err) {
-                console.error('Failed to load interviews:', err);
+                // debug error removed
             }
         };
 

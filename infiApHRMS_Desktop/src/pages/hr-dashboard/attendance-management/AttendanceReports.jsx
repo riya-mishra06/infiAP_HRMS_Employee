@@ -42,10 +42,10 @@ const AttendanceReports = () => {
     setLoading(true);
     try {
       const res = await getAttendanceReports();
-      console.log('AttendanceReports API Response:', res);
-      console.log('Response keys:', JSON.stringify(Object.keys(res || {})));
-      console.log('Response.data:', res?.data);
-      console.log('Response.data keys:', JSON.stringify(Object.keys(res?.data || {})));
+      // debug log removed
+      // debug log removed
+      // debug log removed
+      // debug log removed
       
       // Handle different possible response structures
       let reportsData = [];
@@ -67,7 +67,7 @@ const AttendanceReports = () => {
           if (!obj || typeof obj !== 'object') return null;
           for (const key in obj) {
             if (Array.isArray(obj[key]) && obj[key].length > 0) {
-              console.log(`Found array in property '${key}':`, obj[key]);
+              // debug log removed
               return obj[key];
             }
             const found = searchForArray(obj[key]);
@@ -78,7 +78,7 @@ const AttendanceReports = () => {
         reportsData = searchForArray(res) || [];
       }
       
-      console.log('Reports data after parsing:', reportsData);
+      // debug log removed
       
       if (Array.isArray(reportsData) && reportsData.length > 0) {
         const mappedReports = reportsData.map(r => ({
@@ -95,7 +95,7 @@ const AttendanceReports = () => {
         setReports([]);
       }
     } catch (err) {
-      console.error('Failed to load reports:', err);
+      // debug error removed
       setReports([]);
     } finally {
       setLoading(false);
@@ -113,7 +113,7 @@ const AttendanceReports = () => {
       showNotification('Report generated successfully');
       fetchReports();
     } catch (err) {
-      console.error('Failed to generate report:', err);
+      // debug error removed
       showNotification('Failed to generate report');
     } finally {
       setIsGenerating(false);

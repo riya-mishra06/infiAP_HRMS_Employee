@@ -78,7 +78,7 @@ const EditProfile = () => {
           joiningDate: profileData.joiningDate ? profileData.joiningDate.split('T')[0] : ''
         });
       } catch (err) {
-        console.error('Error fetching profile:', err);
+        // debug error removed
         setFormData({
           name: user?.name || '',
           email: user?.email || '',
@@ -190,7 +190,7 @@ const EditProfile = () => {
       }, 1500);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to update profile');
-      console.error('Error updating profile:', err);
+      // debug error removed
     } finally {
       setSaving(false);
     }

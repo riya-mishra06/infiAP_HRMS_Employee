@@ -2,6 +2,7 @@ const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendVerificationEmail, sendLoginOTPEmail } = require("../services/email.service");
+const logger = require("../utils/logger");
 
 // Generate tokens
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -73,7 +74,7 @@ const issueLoginOtpChallenge = async (user) => {
     try {
         emailSent = await sendLoginOTPEmail(user.email, otp);
     } catch (mailError) {
-        console.warn("OTP email send failed:", mailError.message);
+        logger.warn("OTP email send failed", { error: mailError.message });
     }
 
     return { emailSent };
@@ -120,7 +121,7 @@ const registerUser = async (req, res) => {
                 ? "User registered successfully. Please check your email for verification."
                 : "User registered successfully. Email verification is skipped in local development.";
         } catch (mailError) {
-            console.warn("Verification email skipped:", mailError.message);
+            logger.warn("Verification email skipped", { error: mailError.message });
             emailMessage = "User registered successfully. Verification email could not be sent from this environment.";
         }
 
@@ -135,7 +136,7 @@ const registerUser = async (req, res) => {
             message: emailMessage,
         });
     } catch (error) {
-        console.error("Register Error:", error);
+        logger.error("Register Error", { error: error.message });
         res.status(500).json({ message: "Server error during registration" });
     }
 };
@@ -211,7 +212,7 @@ const loginUser = async (req, res) => {
             userId: user._id,
         });
     } catch (error) {
-        console.error("Login Error:", error);
+        logger.error("Login Error", { error: error.message });
         res.status(500).json({ message: "Server error during login" });
     }
 };
@@ -243,7 +244,7 @@ const resendLoginOTP = async (req, res) => {
             userId: user._id,
         });
     } catch (error) {
-        console.error("Resend OTP Error:", error);
+        logger.error("Resend OTP Error", { error: error.message });
         return res.status(500).json({ message: "Server error while resending the verification code" });
     }
 };
@@ -297,7 +298,7 @@ const verifyLoginOTP = async (req, res) => {
                 user: sanitizeUser(loggedInUser)
             });
     } catch (error) {
-        console.error("Verify OTP Error:", error);
+        logger.error("Verify OTP Error", { error: error.message });
         res.status(500).json({ message: "Server error during 2FA verification" });
     }
 };

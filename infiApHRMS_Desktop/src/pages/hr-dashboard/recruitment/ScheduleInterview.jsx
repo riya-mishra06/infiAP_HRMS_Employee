@@ -68,7 +68,7 @@ const ScheduleInterview = () => {
                     setCandidates(mapped);
                 }
             } catch (err) {
-                console.error('Failed to load candidates:', err);
+                // debug error removed
             }
         };
 
@@ -113,7 +113,7 @@ const ScheduleInterview = () => {
             }
             setSubmitted(true);
         } catch (err) {
-            console.error('Failed to schedule interview:', err);
+            // debug error removed
         }
     };
 

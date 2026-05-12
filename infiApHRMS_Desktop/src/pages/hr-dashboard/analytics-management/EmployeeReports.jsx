@@ -91,7 +91,7 @@ const EmployeeReports = () => {
         generatedAt: formatDate(payload.generatedAt || payload.updatedAt)
       });
     } catch (err) {
-      console.error('Failed to load employee analytics report:', err);
+      // debug error removed
       setDepartments([]);
       setTenureBuckets([]);
       setSummary({ totalEmployees: 0, departments: 0, avgTenure: 'N/A', generatedAt: 'Current' });

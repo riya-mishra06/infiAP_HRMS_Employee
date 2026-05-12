@@ -61,7 +61,6 @@ export const AuthProvider = ({ children }) => {
       // This prevents auto-logout when session exists in sessionStorage
       if (!storedToken) {
         // No stored token - need to authenticate fresh
-        console.log('No stored token found');
         setLoading(false);
         return;
       }
@@ -74,24 +73,13 @@ export const AuthProvider = ({ children }) => {
         const normalizedRole = normalizeRole(userData.role);
         setUser({ ...userData, role: normalizedRole });
         setRole(normalizedRole);
-      } else {
-        // API returned success but no user data - keep using stored token
-        console.log('No user data in response, using stored token');
       }
     } catch (err) {
       // Only clear auth on 401 if there's NO stored token
       // If we have a stored token, keep the user logged in despite API error
       const is401 = err.response?.status === 401;
       if (is401 && !storedToken) {
-        console.log('No token and 401 - clearing auth');
         clearAuth();
-      } else if (is401 && storedToken) {
-        // Got 401 from API but we have stored token - keep session alive
-        // The API might have rejected the token but we preserve the session
-        console.log('Got 401 but have stored token - preserving session');
-        // Still need user data - don't leave user object null
-      } else {
-        console.log('API error during hydrate:', err.message);
       }
     } finally {
       setLoading(false);
@@ -225,7 +213,7 @@ export const AuthProvider = ({ children }) => {
       // Call backend logout to clear cookies
       await apiClient.post('/auth/logout');
     } catch (err) {
-      console.error('Logout error:', err);
+      // Silent logout error - user is clearing anyway
     } finally {
       clearAuth();
     }

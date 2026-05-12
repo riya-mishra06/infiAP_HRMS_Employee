@@ -40,7 +40,7 @@ export const JobProvider = ({ children }) => {
       }));
       setJobs(data);
     } catch (err) {
-      console.error('Failed to fetch jobs:', err);
+      // Silent error - using fallback data
       // Keep existing fallback data if API fails
       if (jobs.length === 0) {
         setJobs([

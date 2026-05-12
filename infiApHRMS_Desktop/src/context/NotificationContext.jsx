@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { API_CONFIG } from '../config';
 
 const NotificationContext = createContext();
 
@@ -14,18 +15,16 @@ export const NotificationProvider = ({ children }) => {
         if (!token || !user) return;
 
         // Initialize Socket.io connection to backend
-        const newSocket = io('http://localhost:3000', {
+        const newSocket = io(API_CONFIG.socketURL, {
             auth: { token },
             transports: ['websocket']
         });
 
         newSocket.on('connect', () => {
-            console.log('Connected to WebSocket');
             setConnected(true);
         });
 
         newSocket.on('disconnect', () => {
-            console.log('Disconnected from WebSocket');
             setConnected(false);
         });
 

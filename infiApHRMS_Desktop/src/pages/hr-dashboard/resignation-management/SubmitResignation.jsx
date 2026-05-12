@@ -73,7 +73,7 @@ const SubmitResignation = () => {
           }));
         }
       } catch (err) {
-        console.error('Failed to load HR profile:', err);
+        // debug error removed
         if (isMounted) {
           const fallbackProfile = getProfileData({}, user);
           setProfile(fallbackProfile);

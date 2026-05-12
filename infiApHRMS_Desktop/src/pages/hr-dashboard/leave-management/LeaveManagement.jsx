@@ -97,7 +97,7 @@ const LeaveManagement = () => {
         onLeaveToday: Number(statsPayload.onLeaveToday ?? todayRows.length)
       });
     } catch (err) {
-      console.error('Failed to fetch leave data:', err);
+      // debug error removed
       setError('Unable to load leave data. Please refresh once the HR API is available.');
       setRequests([]);
       setStats({ pending: 0, approved: 0, rejected: 0, onLeaveToday: 0 });

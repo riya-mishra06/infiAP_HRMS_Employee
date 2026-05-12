@@ -107,7 +107,7 @@ const PerformanceManagement = () => {
         feedbackPending: Number(feedback.pending ?? feedback.pendingFeedback ?? 0)
       });
     } catch (err) {
-      console.error('Failed to fetch performance data:', err);
+      // debug error removed
       setRows([]);
       setSummary({ pendingReviews: 0, averageMeritScore: 0, evolutionIndex: 0, feedbackPending: 0 });
       setError('Unable to load performance data. Please refresh once the HR API is available.');

@@ -73,7 +73,7 @@ const ResignationHub = () => {
       const response = await getResignationRegister();
       setRequests(getPayloadArray(response).map(normalizeResignation));
     } catch (err) {
-      console.error('Failed to fetch resignation register:', err);
+      // debug error removed
       setRequests([]);
       setError('Unable to load resignation data. Please refresh once the HR API is available.');
     } finally {

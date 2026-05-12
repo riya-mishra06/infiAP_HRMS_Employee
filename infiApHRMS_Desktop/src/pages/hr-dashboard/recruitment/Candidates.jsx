@@ -59,7 +59,7 @@ const Candidates = () => {
                     setCandidates(mapped);
                 }
             } catch (err) {
-                console.error('Failed to load candidates:', err);
+                // debug error removed
             }
         };
 
