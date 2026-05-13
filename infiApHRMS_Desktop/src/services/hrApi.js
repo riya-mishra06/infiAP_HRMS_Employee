@@ -79,6 +79,7 @@ export const getEmployeeProfile = (id) => get(`/employees/${id}/profile`);
 // ─── 3. Attendance ───────────────────────────────────────────────────────────
 export const getAttendanceDailyOverview = (params) => get('/attendance/daily-overview', params);
 export const getAttendanceRecords = (params) => get('/attendance/records', params);
+export const getPunchRecords = (params) => get('/attendance/punch-records', params);
 export const submitAttendanceCorrection = (data) => post('/attendance/correction/submit', data);
 export const getAttendanceCorrectionRequests = (params) => get('/attendance/correction/requests', params);
 export const reviewAttendanceCorrection = (data) => put('/attendance/correction/review', data);

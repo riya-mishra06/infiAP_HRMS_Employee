@@ -8,7 +8,6 @@ const emptyForm = {
   name: '',
   email: '',
   phone: '',
-  employeeId: '',
   joiningDate: '',
   department: '',
   role: '',
@@ -165,19 +164,7 @@ const AddEmployee = () => {
               />
             </label>
 
-            <label className="space-y-1.5">
-              <span className={labelClass}>Employee ID</span>
-              <input
-                name="employeeId"
-                value={formData.employeeId}
-                onChange={handleChange}
-                required
-                type="text"
-                placeholder="EMP-001"
-                className={fieldClass}
-              />
-            </label>
-
+            
             <label className="space-y-1.5">
               <span className={labelClass}>Email</span>
               <input

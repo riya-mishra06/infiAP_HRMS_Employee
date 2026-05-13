@@ -12,9 +12,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
-  getLeaveRequests,
+  getLeaveApplications,
   getLeaveStats,
-  getPendingDetailedLeaves,
   getTodayLeaves
 } from '../../../services/hrApi';
 
@@ -34,23 +33,32 @@ const formatDate = (value) => {
 };
 
 const normalizeLeave = (leave, index) => {
-  const employee = leave.employee || leave.user || {};
-  const startDate = leave.startDate || leave.fromDate || leave.dateFrom || leave.leaveStartDate;
-  const endDate = leave.endDate || leave.toDate || leave.dateTo || leave.leaveEndDate || startDate;
-  const employeeName = leave.employeeName || leave.name || employee.name || employee.fullName || 'Unknown Employee';
+  // Handle EmployeeID from backend (populated employee reference)
+  const employee = leave.EmployeeID || leave.employee || leave.user || {};
+  const startDate = leave.StartDate || leave.startDate || leave.fromDate || leave.dateFrom || leave.leaveStartDate;
+  const endDate = leave.EndDate || leave.endDate || leave.toDate || leave.dateTo || leave.leaveEndDate || startDate;
+
+  // Get employee name from various possible fields
+  const employeeName = leave.employeeName || leave.EmployeeID?.name || employee.name || employee.fullName || leave.name || 'Unknown Employee';
+
+  // Map backend status to frontend status
+  let status = leave.status || leave.ApprovalStatus || 'Pending';
+  if (status === 'Awaiting Approve') status = 'Pending';
+  if (status === 'Approved') status = 'Approved';
+  if (status === 'Rejected') status = 'Rejected';
 
   return {
     id: leave._id || leave.id || leave.leaveId || `LEAVE-${index + 1}`,
     employeeName,
-    employeeId: leave.employeeId || employee.employeeId || employee.empId || 'N/A',
-    department: leave.department || employee.department || leave.dept || 'N/A',
-    leaveType: leave.leaveType || leave.type || leave.category || 'Leave',
+    employeeId: leave.employeeId || leave.EmployeeID?.employeeId || employee.employeeId || employee.empId || 'N/A',
+    department: leave.department || leave.EmployeeID?.department || employee.department || leave.dept || 'N/A',
+    leaveType: leave.LeaveType || leave.leaveType || leave.type || leave.category || 'Leave',
     startDate,
     endDate,
     dateRange: startDate === endDate ? formatDate(startDate) : `${formatDate(startDate)} - ${formatDate(endDate)}`,
-    days: leave.days || leave.totalDays || leave.duration || 1,
-    status: leave.status || 'Pending',
-    reason: leave.reason || leave.Reason || leave.description || 'No reason provided',
+    days: leave.durationDays || leave.days || leave.totalDays || leave.duration || 1,
+    status,
+    reason: leave.Reason || leave.reason || leave.description || 'No reason provided',
     requestedAt: leave.requestedAt || leave.createdAt || leave.appliedAt
   };
 };
@@ -76,24 +84,29 @@ const LeaveManagement = () => {
       setLoading(true);
       setError('');
 
-      const [statsRes, requestsRes, pendingRes, todayRes] = await Promise.all([
+      // Fetch all leave applications (pending, approved, rejected)
+      // Fetch stats and today's leaves in parallel
+      const [statsRes, applicationsRes, todayRes] = await Promise.all([
         getLeaveStats(),
-        getLeaveRequests(),
-        getPendingDetailedLeaves(),
+        getLeaveApplications({ limit: 100 }), // Get up to 100 recent leaves
         getTodayLeaves()
       ]);
 
       const statsPayload = statsRes.data?.data || statsRes.data || {};
-      const requestRows = getPayloadArray(requestsRes).map(normalizeLeave);
-      const pendingRows = getPayloadArray(pendingRes);
+      const applicationRows = getPayloadArray(applicationsRes).map(normalizeLeave);
       const todayRows = getPayloadArray(todayRes);
 
-      setRequests(requestRows);
-      setPendingCount(pendingRows.length || Number(statsPayload.pending || 0));
+      // Calculate counts from actual data
+      const pendingCount = applicationRows.filter((item) => item.status === 'Pending').length;
+      const approvedCount = applicationRows.filter((item) => item.status === 'Approved').length;
+      const rejectedCount = applicationRows.filter((item) => item.status === 'Rejected').length;
+
+      setRequests(applicationRows);
+      setPendingCount(pendingCount);
       setStats({
-        pending: Number(statsPayload.pending ?? requestRows.filter((item) => item.status === 'Pending').length),
-        approved: Number(statsPayload.approved ?? requestRows.filter((item) => item.status === 'Approved').length),
-        rejected: Number(statsPayload.rejected ?? requestRows.filter((item) => item.status === 'Rejected').length),
+        pending: Number(statsPayload.pending ?? pendingCount),
+        approved: Number(statsPayload.approved ?? approvedCount),
+        rejected: Number(statsPayload.rejected ?? rejectedCount),
         onLeaveToday: Number(statsPayload.onLeaveToday ?? todayRows.length)
       });
     } catch (err) {

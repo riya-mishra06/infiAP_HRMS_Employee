@@ -86,16 +86,23 @@ exports.getHRAdminProfile = async (req, res) => {
 // ---> HR Operations: Employee <---
 exports.addEmployee = async (req, res) => {
     try {
-        const { name, email, phone, employeeId, department, designation, reportingManager, annualSalary, employmentType, password = "Password@123" } = req.body;
-        
+        const { name, email, phone, employeeId: providedEmployeeId, department, designation, reportingManager, annualSalary, employmentType, password = "Password@123" } = req.body;
+
         const existing = await User.findOne({ email });
         if (existing) return res.status(400).json({ success: false, message: "Email already exists" });
+
+        // Auto-generate employeeId if not provided
+        let employeeId = providedEmployeeId;
+        if (!employeeId) {
+            const count = await User.countDocuments({ role: "employee" });
+            employeeId = `EMP-${String(count + 1).padStart(4, '0')}`;
+        }
 
         const newEmployee = new User({
             name, email, phone, password, role: "employee",
             employeeId, department, designation, reportingManager, annualSalary, employmentType
         });
-        
+
         await newEmployee.save();
         res.status(201).json({ success: true, message: "Employee added successfully", data: newEmployee });
     } catch (error) {
@@ -402,6 +409,77 @@ exports.getCheckInRecords = async (req, res) => {
         });
     } catch (error) {
         logger.error('getCheckInRecords error', { error: error.message });
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 2b. Raw Punch Records (for attendance records display)
+exports.getPunchRecords = async (req, res) => {
+    try {
+        const { date, page = 1, limit = 50 } = req.query;
+
+        let targetDate;
+        if (date) {
+            const [year, month, day] = date.split('-').map(Number);
+            targetDate = new Date(Date.UTC(year, month - 1, day));
+        } else {
+            const now = new Date();
+            targetDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+        }
+
+        const startOfDay = new Date(targetDate);
+        startOfDay.setUTCHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setUTCHours(23, 59, 59, 999);
+
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        // Get raw punch records with user details
+        const punches = await Punch.find({
+            PunchTime: { $gte: startOfDay, $lte: endOfDay }
+        })
+        .populate("userId", "name email employeeId department designation profileImage")
+        .sort({ PunchTime: 1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean();
+
+        const total = await Punch.countDocuments({
+            PunchTime: { $gte: startOfDay, $lte: endOfDay }
+        });
+
+        // Transform to include user details
+        const records = punches.map(p => ({
+            _id: p._id,
+            userId: p.userId?._id,
+            userName: p.userId?.name || 'Unknown',
+            userEmail: p.userId?.email || '',
+            employeeId: p.userId?.employeeId || '',
+            department: p.userId?.department || '',
+            designation: p.userId?.designation || '',
+            profileImage: p.userId?.profileImage || null,
+            PunchType: p.PunchType,
+            Latitude: p.Latitude,
+            Longitude: p.Longitude,
+            IsAway: p.IsAway,
+            WorkMode: p.WorkMode,
+            PunchTime: p.PunchTime,
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: records,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            }
+        });
+    } catch (error) {
+        logger.error('getPunchRecords error', { error: error.message });
         res.status(500).json({ success: false, message: error.message });
     }
 };

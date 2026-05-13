@@ -1,13 +1,53 @@
-import React, { useEffect, useState } from 'react';
-import { Search, Bell, User } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Search, Bell, User, Check, X, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getHrProfile } from '../../services/hrApi';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { notifications, markAsRead } = useNotifications();
   const [profile, setProfile] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diff = Math.floor((now - time) / 60000);
+    if (diff < 1) return 'Just now';
+    if (diff < 60) return `${diff}m ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+    return `${Math.floor(diff / 1440)}d ago`;
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'success':
+      case 'leave_approved':
+        return <Check className="w-4 h-4 text-emerald-600" />;
+      case 'error':
+      case 'leave_rejected':
+        return <X className="w-4 h-4 text-red-600" />;
+      default:
+        return <Bell className="w-4 h-4 text-indigo-600" />;
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -56,11 +96,100 @@ const Navbar = () => {
 
       {/* Right Section */}
       <div className="flex items-center gap-4 pl-6">
-        
-        <button className="text-[#7E8AB2] hover:text-[#4E63F0] p-2.5 hover:bg-[#F4F7FD] rounded-xl relative transition-all group">
-          <Bell size={20} />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white group-hover:animate-ping"></span>
-        </button>
+
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="text-[#7E8AB2] hover:text-[#4E63F0] p-2.5 hover:bg-[#F4F7FD] rounded-xl relative transition-all group"
+          >
+            <Bell size={20} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {showDropdown && (
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <div className="flex items-center gap-2">
+                  <Bell size={16} className="text-slate-600" />
+                  <span className="font-bold text-sm text-slate-800">Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                      {unreadCount} unread
+                    </span>
+                  )}
+                </div>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={() => notifications.forEach(n => !n.read && markAsRead(n.id))}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <Bell size={32} className="mx-auto text-slate-300 mb-2" />
+                    <p className="text-sm text-slate-500">No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.slice(0, 10).map((notification) => (
+                    <div
+                      key={notification.id || notification._id}
+                      onClick={() => markAsRead(notification.id || notification._id)}
+                      className={`px-4 py-3 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${
+                        !notification.read ? 'bg-indigo-50/50' : ''
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`mt-0.5 p-1.5 rounded-lg ${notification.read ? 'bg-slate-100' : 'bg-indigo-100'}`}>
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-800 truncate">
+                            {notification.title || notification.message?.slice(0, 30) || 'Notification'}
+                          </p>
+                          <p className="text-xs text-slate-500 truncate mt-0.5">
+                            {notification.message}
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Clock size={10} className="text-slate-400" />
+                            <span className="text-[10px] text-slate-400">
+                              {formatTime(notification.timestamp || notification.createdAt)}
+                            </span>
+                          </div>
+                        </div>
+                        {!notification.read && (
+                          <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2" />
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {notifications.length > 10 && (
+                <div className="px-4 py-3 border-t border-slate-100">
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      navigate('/notifications');
+                    }}
+                    className="w-full text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                  >
+                    View all notifications
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div 
           onClick={() => navigate('/profile')}

@@ -2,7 +2,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import DashboardLayout from './components/layout/DashboardLayout';
 import AdminLayout from './components/layout/AdminLayout';
 import { useAuth } from './context/AuthContext';
+import { useNotifications } from './context/NotificationContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import ToastContainer from './components/common/Toast';
 
 // HR Dashboard Pages
 import Dashboard from './pages/hr-dashboard/Dashboard';
@@ -149,9 +151,13 @@ const PublicOnlyRoute = ({ children }) => {
 };
 
 
-function App() {
+function AppContent() {
+  const { toasts, removeToast } = useNotifications();
+
   return (
-    <Router>
+    <>
+      <ToastContainer toasts={toasts} onClose={removeToast} />
+      <Router>
       <ScrollToTop />
       <EmployeeProvider>
         <DepartmentProvider>
@@ -312,7 +318,12 @@ function App() {
         </DepartmentProvider>
       </EmployeeProvider>
     </Router>
+    </>
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;
