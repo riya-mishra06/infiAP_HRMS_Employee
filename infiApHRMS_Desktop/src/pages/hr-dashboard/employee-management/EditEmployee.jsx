@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -16,7 +16,10 @@ import {
     Shield,
     TrendingUp,
     Clock,
-    UserPlus
+    UserPlus,
+    Camera,
+    X,
+    Upload
 } from 'lucide-react';
 import { useEmployeeContext } from '../../../context/EmployeeContext';
 
@@ -30,6 +33,9 @@ const EditEmployee = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [error, setError] = useState(null);
+    const fileInputRef = useRef(null);
+    const [profileImagePreview, setProfileImagePreview] = useState(null);
+    const [profileImageFile, setProfileImageFile] = useState(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -38,7 +44,8 @@ const EditEmployee = () => {
         department: '',
         manager: '',
         location: '',
-        status: ''
+        status: '',
+        profilePicture: ''
     });
 
     // --- IDENTITY FETCH ---
@@ -52,12 +59,52 @@ const EditEmployee = () => {
                 department: employee.department,
                 manager: employee.manager,
                 location: employee.location || 'Mumbai Office',
-                status: employee.status
+                status: employee.status,
+                profilePicture: employee.profileImage || employee.profilePicture || ''
             });
+            // Set existing profile image preview
+            if (employee.profileImage || employee.profilePicture) {
+                setProfileImagePreview(employee.profileImage || employee.profilePicture);
+            }
         } else if (employees.length > 0) {
             setError("Employee Identity Not Found");
         }
     }, [id, employees]);
+
+    // --- IMAGE UPLOAD HANDLER ---
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                setSubmitError('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+                return;
+            }
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                setSubmitError('Image size must be less than 5MB');
+                return;
+            }
+            setProfileImageFile(file);
+            // Create preview URL
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfileImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+            setSubmitError('');
+        }
+    };
+
+    const removeImage = () => {
+        setProfileImageFile(null);
+        setProfileImagePreview(null);
+        setFormData(prev => ({ ...prev, profilePicture: '' }));
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -71,7 +118,13 @@ const EditEmployee = () => {
         setIsSubmitting(true);
         setSubmitError('');
 
-        const result = await updateEmployee(id, formData);
+        // Include profile image file in form data if selected
+        const submitData = {
+            ...formData,
+            ...(profileImageFile && { profilePicture: profileImageFile })
+        };
+
+        const result = await updateEmployee(id, submitData);
 
         setIsSubmitting(false);
 
@@ -207,7 +260,52 @@ const EditEmployee = () => {
                                 <User size={16} className="text-indigo-500" />
                                 Personal Information
                             </h2>
-                            
+
+                            {/* Profile Image Upload */}
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                <div className="relative">
+                                    {profileImagePreview ? (
+                                        <div className="relative">
+                                            <img
+                                                src={profileImagePreview}
+                                                alt="Profile Preview"
+                                                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={removeImage}
+                                                className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center border-4 border-white shadow-md">
+                                            <User size={32} className="text-slate-400" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-slate-800 mb-1">Profile Picture</p>
+                                    <p className="text-xs text-slate-500 mb-3">Upload a photo (JPEG, PNG, GIF, WebP - max 5MB)</p>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/gif,image/webp"
+                                        onChange={handleImageChange}
+                                        className="hidden"
+                                        id="profile-image-upload"
+                                    />
+                                    <label
+                                        htmlFor="profile-image-upload"
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                                    >
+                                        <Camera size={16} />
+                                        {profileImagePreview ? 'Change Photo' : 'Upload Photo'}
+                                    </label>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <label className="text-xs font-medium text-slate-600">Full Name</label>

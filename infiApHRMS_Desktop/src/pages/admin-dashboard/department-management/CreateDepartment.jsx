@@ -24,7 +24,6 @@ const CreateDepartment = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    manager: '',
     location: '',
     teams: ''
   });
@@ -105,27 +104,6 @@ const CreateDepartment = () => {
                 />
               </div>
 
-              {/* Department Manager */}
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Department Manager</label>
-                <div className="relative">
-                  <select 
-                    className="w-full appearance-none bg-slate-50 border border-slate-100 rounded-[24px] px-8 py-5 text-lg font-bold text-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all outline-none"
-                    value={formData.manager}
-                    onChange={(e) => setFormData({...formData, manager: e.target.value})}
-                    required
-                  >
-                    <option value="" disabled>Select a manager from system</option>
-                    {employees.map(emp => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.department} - {emp.role})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={24} />
-                </div>
-              </div>
-
               {/* Location & Teams */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-4">
@@ -171,7 +149,7 @@ const CreateDepartment = () => {
               </button>
               <button 
                 type="button"
-                onClick={() => setFormData({ name: '', description: '', manager: '', location: '', teams: '' })}
+                onClick={() => setFormData({ name: '', description: '', location: '', teams: '' })}
                 className="w-full md:w-auto px-12 py-6 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-[24px] font-black text-[10px] uppercase tracking-[0.25em] transition-all"
               >
                 Cancel

@@ -154,6 +154,10 @@ export const EmployeeProvider = ({ children }) => {
       if (updatedData.salary !== undefined) payload.annualSalary = updatedData.salary;
       if (updatedData.status !== undefined) payload.status = updatedData.status;
       if (updatedData.location !== undefined) payload.address = updatedData.location;
+      // Handle profile picture upload (File object or URL string)
+      if (updatedData.profilePicture !== undefined) {
+        payload.profilePicture = updatedData.profilePicture;
+      }
 
       // Debug: updating employee
       const res = await apiUpdateEmployee(id, payload);
@@ -167,6 +171,7 @@ export const EmployeeProvider = ({ children }) => {
               ? {
                   ...emp,
                   ...updatedData,
+                  profileImage: updated.profileImage || updatedData.profilePicture,
                   id: updated._id || updated.id,
                   _id: updated._id,
                 }
