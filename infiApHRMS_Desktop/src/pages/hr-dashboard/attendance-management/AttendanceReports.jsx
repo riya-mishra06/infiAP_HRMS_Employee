@@ -124,21 +124,24 @@ const AttendanceReports = () => {
     setIsExporting(true);
     setTimeout(() => {
       const headers = ['Title', 'Date', 'Type', 'Status', 'Size'];
+      const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
       const rows = reports.map(r => [
         r.title,
         r.date,
         r.type,
         r.status,
         r.size
-      ].map(v => `"${v}"`).join(','));
+      ].map(escapeCsv).join(','));
       const csv = [headers.join(','), ...rows].join('\n');
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'attendance-reports.csv';
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
       setIsExporting(false);
       showNotification('CSV exported successfully');
     }, 500);

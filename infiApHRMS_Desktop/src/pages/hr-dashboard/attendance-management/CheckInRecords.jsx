@@ -132,10 +132,11 @@ const CheckInRecords = () => {
   const handleExport = () => {
     setIsExporting(true);
     setTimeout(() => {
+      const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
       const csv = [
         ['Name', 'Role', 'Date', 'Check In', 'Check Out', 'Duration', 'Status', 'Mode'].join(','),
         ...filteredRecords.map(r =>
-          [r.name, r.role, r.date, r.checkIn, r.checkOut, r.duration, r.status, r.mode].map(v => `"${v}"`).join(',')
+          [r.name, r.role, r.date, r.checkIn, r.checkOut, r.duration, r.status, r.mode].map(escapeCsv).join(',')
         )
       ].join('\n');
 
@@ -144,8 +145,10 @@ const CheckInRecords = () => {
       const a = document.createElement('a');
       a.href = url;
       a.download = `attendance-${selectedDate}.csv`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
       setIsExporting(false);
       showNotification('CSV exported successfully');
     }, 800);
