@@ -10,10 +10,15 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { useAdminDashboard } from '../../context/AdminDashboardContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Departments = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { departments, summary, fetchDepartments, loading } = useAdminDashboard();
+
+  const teamRoute = role === 'HR' ? '/departments/teams' : '/admin/department-management/teams';
+  const createDepartmentRoute = role === 'HR' ? '/departments/create' : '/admin/department-management/create';
 
   useEffect(() => {
     fetchDepartments();
@@ -57,7 +62,7 @@ const Departments = () => {
             />
           </div>
           <button
-            onClick={() => navigate('/admin/department-management/create')}
+            onClick={() => navigate(createDepartmentRoute)}
             className="flex items-center gap-3 px-8 py-4 bg-linear-to-r from-[#4E63F0] to-[#6855E8] text-white rounded-2xl shadow-xl shadow-indigo-100 hover:shadow-indigo-200 hover:-translate-y-1 transition-all active:scale-95 text-xs font-black uppercase tracking-widest"
           >
             <Plus size={18} strokeWidth={3} />
@@ -120,7 +125,7 @@ const Departments = () => {
               </div>
 
               <button
-                onClick={() => navigate('/admin/department-management/teams')}
+                onClick={() => navigate(teamRoute)}
                 className="relative z-10 w-full py-4 bg-slate-50 text-slate-600 font-black rounded-2xl group-hover:bg-slate-900 group-hover:text-white transition-all duration-300 text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
               >
                 View Teams
@@ -130,7 +135,7 @@ const Departments = () => {
           ))}
 
           <div
-            onClick={() => navigate('/admin/department-management/create')}
+            onClick={() => navigate(createDepartmentRoute)}
             className="rounded-[28px] border-2 border-dashed border-slate-200 bg-white p-6 flex flex-col items-center justify-center group hover:border-slate-900 hover:bg-slate-50 transition-all duration-300 cursor-pointer min-h-[240px]"
           >
             <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-slate-900 group-hover:text-white transition-all">
@@ -143,7 +148,7 @@ const Departments = () => {
 
         {/* Floating Minimal CTA */}
         <button
-          onClick={() => navigate('/admin/department-management/create')}
+            onClick={() => navigate(createDepartmentRoute)}
           className="fixed bottom-12 right-12 w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center group z-40"
         >
           <Plus size={24} strokeWidth={3} className="group-hover:rotate-90 transition-transform duration-500" />
