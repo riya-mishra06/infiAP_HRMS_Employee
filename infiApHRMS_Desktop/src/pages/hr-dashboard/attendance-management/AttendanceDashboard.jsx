@@ -71,25 +71,20 @@ const AttendanceDashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // debug log removed
-
         const [overviewRes, recordsRes, correctionsRes] = await Promise.all([
           getAttendanceDailyOverview({ date: selectedDate }).catch((err) => {
-            // debug error removed
+            console.error('Daily overview error:', err.message);
             return { data: { data: null } };
           }),
-          getAttendanceRecords({ date: selectedDate, limit: 50 }).catch((err) => {
-            // debug error removed
+          getAttendanceRecords({ date: selectedDate, limit: 100 }).catch((err) => {
+            console.error('Attendance records error:', err.message);
             return { data: { data: [] } };
           }),
           getAttendanceCorrectionRequests({ status: 'Pending' }).catch((err) => {
-            // debug error removed
+            console.error('Correction requests error:', err.message);
             return { data: { data: [] } };
           }),
         ]);
-
-        // debug log removed
-        // debug log removed
 
         // Set stats from API
         const overview = overviewRes.data?.data;
@@ -102,24 +97,40 @@ const AttendanceDashboard = () => {
           ]);
         }
 
-        // Map records from API
-        const records = recordsRes.data?.data || [];
-        // debug log removed
+        // Map grouped attendance records to display format
+        const attendanceRecords = recordsRes.data?.data || [];
+        const mappedRecords = attendanceRecords.map((r, index) => {
+          const checkInTime = r.inTime || (r.PunchType === 1 ? r.PunchTime : null);
+          const checkOutTime = r.outTime || (r.PunchType === 2 ? r.PunchTime : null);
+          const workMode = r.workMode ?? r.WorkMode ?? 1;
+          const duration = checkInTime && checkOutTime
+            ? (() => {
+                const diffMs = Math.max(0, new Date(checkOutTime).getTime() - new Date(checkInTime).getTime());
+                const totalMinutes = Math.floor(diffMs / 60000);
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                return `${hours}h ${minutes}m`;
+              })()
+            : '--';
 
-        const mappedRecords = records.map((r, i) => ({
-          id: r.employeeId || `log-${i}`,
-          name: r.name || 'Unknown',
-          role: r.designation || 'Employee',
-          checkIn: r.inTime ? new Date(r.inTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--',
-          checkOut: r.outTime ? new Date(r.outTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--',
-          status: r.status || 'Absent',
-          location: r.team || 'Office',
-          latLong: '',
-          type: r.workMode === 2 ? 'Remote' : r.workMode === 3 ? 'Meeting' : r.workMode === 4 ? 'Offsite' : 'Office',
-          avatar: r.profileImage || null,
-        }));
+          return {
+            id: r.employeeId || r.userId || r._id || `log-${index}`,
+            name: r.name || r.userName || 'Unknown',
+            role: r.designation || 'Employee',
+            department: r.team || r.department || '',
+            checkIn: checkInTime ? new Date(checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--',
+            checkOut: checkOutTime ? new Date(checkOutTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--',
+            duration,
+            status: r.status || (checkInTime && !checkOutTime ? 'Present' : checkInTime && checkOutTime ? 'Present' : 'Absent'),
+            type: workMode === 2 ? 'Remote' : workMode === 3 ? 'Meeting' : workMode === 4 ? 'Offsite' : 'Office',
+            avatar: r.profileImage || null,
+            latitude: r.latitude ?? r.Latitude ?? null,
+            longitude: r.longitude ?? r.Longitude ?? null,
+            isAway: r.isAway ?? r.IsAway ?? false,
+            raw: r,
+          };
+        });
 
-        // debug log removed
         setAttendanceLogs(mappedRecords);
 
         // Map corrections from API
@@ -133,7 +144,8 @@ const AttendanceDashboard = () => {
           avatar: c.userId?.profileImage || null,
         })));
       } catch (err) {
-        // debug error removed
+        console.error('Fetch error:', err);
+        setAttendanceLogs([]);
       } finally {
         setLoading(false);
       }
@@ -144,9 +156,10 @@ const AttendanceDashboard = () => {
   // --- DYNAMIC SEARCH LOGIC ---
   const filteredLogs = useMemo(() => {
     return attendanceLogs.filter(log =>
-      log.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.status.toLowerCase().includes(searchQuery.toLowerCase())
+        log.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        log.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        log.status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        log.type?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [searchQuery, attendanceLogs]);
 
@@ -327,8 +340,9 @@ const AttendanceDashboard = () => {
                     <th className="px-6 py-4 text-xs font-semibold text-slate-600">Employee</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-600">Check In</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-600">Check Out</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-slate-600">Duration</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-600">Status</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-600">Mode</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-slate-600">Work Mode</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -353,11 +367,14 @@ const AttendanceDashboard = () => {
                         <span className="text-sm text-slate-800">{log.checkIn}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-slate-400">{log.checkOut}</span>
+                        <span className="text-sm text-slate-800">{log.checkOut}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-slate-800">{log.duration}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          log.status.includes('Late') ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                          log.status === 'Late' ? 'bg-amber-100 text-amber-700' : log.status === 'Absent' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
                         }`}>
                           {log.status}
                         </span>
