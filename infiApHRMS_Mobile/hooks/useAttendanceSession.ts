@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppState } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
+import { fetchPunchStatus } from '../services/auth';
 
 const STORAGE_KEY = 'employee-attendance-session-v1';
 
@@ -74,6 +75,62 @@ const loadSession = async (date = new Date()) => {
   return session;
 };
 
+const syncSessionWithBackend = async (date = new Date()) => {
+  try {
+    const response = await fetchPunchStatus();
+    const punchType = response.data.PunchType;
+    
+    // PunchType 3 means no punch/reset, or if no data exists
+    if (punchType === 3 || !response.data.PunchDateTime || response.data.PunchDateTime === 'N/A') {
+      // Reset local session since backend has no punch data
+      const emptySession = createEmptySession(date);
+      await persistSession(emptySession);
+      return emptySession;
+    }
+    
+    // If backend has check-in (PunchType 1) or check-out (PunchType 2), sync local state
+    const localSession = await readStoredSession(date);
+    const todayKey = getDateKey(date);
+    
+    if (localSession.dateKey !== todayKey) {
+      // Different day, create new session
+      return createEmptySession(date);
+    }
+    
+    // Treat backend punch status as the source of truth. Local state can be stale
+    // if a previous checkout was shown before the backend record was available.
+    if (punchType === 1) {
+      const syncedSession: AttendanceSession = {
+        ...localSession,
+        checkedIn: true,
+        checkedOut: false,
+        checkInSnapshot: localSession.checkInSnapshot ?? {
+          time: response.data.PunchDateTime.split(' ')[1] || '',
+        },
+        checkOutSnapshot: null,
+      };
+      await persistSession(syncedSession);
+      return syncedSession;
+    } else if (punchType === 2) {
+      const syncedSession: AttendanceSession = {
+        ...localSession,
+        checkedIn: true,
+        checkedOut: true,
+        checkOutSnapshot: localSession.checkOutSnapshot ?? {
+          time: response.data.PunchDateTime.split(' ')[1] || '',
+        },
+      };
+      await persistSession(syncedSession);
+      return syncedSession;
+    }
+    
+    return localSession;
+  } catch (error) {
+    // If sync fails, return local session
+    return await readStoredSession(date);
+  }
+};
+
 const getDelayUntilNextReset = () => {
   const now = new Date();
   const nextMidnight = new Date(now);
@@ -86,7 +143,7 @@ export const useAttendanceSession = () => {
   const [loading, setLoading] = useState(true);
 
   const refreshSession = useCallback(async () => {
-    const nextSession = await loadSession();
+    const nextSession = await syncSessionWithBackend();
     setSession(nextSession);
     setLoading(false);
     return nextSession;

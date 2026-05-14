@@ -28,7 +28,7 @@ export default function LeaveManagement() {
     },
     {
       id: 'approvals',
-      title: 'Leave Approvals',
+      title: 'Leave Approvals / Rejections',
       subtitle: 'Approve/reject leaves',
       icon: 'checkmark-circle-outline',
       color: '#4f39f6',
@@ -65,7 +65,7 @@ export default function LeaveManagement() {
             >
               <View style={styles.cardLeft}>
                 <View style={[styles.iconBox, { backgroundColor: `${item.color}10` }]}>
-                  <Ionicons name={item.icon as any} size={24} color={item.color} />
+                  <Ionicons name={item.icon as any} size={20} color={item.color} />
                 </View>
                 <View style={styles.cardInfo}>
                   <Text style={styles.cardTitle}>{item.title}</Text>
@@ -143,8 +143,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconBox: {
-    width: 52,
-    height: 52,
+    width: 45,
+    height: 45,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
@@ -154,13 +154,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#1e293b',
     marginBottom: 4,
   },
   cardSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#64748b',
   },
 });

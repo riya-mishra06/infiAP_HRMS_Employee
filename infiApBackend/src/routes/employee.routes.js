@@ -11,13 +11,13 @@ const { verifyJWT } = require("../middlewares/auth.middleware");
 router.get("/dashboard/home", verifyJWT, employeeController.getDashboardHome);
 
 // Employee Punch (IN / OUT)
-router.post("/emp-punch", employeeController.empPunch);
+router.post("/emp-punch", verifyJWT, employeeController.empPunch);
 
 // Get Attendance History with Check-in/Check-out times
-router.get("/attendance-history", employeeController.getAttendanceHistory);
+router.post("/attendance-history", verifyJWT, employeeController.getAttendanceHistory);
 
 // Get User recent Punch Status
-router.get("/punch-status", employeeController.getPunchStatus);
+router.get("/punch-status", verifyJWT, employeeController.getPunchStatus);
 
 // Get Employee Leave Balance
 router.get("/getemployeeleavebalance", employeeController.getEmployeeLeaveBalance);
@@ -57,25 +57,25 @@ router.post("/allapprove", employeeController.approveActivity);
 router.get("/directors", employeeController.getDirectors);
 
 // Get Profile Header Info
-router.get("/profile/header", employeeController.getProfileHeader);
+router.get("/profile/header", verifyJWT, employeeController.getProfileHeader);
 
 // Get Personal Information
-router.get("/profile/personal", employeeController.getPersonalInformation);
+router.get("/profile/personal", verifyJWT, employeeController.getPersonalInformation);
 
 // Get Professional Information
-router.get("/profile/professional", employeeController.getProfessionalInformation);
+router.get("/profile/professional", verifyJWT, employeeController.getProfessionalInformation);
 
 // Get Account Information
-router.get("/profile/account", employeeController.getAccountInformation);
+router.get("/profile/account", verifyJWT, employeeController.getAccountInformation);
 
 // Get Profile Documents
-router.get("/profile/documents", employeeController.getProfileDocuments);
+router.get("/profile/documents", verifyJWT, employeeController.getProfileDocuments);
 
 // Get Profile Activity Feed
-router.get("/profile/activity", employeeController.getProfileActivityFeed);
+router.get("/profile/activity", verifyJWT, employeeController.getProfileActivityFeed);
 
 // Get Notification Settings
-router.get("/profile/notifications", employeeController.getNotificationSettings);
+router.get("/profile/notifications", verifyJWT, employeeController.getNotificationSettings);
 
 // Edit Personal Profile
 router.post("/profile/edit", employeeController.editProfile);

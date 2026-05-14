@@ -1089,20 +1089,127 @@ exports.getAttendanceHistory = async (req, res) => {
         const { fromDate, toDate } = req.body;
         const userId = req.user ? req.user._id : "656b23d91f4a9b2b2c3d4e5f";
 
-        // Mocking the data based on filter
-        // In a real app, you would query the Punch model using date ranges
-        const attendanceLog = [
-            { date: "20-Mar-2026", checkIn: "09:05 AM", checkOut: "06:02 PM", status: "Present", isLate: false },
-            { date: "19-Mar-2026", checkIn: "09:15 AM", checkOut: "06:10 PM", status: "Present", isLate: true },
-            { date: "18-Mar-2026", checkIn: "08:55 AM", checkOut: "05:55 PM", status: "Present", isLate: false },
-            { date: "17-Mar-2026", checkIn: "N/A", checkOut: "N/A", status: "Absent", isLate: false }
-        ];
+        // Set default date range to last 30 days if not provided
+        const endDate = toDate ? new Date(toDate) : new Date();
+        const startDate = fromDate ? new Date(fromDate) : moment().subtract(30, 'days').toDate();
+
+        // Fetch all punches for the user within the date range
+        const punches = await Punch.find({
+            userId,
+            PunchTime: { $gte: startDate, $lte: endDate }
+        }).sort({ PunchTime: 1 });
+
+        // Group punches by date
+        const punchesByDate = {};
+        punches.forEach(punch => {
+            const dateKey = moment(punch.PunchTime).format('DD-MMM-YYYY');
+            if (!punchesByDate[dateKey]) {
+                punchesByDate[dateKey] = [];
+            }
+            punchesByDate[dateKey].push(punch);
+        });
+
+        // Generate attendance log for each day in the range
+        const attendanceLog = [];
+        const presentDays = [];
+        const absentDays = [];
+        const lateDays = [];
+        const missedDays = [];
+        let totalMinutesWorked = 0;
+
+        const currentDate = moment(startDate);
+        const endMoment = moment(endDate);
+
+        while (currentDate.isSameOrBefore(endMoment, 'day')) {
+            const dateKey = currentDate.format('DD-MMM-YYYY');
+            const dayPunches = punchesByDate[dateKey] || [];
+
+            let checkInTime = 'N/A';
+            let checkOutTime = 'N/A';
+            let status = 'Absent';
+            let isLate = false;
+            let workingHours = '0h 0m';
+
+            if (dayPunches.length > 0) {
+                // Find first check-in (PunchType 1)
+                const checkInPunch = dayPunches.find(p => p.PunchType === 1);
+                // Find last check-out (PunchType 2)
+                const checkOutPunch = [...dayPunches].reverse().find(p => p.PunchType === 2);
+
+                if (checkInPunch) {
+                    checkInTime = moment(checkInPunch.PunchTime).format('hh:mm A');
+                    
+                    // Check if late (after 10:00 AM)
+                    const checkInHour = checkInPunch.PunchTime.getHours();
+                    const checkInMinute = checkInPunch.PunchTime.getMinutes();
+                    if (checkInHour > 10 || (checkInHour === 10 && checkInMinute > 0)) {
+                        isLate = true;
+                        status = 'Late';
+                    } else {
+                        status = 'Present';
+                    }
+                }
+
+                if (checkOutPunch) {
+                    checkOutTime = moment(checkOutPunch.PunchTime).format('hh:mm A');
+                }
+
+                // Calculate working hours if both check-in and check-out exist
+                if (checkInPunch && checkOutPunch) {
+                    const diffMs = checkOutPunch.PunchTime - checkInPunch.PunchTime;
+                    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                    totalMinutesWorked += diffMinutes;
+                    
+                    const hours = Math.floor(diffMinutes / 60);
+                    const minutes = diffMinutes % 60;
+                    workingHours = `${hours}h ${minutes}m`;
+                } else if (checkInPunch && !checkOutPunch) {
+                    // Check-in but no check-out - Missed
+                    status = 'Missed';
+                    missedDays.push(dateKey);
+                } else if (!checkInPunch && checkOutPunch) {
+                    // Check-out but no check-in - Missed
+                    status = 'Missed';
+                    missedDays.push(dateKey);
+                }
+
+                if (status === 'Present') {
+                    presentDays.push(dateKey);
+                } else if (status === 'Late') {
+                    lateDays.push(dateKey);
+                }
+            } else {
+                // No punches for this day - check if it's a weekend or holiday
+                const dayOfWeek = currentDate.day();
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    status = 'Weekend';
+                } else {
+                    absentDays.push(dateKey);
+                }
+            }
+
+            attendanceLog.push({
+                date: dateKey,
+                checkIn: checkInTime,
+                checkOut: checkOutTime,
+                status: status,
+                isLate: isLate,
+                workingHours: workingHours
+            });
+
+            currentDate.add(1, 'day');
+        }
+
+        // Calculate summary
+        const totalHours = Math.floor(totalMinutesWorked / 60);
+        const totalMinutes = totalMinutesWorked % 60;
 
         const summary = {
-            totalHoursWorking: "165h 30m",
-            presentDayCount: 22,
-            absentDayCount: 2,
-            lateDayCount: 5
+            totalHoursWorking: `${totalHours}h ${totalMinutes}m`,
+            presentDayCount: presentDays.length,
+            absentDayCount: absentDays.length,
+            lateDayCount: lateDays.length,
+            missedDayCount: missedDays.length
         };
 
         res.status(200).json({
@@ -1686,7 +1793,7 @@ exports.getAttendanceHistory = async (req, res) => {
 
             if (record.checkInTime && record.checkOutTime) {
                 status = 'Present';
-                const diffMs = record.checkOutTime - record.checkInTime;
+                const diffMs = Math.max(0, record.checkOutTime - record.checkInTime);
                 const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
                 const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
                 duration = `${diffHours}h ${diffMinutes}m`;

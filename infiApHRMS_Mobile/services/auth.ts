@@ -383,7 +383,7 @@ export const fetchAttendanceSummary = async () => {
 };
 
 export const submitEmployeePunch = async (payload: PunchPayload) => {
-  const headers = await getOptionalAuthHeaders();
+  const headers = await getAuthHeaders();
   return request<{
     status: string;
     message: string;
@@ -413,31 +413,30 @@ export type AttendanceRecord = {
   checkOutTime: string;
   status: 'Present' | 'Late' | 'Absent' | 'Pending';
   duration: string;
-  latitude?: number;
-  longitude?: number;
-  workMode?: number;
 };
 
 export const fetchAttendanceHistory = async (month?: string, year?: string) => {
-  const headers = await getOptionalAuthHeaders();
-  let path = '/attendance-history';
-  if (month && year) {
-    path += `?month=${month}&year=${year}`;
-  }
+  const headers = await getAuthHeaders();
+  const queryParams = new URLSearchParams();
+  if (month) queryParams.append('month', month);
+  if (year) queryParams.append('year', year);
+  const queryString = queryParams.toString();
+  const path = `/attendance-history${queryString ? `?${queryString}` : ''}`;
+
   return request<{
     status: string;
     statusCode: number;
     data: {
-      records: AttendanceRecord[];
       summary: {
         presentDays: number;
         lateDays: number;
         absentDays: number;
         totalHours: number;
       };
+      records: AttendanceRecord[];
     };
   }>(path, {
-    method: 'GET',
+    method: 'POST',
     headers,
   });
 };
@@ -508,6 +507,21 @@ export const fetchAllEmployees = async () => {
     statusCode: number;
     data: DirectoryEmployee[];
   }>('/directors', {
+    method: 'GET',
+    headers,
+  });
+};
+
+export const fetchPunchStatus = async () => {
+  const headers = await getAuthHeaders();
+  return request<{
+    status: string;
+    statusCode: number;
+    data: {
+      PunchType: number;
+      PunchDateTime: string;
+    };
+  }>('/punch-status', {
     method: 'GET',
     headers,
   });

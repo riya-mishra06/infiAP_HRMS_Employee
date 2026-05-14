@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Platform, StatusBar, Modal, ActivityIndicator, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Platform, StatusBar, Modal, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import { BottomNav } from '../../components/BottomNav';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/layout/Header';
@@ -18,6 +20,163 @@ import Animated, {
 } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
+
+const formatFileName = (month: string) => `infiap-payslip-${month.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+
+const buildPayslipHtml = ({
+  month,
+  salary,
+  payDate,
+}: {
+  month: string;
+  salary: string;
+  payDate: string;
+}) => `
+  <!doctype html>
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          color: #0f172a;
+          padding: 36px;
+        }
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          border-bottom: 2px solid #4f46e5;
+          padding-bottom: 20px;
+          margin-bottom: 28px;
+        }
+        .brand {
+          font-size: 28px;
+          font-weight: 800;
+          color: #4f46e5;
+        }
+        .muted {
+          color: #64748b;
+          font-size: 13px;
+          margin-top: 4px;
+        }
+        .badge {
+          background: #dcfce7;
+          color: #15803d;
+          font-weight: 800;
+          padding: 8px 14px;
+          border-radius: 8px;
+          font-size: 12px;
+        }
+        .summary {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 20px;
+          margin-bottom: 24px;
+        }
+        .summary-title {
+          color: #64748b;
+          font-size: 13px;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+        .amount {
+          font-size: 36px;
+          font-weight: 900;
+          margin-top: 8px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 12px;
+        }
+        th {
+          text-align: left;
+          background: #eef2ff;
+          color: #3730a3;
+          padding: 12px;
+          font-size: 13px;
+        }
+        td {
+          border-bottom: 1px solid #e2e8f0;
+          padding: 12px;
+          font-size: 14px;
+        }
+        td:last-child,
+        th:last-child {
+          text-align: right;
+        }
+        .deduction {
+          color: #dc2626;
+        }
+        .total {
+          margin-top: 22px;
+          display: flex;
+          justify-content: space-between;
+          background: #4f46e5;
+          color: white;
+          border-radius: 12px;
+          padding: 16px 18px;
+          font-size: 18px;
+          font-weight: 800;
+        }
+        .footer {
+          margin-top: 28px;
+          color: #64748b;
+          font-size: 12px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div>
+          <div class="brand">infiAp HRMS</div>
+          <div class="muted">Salary Slip • ${month}</div>
+          <div class="muted">Pay Date: ${payDate}</div>
+        </div>
+        <div class="badge">PAID</div>
+      </div>
+
+      <div class="summary">
+        <div class="summary-title">Net Payable Salary</div>
+        <div class="amount">${salary}.00</div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Earnings</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Basic Salary</td><td>₹25,000.00</td></tr>
+          <tr><td>HRA (House Rent Allowance)</td><td>₹0.00</td></tr>
+          <tr><td>Conv. Allowance</td><td>₹0.00</td></tr>
+          <tr><td>Special Allowance</td><td>₹0.00</td></tr>
+          <tr><td class="deduction">Professional Tax (PT)</td><td class="deduction">-₹0.00</td></tr>
+          <tr><td class="deduction">Other Deductions</td><td class="deduction">-₹0.00</td></tr>
+        </tbody>
+      </table>
+
+      <div class="total">
+        <span>Total Net Pay</span>
+        <span>₹25,000.00</span>
+      </div>
+
+      <div class="footer">This computer-generated payslip does not require a signature.</div>
+    </body>
+  </html>
+`;
+
+const createPayslipPdf = async (month: string, salary: string, payDate: string) => {
+  const result = await Print.printToFileAsync({
+    html: buildPayslipHtml({ month, salary, payDate }),
+    base64: false,
+  });
+  return result.uri;
+};
 
 
 
@@ -54,7 +213,7 @@ const generateHistoryData = () => {
 export default function PayrollDashboard() {
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [successVisible, setSuccessVisible] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   const [historyData] = useState(() => generateHistoryData());
   
@@ -65,22 +224,44 @@ export default function PayrollDashboard() {
   const currentSalary = '₹25,000';
   const payDate = `${now.toLocaleString('en-US', { month: 'long' })} 9, ${now.getFullYear()}`;
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    if (downloading) return;
     setDownloading(true);
-    setTimeout(() => {
+    try {
+      const html = buildPayslipHtml({ month: currentMonth, salary: currentSalary, payDate });
+      // Open the native print dialog which has a built-in "Save as PDF" option
+      // on both iOS (AirPrint -> Save to Files) and Android (PDF Printer -> Save).
+      await Print.printAsync({ html });
+    } catch (error: any) {
+      // User cancelling the print dialog throws; ignore that case.
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/cancel|dismiss/i.test(message)) {
+        Alert.alert('Download Failed', message || 'Unable to create the salary slip PDF.');
+      }
+    } finally {
       setDownloading(false);
-      setSuccessVisible(true);
-      setTimeout(() => setSuccessVisible(false), 2000);
-    }, 1500);
+    }
   };
 
   const handleShare = async () => {
     try {
-      await Share.share({
-        message: 'My Salary Slip for October 2023: $3,500.00. (Simulated Link: payslip.infiap.com/oct23)',
+      setSharing(true);
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Sharing Unavailable', 'PDF sharing is not available on this device.');
+        return;
+      }
+
+      const pdfUri = await createPayslipPdf(currentMonth, currentSalary, payDate);
+      await Sharing.shareAsync(pdfUri, {
+        mimeType: 'application/pdf',
+        dialogTitle: `${currentMonth} Salary Slip`,
+        UTI: 'com.adobe.pdf',
       });
     } catch (error) {
-      console.log(error);
+      Alert.alert('Share Failed', error instanceof Error ? error.message : 'Unable to share the salary slip PDF.');
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -126,7 +307,7 @@ export default function PayrollDashboard() {
             >
               <TouchableOpacity style={styles.actionBtn} onPress={action.action}>
                 <View style={[styles.actionIconCircle, { backgroundColor: `${action.color}15` }]}>
-                  {action.id === 'download' && downloading ? (
+                  {(action.id === 'download' && downloading) || (action.id === 'share' && sharing) ? (
                     <ActivityIndicator color={action.color} />
                   ) : (
                     <Ionicons name={action.icon as any} size={28} color={action.color} />
@@ -244,15 +425,6 @@ export default function PayrollDashboard() {
 
       <BottomNav />
 
-      {/* Success Animation */}
-      {successVisible && (
-        <View style={styles.successOverlay} pointerEvents="none">
-          <Animated.View entering={ZoomIn} exiting={ZoomOut} style={styles.successInfo}>
-            <Ionicons name="checkmark-circle" size={60} color="#22c55e" />
-            <Text style={styles.successText}>Salary Slip Downloaded ✅</Text>
-          </Animated.View>
-        </View>
-      )}
     </View>
   );
 }
