@@ -94,15 +94,7 @@ const Navbar = ({ setMobileMenuOpen }) => {
           <Menu size={24} />
         </button>
         
-        {/* Search */}
-        <div className="relative group w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8896C0] group-hover:text-[#4E63F0] transition-colors" size={18} />
-          <input
-            type="text"
-            placeholder="Search employees, departments, payroll..."
-            className="w-full bg-[#F4F7FD] border border-[#E6ECF9] rounded-xl pl-12 pr-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#4E63F0]/15 transition-all placeholder:text-[#93A0C7]"
-          />
-        </div>
+
       </div>
 
       {/* Right Section */}
