@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
-  withTiming, 
   withSpring,
-  FadeInDown,
-  LinearTransition
+  FadeIn
 } from 'react-native-reanimated';
 import { useLeave, LeaveRequest } from '../../context/LeaveContext';
 import { BottomNav } from '../../components/BottomNav';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/layout/Header';
 
 const { width } = Dimensions.get('window');
@@ -30,7 +26,7 @@ export default function LeaveApprovals() {
     const tabIndex = TABS.indexOf(activeTab);
     indicatorPosition.value = withSpring(tabIndex * TAB_WIDTH, {
       damping: 20,
-      stiffness: 150,
+      stiffness: 180,
     });
   }, [activeTab]);
 
@@ -114,28 +110,31 @@ export default function LeaveApprovals() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        itemLayoutAnimation={LinearTransition.springify().damping(15)}
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <Ionicons name="documents-outline" size={48} color="#cbd5e1" />
             <Text style={styles.emptyText}>No records found in this category.</Text>
           </View>
         )}
-        renderItem={({ item, index }) => {
+        renderItem={({ item }) => {
           const statusColors = getStatusColor(item.status);
           const iconName = getIconForType(item.type);
 
           return (
             <Animated.View 
-              entering={FadeInDown.delay(index * 100).springify().damping(15)}
+              entering={FadeIn.duration(250)}
               style={styles.card}
             >
+              {/* Profile & Status Row */}
               <View style={styles.cardHeader}>
                 <View style={styles.employeeInfo}>
                   <View style={styles.avatarPlaceholder}>
-                    <Text style={styles.avatarInitial}>{item.employeeName?.charAt(0) || 'E'}</Text>
+                    <Ionicons name="person" size={18} color="#64748b" />
                   </View>
-                  <Text style={styles.employeeName}>{item.employeeName || 'Unknown Employee'}</Text>
+                  <View>
+                    <Text style={styles.employeeName}>{item.employeeName || 'You'}</Text>
+                    <Text style={styles.employeeRole}>Employee</Text>
+                  </View>
                 </View>
                 <View style={[styles.badge, { backgroundColor: statusColors.bg }]}>
                   <Text style={[styles.badgeText, { color: statusColors.text }]}>
@@ -146,9 +145,10 @@ export default function LeaveApprovals() {
 
               <View style={styles.divider} />
 
+              {/* Leave Details */}
               <View style={styles.cardBody}>
                 <View style={styles.iconBox}>
-                  <Ionicons name={iconName} size={28} color="#4f39f6" />
+                  <Ionicons name={iconName} size={24} color="#4f39f6" />
                 </View>
                 <View style={styles.infoBox}>
                   <Text style={styles.cardTitle}>{item.type}</Text>
@@ -156,9 +156,24 @@ export default function LeaveApprovals() {
                 </View>
               </View>
 
+              {/* Approver Info for Approved/Rejected */}
+              {item.approverName && (
+                <View style={styles.approverBox}>
+                  <Ionicons 
+                    name={item.status === 'REJECTED' ? 'close-circle' : 'checkmark-circle'} 
+                    size={14} 
+                    color={item.status === 'REJECTED' ? '#ef4444' : '#22c55e'} 
+                  />
+                  <Text style={styles.approverText}>
+                    {item.status === 'REJECTED' ? 'Rejected' : 'Approved'} by <Text style={styles.approverName}>{item.approverName}</Text>
+                  </Text>
+                </View>
+              )}
+
+              {/* Rejection Reason */}
               {item.status === 'REJECTED' && item.rejectionReason && (
                 <View style={styles.reasonBox}>
-                   <Ionicons name="information-circle-outline" size={16} color="#ef4444" />
+                   <Ionicons name="alert-circle" size={16} color="#ef4444" />
                    <Text style={styles.reasonText}>{item.rejectionReason}</Text>
                 </View>
               )}
@@ -175,11 +190,6 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0f172a',
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -211,7 +221,7 @@ const styles = StyleSheet.create({
     height: 3,
   },
   indicator: {
-    width: 24, // Narrow indicator
+    width: 24,
     height: 3,
     backgroundColor: '#4f39f6',
     borderRadius: 2,
@@ -237,10 +247,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 16,
     padding: 16,
-    shadowColor: '#4f39f6',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
-    shadowRadius: 10,
+    shadowRadius: 8,
     elevation: 2,
   },
   cardHeader: {
@@ -253,23 +263,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarPlaceholder: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#f1f5f9',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#eef2ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-  },
-  avatarInitial: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#64748b',
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
   },
   employeeName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#1e293b',
+  },
+  employeeRole: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginTop: 2,
   },
   badge: {
     paddingHorizontal: 10,
@@ -285,25 +297,23 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#f1f5f9',
-    marginTop: 14,
-    marginBottom: 14,
+    marginTop: 12,
+    marginBottom: 12,
   },
   cardBody: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: '#eef2ff', 
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e0e7ff',
   },
   infoBox: {
-    marginLeft: 14,
+    marginLeft: 12,
     justifyContent: 'center',
     flex: 1,
   },
@@ -311,25 +321,43 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#1e293b',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   cardDates: {
     fontSize: 13,
     color: '#64748b',
     fontWeight: '500',
   },
+  approverBox: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  approverText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  approverName: {
+    fontWeight: '700',
+    color: '#1e293b',
+  },
   reasonBox: {
-    marginTop: 14,
-    backgroundColor: '#fff5f5',
+    marginTop: 10,
+    backgroundColor: '#fef2f2',
     padding: 10,
     borderRadius: 8,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    borderLeftWidth: 3,
+    borderLeftColor: '#ef4444',
   },
   reasonText: {
     fontSize: 13,
     color: '#991b1b',
-    marginLeft: 6,
+    marginLeft: 8,
     flex: 1,
+    lineHeight: 18,
   },
 });

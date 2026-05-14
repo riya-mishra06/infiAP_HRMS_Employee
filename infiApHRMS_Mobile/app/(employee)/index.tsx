@@ -342,10 +342,6 @@ export default function EmployeeDashboard() {
                 </View>
                 <Text style={styles.bannerTitle}>{welcomeTitle}</Text>
                 <Text style={styles.bannerSubtitle}>{welcomeSubTitle}</Text>
-                <TouchableOpacity style={styles.sendWelcomeBtn}>
-                  <Text style={styles.sendWelcomeText}>Send Welcome </Text>
-                  <Ionicons name="paper-plane" size={12} color="#2e4ce6" />
-                </TouchableOpacity>
               </View>
 
               {/* Check-In Section */}

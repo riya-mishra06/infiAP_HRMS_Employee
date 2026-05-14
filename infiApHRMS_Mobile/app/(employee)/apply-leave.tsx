@@ -18,7 +18,7 @@ export default function ApplyLeave() {
   const [leaveType, setLeaveType] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [dateMode, setDateMode] = useState<'single' | 'range'>('single');
+  const [dateMode, setDateMode] = useState<'single' | 'range' | 'half'>('single');
   const [reason, setReason] = useState('');
   const [notifyManager, setNotifyManager] = useState(true);
   const [isTypeModalVisible, setIsTypeModalVisible] = useState(false);
@@ -40,7 +40,7 @@ export default function ApplyLeave() {
     { label: 'Casual Leave', icon: 'cafe-outline', color: '#f59e0b' },
     { label: 'Sick Leave', icon: 'medical-outline', color: '#ef4444' },
     { label: 'Paid Leave', icon: 'cash-outline', color: '#10b981' },
-    { label: 'Earned Leave', icon: 'star-outline', color: '#6366f1' },
+    { label: 'Half Day Leave', icon: 'time-outline', color: '#6366f1' },
     { label: 'Maternity/Paternity Leave', icon: 'heart-outline', color: '#ec4899' },
   ];
 
@@ -75,7 +75,7 @@ export default function ApplyLeave() {
     if (calendarTarget === 'start') {
       setStartDate(dateString);
 
-      if (dateMode === 'single' || !endDate || new Date(endDate) < new Date(dateString)) {
+      if (dateMode === 'single' || dateMode === 'half' || !endDate || new Date(endDate) < new Date(dateString)) {
         setEndDate(dateString);
       }
     } else {
@@ -89,7 +89,7 @@ export default function ApplyLeave() {
     if (isSubmitting) return;
 
     // Step 6: System Validation (from Flowchart)
-    const finalEndDate = dateMode === 'single' ? startDate : endDate;
+    const finalEndDate = dateMode === 'range' ? endDate : startDate;
 
     if (!leaveType || !startDate || !finalEndDate || !reason) {
       alert('Please fill in all required fields');
@@ -110,7 +110,9 @@ export default function ApplyLeave() {
 
     // Leave balance check
     const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const diffDays = dateMode === 'half'
+      ? 0.5
+      : Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     const typeKey = leaveType.toLowerCase().split(' ')[0] as keyof typeof balances;
     if (balances[typeKey] !== undefined && diffDays > balances[typeKey]) {
       alert(`Insufficient ${leaveType} balance. Available: ${balances[typeKey]} days.`);
@@ -122,7 +124,7 @@ export default function ApplyLeave() {
       setIsSubmitting(true);
 
       await applyLeave({
-        type: leaveType,
+        type: dateMode === 'half' ? `${leaveType} (Half Day)` : leaveType,
         startDate,
         endDate: finalEndDate,
         reason,
@@ -222,7 +224,7 @@ export default function ApplyLeave() {
             </TouchableOpacity>
 
             <View style={styles.row}>
-              <View style={dateMode === 'single' ? styles.fullWidth : styles.halfWidth}>
+              <View style={dateMode === 'range' ? styles.halfWidth : styles.fullWidth}>
                 <Text style={styles.label}>Start Date</Text>
                 <TouchableOpacity 
                   style={styles.inputWrap} 
@@ -271,6 +273,17 @@ export default function ApplyLeave() {
               >
                 <Ionicons name="today-outline" size={16} color={dateMode === 'single' ? '#fff' : '#64748b'} />
                 <Text style={[styles.dateModeText, dateMode === 'single' && styles.dateModeTextActive]}>Single day</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.dateModeButton, dateMode === 'half' && styles.dateModeButtonActive]}
+                activeOpacity={0.75}
+                onPress={() => {
+                  setDateMode('half');
+                  if (startDate) setEndDate(startDate);
+                }}
+              >
+                <Ionicons name="time-outline" size={16} color={dateMode === 'half' ? '#fff' : '#64748b'} />
+                <Text style={[styles.dateModeText, dateMode === 'half' && styles.dateModeTextActive]}>Half day</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.dateModeButton, dateMode === 'range' && styles.dateModeButtonActive]}
@@ -369,6 +382,10 @@ export default function ApplyLeave() {
                     style={styles.typeOption}
                     onPress={() => {
                       setLeaveType(item.label);
+                      if (item.label === 'Half Day Leave') {
+                        setDateMode('half');
+                        if (startDate) setEndDate(startDate);
+                      }
                       setIsTypeModalVisible(false);
                     }}
                   >
@@ -408,7 +425,7 @@ export default function ApplyLeave() {
             <View style={styles.calendarModalContent}>
               <View style={styles.modalHeader}>
                 <View style={styles.modalHandle} />
-                <Text style={styles.modalTitle}>Select {dateMode === 'single' ? 'Leave' : calendarTarget === 'start' ? 'Start' : 'End'} Date</Text>
+                <Text style={styles.modalTitle}>Select {dateMode === 'range' ? (calendarTarget === 'start' ? 'Start' : 'End') : 'Leave'} Date</Text>
               </View>
               
               <View style={styles.calendarContainer}>

@@ -66,9 +66,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       email: apiUser.email || prev.email,
       employeeId: apiUser.employeeId || prev.employeeId,
       department: apiUser.department || prev.department,
-      joiningDate: apiUser.joiningDate
-        ? new Date(apiUser.joiningDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        : prev.joiningDate,
+      joiningDate: (() => {
+        if (!apiUser.joiningDate) return prev.joiningDate;
+        const parsed = new Date(apiUser.joiningDate);
+        if (isNaN(parsed.getTime())) {
+          // Backend may already return a pre-formatted string; keep as-is.
+          return typeof apiUser.joiningDate === 'string' && apiUser.joiningDate.trim()
+            ? apiUser.joiningDate
+            : prev.joiningDate;
+        }
+        return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      })(),
       phone: apiUser.phone ?? prev.phone,
       address: apiUser.address ?? prev.address,
       avatar: apiUser.profileImage || apiUser.avatar || prev.avatar,
