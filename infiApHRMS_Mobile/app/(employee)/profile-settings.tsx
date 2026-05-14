@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch, Alert, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { BottomNav } from '../../components/BottomNav';
@@ -17,11 +17,28 @@ export default function ProfileSettingsPage() {
     </View>
   );
 
-  const renderItem = (label: string, value?: string, hasArrow?: boolean, isSwitch?: boolean, switchValue?: boolean, onSwitchChange?: (v: boolean) => void, icon?: any) => (
+  const handleContactHR = () => {
+    Alert.alert(
+      'Contact HR',
+      'Reach out to HR for any queries or assistance.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Call HR', onPress: () => Linking.openURL('tel:+919999999999') },
+        {
+          text: 'Email HR',
+          onPress: () =>
+            Linking.openURL('mailto:hr@infiap.com?subject=Employee%20Query&body=Hi%20HR%2C%0A%0A'),
+        },
+      ],
+    );
+  };
+
+  const renderItem = (label: string, value?: string, hasArrow?: boolean, isSwitch?: boolean, switchValue?: boolean, onSwitchChange?: (v: boolean) => void, icon?: any, onPress?: () => void) => (
     <TouchableOpacity 
       style={styles.itemRow} 
       activeOpacity={0.7}
       disabled={isSwitch}
+      onPress={onPress}
     >
       <View style={styles.itemContent}>
         <Text style={styles.itemLabel}>{label}</Text>
@@ -102,17 +119,10 @@ export default function ProfileSettingsPage() {
           {renderItem('Email Reports', undefined, false, true, user.settings.emailReports, (v) => updateSettings({ emailReports: v }))}
         </View>
 
-        {/* Security */}
-        <View style={styles.section}>
-          {renderSectionHeader('shield-checkmark-outline', 'Security')}
-          {renderItem('Change Password', undefined, true)}
-          {renderItem('Two-Factor Authentication', user.settings.twoFactorEnabled ? 'Currently Enabled' : 'Disabled', true)}
-        </View>
-
         {/* Support & Legal */}
         <View style={styles.section}>
           {renderSectionHeader('information-circle-outline', 'Support & Legal')}
-          {renderItem('Help Center', undefined, false, false, false, undefined, 'open-outline')}
+          {renderItem('Contact HR', 'For any queries or assistance', false, false, false, undefined, 'mail-outline', handleContactHR)}
           {renderItem('Privacy Policy', undefined, true)}
         </View>
 
@@ -122,7 +132,7 @@ export default function ProfileSettingsPage() {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 80 }} />
       </ScrollView>
       <BottomNav />
     </View>
@@ -135,7 +145,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 120,
   },
   profileSummaryRow: {
     flexDirection: 'row',
