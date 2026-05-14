@@ -62,8 +62,12 @@ import AdminDepartments from './pages/admin-dashboard/Departments';
 import CreateDepartment from './pages/admin-dashboard/department-management/CreateDepartment';
 import ManageTeams from './pages/admin-dashboard/department-management/ManageTeams';
 import CreateTeam from './pages/admin-dashboard/department-management/CreateTeam';
+import EditTeam from './pages/admin-dashboard/department-management/EditTeam';
 import AdminProfileView from './pages/admin-dashboard/profile-management/AdminProfileView';
 import AdminProfileEdit from './pages/admin-dashboard/profile-management/AdminProfileEdit';
+import ProfileSettings from './pages/admin-dashboard/profile-management/ProfileSettings';
+import AccountDetails from './pages/admin-dashboard/profile-management/AccountDetails';
+import ChangePassword from './pages/admin-dashboard/profile-management/ChangePassword';
 import SalaryStructure from './pages/admin-dashboard/payroll-management/SalaryStructure';
 import PayslipGeneration from './pages/admin-dashboard/payroll-management/PayslipGeneration';
 import FinanceReports from './pages/admin-dashboard/payroll-management/FinanceReports';
@@ -77,6 +81,7 @@ import InterviewManagement from './pages/admin-dashboard/recruitment-control/Int
 import CreateJob from './pages/admin-dashboard/recruitment-control/CreateJob';
 import CompanyPolicies from './pages/admin-dashboard/policies/CompanyPolicies';
 import SystemSettings from './pages/admin-dashboard/settings/SystemSettings';
+import AdminPreferences from './pages/admin-dashboard/settings/AdminPreferences';
 
 // Main Admin (Super Admin) Pages
 import MainDashboard from './pages/main-admin/MainDashboard';
@@ -188,11 +193,13 @@ function AppContent() {
                       <Route path="/department-management/create" element={<CreateDepartment />} />
                       <Route path="/department-management/teams" element={<ManageTeams />} />
                       <Route path="/department-management/teams/create" element={<CreateTeam />} />
+                      <Route path="/department-management/teams/edit/:id" element={<EditTeam />} />
 
                       {/* Employees */}
                       <Route path="employees" element={<EmployeeDirectory />} />
-                      <Route path="employees/view" element={<AdminProfileView />} />
-                      <Route path="employees/edit" element={<AdminProfileEdit />} />
+                      {/* Admin Profile */}
+                      <Route path="profile" element={<AdminProfileView />} />
+                      <Route path="profile/edit" element={<AdminProfileEdit />} />
                       <Route path="employees/add" element={<AddEmployee />} />
                       <Route path="employees/profile/:id" element={<EmployeeProfiles />} />
                       <Route path="employees/edit/:id" element={<EditEmployee />} />
@@ -215,6 +222,12 @@ function AppContent() {
 
                       <Route path="/policies" element={<CompanyPolicies />} />
                       <Route path="/settings" element={<SystemSettings />} />
+                      
+                      {/* Independent Profile & Account Routes */}
+                      <Route path="/profile-settings" element={<ProfileSettings />} />
+                      <Route path="/account-details" element={<AccountDetails />} />
+                      <Route path="/reset-password" element={<ChangePassword />} />
+                      <Route path="/preferences" element={<AdminPreferences />} />
                     </Routes>
                   </AdminLayout>
                 </ProtectedRoute>
@@ -260,6 +273,7 @@ function AppContent() {
                       <Route path="/departments/create" element={<CreateDepartment />} />
                       <Route path="/departments/teams" element={<ManageTeams />} />
                       <Route path="/departments/teams/create" element={<CreateTeam />} />
+                      <Route path="/departments/teams/edit/:id" element={<EditTeam />} />
 
                       <Route path="/attendance" element={<AttendanceDashboard />} />
                       <Route path="/attendance/records" element={<CheckInRecords />} />

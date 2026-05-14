@@ -25,7 +25,8 @@ const CreateDepartment = () => {
     name: '',
     description: '',
     location: '',
-    teams: ''
+    teams: '',
+    manager: ''
   });
 
   const handleSubmit = async (e) => {
@@ -56,35 +57,34 @@ const CreateDepartment = () => {
       </button>
 
       {/* Main Form Card */}
-      <div className="w-full max-w-[800px] bg-white rounded-[48px] border border-slate-50 shadow-soft overflow-hidden">
-        <div className="p-12 md:p-16">
+      <div className="w-full max-w-[700px] bg-white rounded-[32px] border border-slate-50 shadow-soft overflow-hidden">
+        <div className="p-8 md:p-10">
           
           {/* Header */}
-          <div className="flex items-center gap-8 mb-16 px-2">
-            <div className="w-20 h-20 bg-indigo-50 text-indigo-500 rounded-[28px] flex items-center justify-center shadow-lg shadow-indigo-100 transition-transform hover:scale-110">
-              <Building2 size={36} />
+          <div className="flex items-center gap-6 mb-10 px-2">
+            <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-[20px] flex items-center justify-center shadow-lg shadow-indigo-100 transition-transform hover:scale-110">
+              <Building2 size={28} />
             </div>
             <div>
-              <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2">Create Department</h1>
-              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">Setup new organizational unit</p>
+              <h1 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1">Create Department</h1>
+              <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">Setup new organizational unit</p>
             </div>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-12">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-xs font-semibold text-red-700 animate-in fade-in slide-in-from-top-2">
                 {error}
               </div>
             )}
 
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Department Name */}
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Department Name</label>
+              <div className="space-y-3">
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Department Name</label>
                 <input 
                   type="text"
                   placeholder="e.g. Engineering, Marketing..."
-                  className="w-full bg-slate-50 border border-slate-100 rounded-[24px] px-8 py-5 text-lg font-bold text-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all outline-none placeholder:text-slate-300"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-[18px] px-6 py-3.5 text-base font-bold text-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all outline-none placeholder:text-slate-300"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   required
@@ -92,12 +92,12 @@ const CreateDepartment = () => {
               </div>
 
               {/* Description */}
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Department Description</label>
+              <div className="space-y-3">
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Department Description</label>
                 <textarea 
                   placeholder="Briefly describe the department's role and objectives..."
-                  rows="4"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-[32px] px-8 py-6 text-lg font-bold text-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all outline-none placeholder:text-slate-300 resize-none"
+                  rows="3"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-[24px] px-6 py-4 text-base font-bold text-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all outline-none placeholder:text-slate-300 resize-none"
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                   required
@@ -105,29 +105,29 @@ const CreateDepartment = () => {
               </div>
 
               {/* Location & Teams */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Primary Location</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Primary Location</label>
                   <div className="relative">
-                    <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                    <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                     <input 
                       type="text"
                       placeholder="e.g. Headquarters"
-                      className="w-full bg-slate-50 border border-slate-100 rounded-[24px] pl-16 pr-8 py-5 text-lg font-bold text-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all outline-none placeholder:text-slate-300"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-[18px] pl-14 pr-6 py-3.5 text-base font-bold text-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all outline-none placeholder:text-slate-300"
                       value={formData.location}
                       onChange={(e) => setFormData({...formData, location: e.target.value})}
                       required
                     />
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Initial Teams Count</label>
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Initial Teams Count</label>
                   <div className="relative">
-                    <LayoutGrid className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                    <LayoutGrid className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                     <input 
                       type="number"
                       placeholder="0"
-                      className="w-full bg-slate-50 border border-slate-100 rounded-[24px] pl-16 pr-8 py-5 text-lg font-bold text-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all outline-none placeholder:text-slate-300"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-[18px] pl-14 pr-6 py-3.5 text-base font-bold text-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all outline-none placeholder:text-slate-300"
                       value={formData.teams}
                       onChange={(e) => setFormData({...formData, teams: e.target.value})}
                       required
@@ -135,22 +135,42 @@ const CreateDepartment = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Department Head */}
+              <div className="space-y-3">
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Department Head / Manager</label>
+                <div className="relative">
+                  <Users className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-100 rounded-[18px] pl-14 pr-8 py-3.5 text-base font-bold text-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+                    value={formData.manager}
+                    onChange={(e) => setFormData({...formData, manager: e.target.value})}
+                    required
+                  >
+                    <option value="">Select a manager...</option>
+                    {(employees || []).map(emp => (
+                      <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                </div>
+              </div>
             </div>
 
             {/* Action Bar */}
-            <div className="flex flex-col md:flex-row items-center gap-6 pt-8">
+            <div className="flex flex-col md:flex-row items-center gap-4 pt-6">
               <button 
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full md:flex-1 py-6 bg-linear-to-r from-[#4E63F0] to-[#6855E8] text-white rounded-[24px] font-black text-[10px] uppercase tracking-[0.25em] shadow-2xl shadow-indigo-100 hover:shadow-indigo-300 hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-4"
+                className="w-full md:flex-1 py-4 bg-linear-to-r from-[#4E63F0] to-[#6855E8] text-white rounded-[18px] font-black text-[9px] uppercase tracking-[0.25em] shadow-2xl shadow-indigo-100 hover:shadow-indigo-300 hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-4"
               >
-                <Check size={20} strokeWidth={3} />
+                <Check size={18} strokeWidth={3} />
                 {isSubmitting ? 'Creating...' : 'Create Department'}
               </button>
               <button 
                 type="button"
-                onClick={() => setFormData({ name: '', description: '', location: '', teams: '' })}
-                className="w-full md:w-auto px-12 py-6 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-[24px] font-black text-[10px] uppercase tracking-[0.25em] transition-all"
+                onClick={() => setFormData({ name: '', description: '', location: '', teams: '', manager: '' })}
+                className="w-full md:w-auto px-10 py-4 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-[18px] font-black text-[9px] uppercase tracking-[0.25em] transition-all"
               >
                 Cancel
               </button>

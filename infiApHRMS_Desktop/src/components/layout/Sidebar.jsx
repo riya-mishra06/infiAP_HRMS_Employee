@@ -37,7 +37,7 @@ import {
 
 import { useAuth } from '../../context/AuthContext';
 
-const Sidebar = () => {
+const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { role, logout } = useAuth();
@@ -156,14 +156,7 @@ const Sidebar = () => {
       name: 'Employees',
       icon: Users,
       path: role === 'HR' ? '/employees' : '/admin/employees',
-      key: 'employees',
-      hasSubmenu: true,
-      roles: ['HR', 'Admin'],
-      subItems: [
-        { name: 'Employee List', icon: Users, path: role === 'HR' ? '/employees' : '/admin/employees' },
-        { name: 'View Profile', icon: Users, path: role === 'HR' ? '/employees/profiles' : '/admin/employees/view' },
-        { name: 'Edit Profile', icon: FileSignature, path: role === 'HR' ? '/employees' : '/admin/employees/edit' },
-      ]
+      roles: ['HR', 'Admin']
     },
     {
       name: role === 'HR' ? 'Departments' : 'Department ',
@@ -259,7 +252,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-80 bg-white h-screen fixed left-0 top-0 border-r border-slate-200 flex flex-col z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+    <div className={`w-80 bg-white h-screen fixed left-0 top-0 border-r border-slate-200 flex flex-col z-40 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-transform duration-300 lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       {/* Premium Logo Section */}
       <div className="p-8 mb-4">
         <div className="flex items-center gap-4 mb-2">
@@ -312,6 +305,7 @@ const Sidebar = () => {
                           <li key={sub.name}>
                             <NavLink
                               to={sub.path}
+                              onClick={() => setMobileMenuOpen?.(false)}
                               className={({ isActive }) =>
                                 `flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 group ${isActive
                                   ? 'bg-indigo-50 text-indigo-600 font-black'
@@ -331,6 +325,7 @@ const Sidebar = () => {
               ) : (
                 <NavLink
                   to={item.path}
+                  onClick={() => setMobileMenuOpen?.(false)}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-5 py-3 rounded-xl transition-all duration-300 group ${isActive
                       ? 'bg-slate-900 text-white shadow-xl shadow-slate-200'

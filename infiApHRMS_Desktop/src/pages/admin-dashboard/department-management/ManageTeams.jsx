@@ -10,8 +10,8 @@ import {
   ArrowLeft,
   Filter,
   MoreVertical,
-  ShieldCheck,
-  Zap,
+  Edit2,
+  Trash2,
   LayoutGrid,
   Bell
 } from 'lucide-react';
@@ -21,9 +21,10 @@ import { useAuth } from '../../../context/AuthContext';
 const ManageTeams = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const { teams, fetchTeams, updateTeam } = useAdminDashboard();
+  const { teams, fetchTeams, updateTeam, deleteTeam } = useAdminDashboard();
   const { employees, fetchEmployees } = useEmployeeContext();
   const [activeTab, setActiveTab] = useState('All Teams');
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeTeamDetails, setActiveTeamDetails] = useState(null);
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [savingMember, setSavingMember] = useState(false);
@@ -46,9 +47,39 @@ const ManageTeams = () => {
       .sort((left, right) => String(left.name || '').localeCompare(String(right.name || '')));
   }, [employees]);
 
-  const tabs = ['All Teams', 'Development', 'QA & Testing', 'Design'];
+  const tabs = useMemo(() => {
+    const uniqueTypes = Array.from(new Set(teams.map(t => t.type || 'General')));
+    const baseTabs = ['All Teams'];
+    uniqueTypes.forEach(type => {
+      if (!baseTabs.includes(type)) baseTabs.push(type);
+    });
+    // Ensure standard tabs exist even if empty
+    ['Development', 'QA & Testing', 'Design'].forEach(type => {
+      if (!baseTabs.includes(type)) baseTabs.push(type);
+    });
+    return baseTabs;
+  }, [teams]);
 
-  const filteredTeams = activeTab === 'All Teams' ? teams : teams.filter(t => t.type === activeTab);
+  const filteredTeams = useMemo(() => {
+    let result = teams;
+    const query = searchQuery.toLowerCase().trim();
+
+    if (query) {
+      // If searching, search across ALL teams
+      result = result.filter(t => 
+        (t.name || '').toLowerCase().includes(query) || 
+        (t.lead || '').toLowerCase().includes(query) ||
+        (t.departmentName || '').toLowerCase().includes(query)
+      );
+    } else {
+      // Otherwise filter by tab
+      result = activeTab === 'All Teams' 
+        ? teams 
+        : teams.filter(t => (t.type || 'General').toLowerCase() === activeTab.toLowerCase());
+    }
+    
+    return result;
+  }, [teams, activeTab, searchQuery]);
 
   const openTeamDetails = (team) => {
     setActiveTeamDetails(team);
@@ -84,33 +115,49 @@ const ManageTeams = () => {
     fetchTeams();
   };
 
+  const handleDeleteTeam = async (teamId, teamName) => {
+    if (!window.confirm(`Are you sure you want to delete "${teamName}"?`)) return;
+    
+    const result = await deleteTeam(teamId);
+    if (!result.success) {
+      alert(result.error);
+    }
+  };
+
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 relative">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 relative">
       
       {/* Dynamic Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0">
          <div className="flex items-center gap-6">
             <button
                onClick={() => navigate(role === 'HR' ? '/departments' : '/admin/departments')}
-               className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
+               className="w-12 h-12 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
             >
-               <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
+               <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
             </button>
             <div>
-          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 underline decoration-indigo-300 underline-offset-4 uppercase">
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1 uppercase">
             Team Management Hub
                </h1>
-               <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">
-            Global Talent Inventory &amp; Identity Portfolio Nodes
+               <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] leading-none">
+            Global Talent Inventory & Identity Portfolio Nodes
                </p>
             </div>
          </div>
          <div className="flex items-center gap-4 relative group max-w-sm w-full">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
             <input
                type="text"
                placeholder="Search teams or leads..."
-               className="w-full bg-white border border-slate-100 hover:border-slate-200 focus:border-indigo-500 outline-none rounded-2xl pl-12 pr-4 py-3.5 text-xs font-black text-slate-600 transition-all shadow-soft uppercase tracking-tight"
+               value={searchQuery}
+               onChange={(e) => setSearchQuery(e.target.value)}
+               onKeyDown={(e) => {
+                 if (e.key === 'Enter' && filteredTeams.length > 0) {
+                   openTeamDetails(filteredTeams[0]);
+                 }
+               }}
+               className="w-full bg-white border border-slate-100 hover:border-slate-200 focus:border-indigo-500 outline-none rounded-xl pl-11 pr-4 py-3 text-xs font-black text-slate-600 transition-all shadow-sm uppercase tracking-tight"
             />
          </div>
       </div>
@@ -134,83 +181,66 @@ const ManageTeams = () => {
         </button>
       </div>
 
-      {/* Teams Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredTeams.map((team, idx) => (
-          <div key={idx} className="bg-white rounded-[48px] border border-slate-50 shadow-soft overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col">
-            <div className="p-10 flex-1">
-              <div className="flex justify-between items-start mb-8">
-                <div>
-                  <h3 className="text-2xl font-black text-slate-800 tracking-tight group-hover:text-indigo-600 transition-colors mb-1">{team.name}</h3>
-                  <p className="text-sm font-bold text-slate-400 italic">Lead: {team.lead}</p>
+          <div key={idx} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-300 flex flex-col">
+            <div className="p-5 flex-1">
+              <div className="flex justify-between items-start mb-4">
+                <div className="min-w-0">
+                  <h3 className="text-base font-black text-slate-800 tracking-tight group-hover:text-indigo-600 transition-colors mb-0.5 truncate">{team.name}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 italic truncate">Lead: {team.lead}</p>
                 </div>
-                <div className="flex gap-2">
-                  <button className="p-3 bg-slate-50 text-slate-300 rounded-xl hover:text-indigo-600 hover:bg-indigo-50 transition-all">
-                    <ShieldCheck size={18} />
+                <div className="flex gap-1.5 shrink-0 ml-2">
+                  <button 
+                    onClick={() => navigate(role === 'HR' ? `/departments/teams/edit/${team.id}` : `/admin/department-management/teams/edit/${team.id}`)}
+                    className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:text-indigo-600 hover:bg-indigo-50 transition-all"
+                    title="Edit Team"
+                  >
+                    <Edit2 size={14} />
                   </button>
-                  <button className="p-3 bg-slate-50 text-slate-300 rounded-xl hover:text-red-500 hover:bg-red-50 transition-all">
-                    <Zap size={18} />
+                  <button 
+                    onClick={() => handleDeleteTeam(team.id, team.name)}
+                    className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:text-red-500 hover:bg-red-50 transition-all"
+                    title="Delete Team"
+                  >
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-6 mb-10">
-                <div className="px-6 py-4 bg-indigo-50 rounded-[20px] flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-white text-indigo-600 flex items-center justify-center shadow-sm">
-                    <Users size={20} />
-                  </div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex-1 px-3 py-2 bg-indigo-50/50 rounded-xl flex items-center gap-2 border border-indigo-100/50">
+                  <Users size={12} className="text-indigo-600" />
                   <div>
-                    <h4 className="text-lg font-black text-slate-800 leading-none mb-1">{team.members}</h4>
-                    <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Members</p>
+                    <h4 className="text-xs font-black text-slate-800 leading-none">{team.members}</h4>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Members</p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => openTeamDetails(team)}
-                  className="flex-1 py-5 bg-slate-50 text-slate-500 hover:bg-indigo-600 hover:text-white transition-all rounded-[20px] font-black text-[10px] uppercase tracking-widest shadow-lg shadow-transparent hover:shadow-indigo-100 flex items-center justify-center gap-3"
-                >
-                  View Team Details
-                  <ChevronRight size={16} />
-                </button>
               </div>
 
-              {/* Key Members Sub-Section */}
-              <div className="space-y-6 pt-8 border-t border-slate-50">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block px-2">Key Members Nodes</label>
-                <div className="space-y-4">
-                  {team.keyMembers?.length > 0 ? team.keyMembers.map((member, midx) => (
-                    <div key={midx} className="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-white border border-transparent hover:border-slate-100 rounded-2xl transition-all cursor-pointer group/member">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm transition-transform group-hover/member:scale-110">
-                          <img 
-                            src={member.img} 
-                            alt={member.name} 
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'U')}&background=random&color=fff`;
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-slate-800 group-hover/member:text-indigo-600 transition-colors">{member.name}</p>
-                          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">{member.role}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-600 rounded-full">
-                        <div className="w-1 h-1 rounded-full bg-current animate-pulse"></div>
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em]">{member.status}</span>
-                      </div>
-                    </div>
-                  )) : (
-                    <div className="p-6 bg-slate-50 border border-slate-100 border-dashed rounded-2xl flex flex-col items-center justify-center text-center">
-                       <Users size={24} className="text-slate-300 mb-2" />
-                       <p className="text-xs font-bold text-slate-400">No members assigned to this team yet.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <button 
+                onClick={() => openTeamDetails(team)}
+                className="w-full py-2.5 bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white transition-all rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                View Details
+                <ChevronRight size={12} />
+              </button>
             </div>
           </div>
         ))}
+
+        {filteredTeams.length === 0 && (
+          <div className="col-span-full py-20 flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-100 border-dashed">
+             <LayoutGrid size={40} className="text-slate-200 mb-4" />
+             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No teams found matching your criteria</p>
+             <button 
+               onClick={() => { setSearchQuery(''); setActiveTab('All Teams'); }}
+               className="mt-4 text-xs font-black text-indigo-600 hover:underline uppercase tracking-widest"
+             >
+               Reset Filters
+             </button>
+          </div>
+        )}
       </div>
 
       {/* Floating CTA */}

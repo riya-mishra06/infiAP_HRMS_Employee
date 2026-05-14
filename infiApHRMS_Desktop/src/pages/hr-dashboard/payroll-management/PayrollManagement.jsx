@@ -336,6 +336,18 @@ const PayrollManagement = () => {
     }
   };
 
+  const handleDownloadPayslip = (entry) => {
+    const csvContent = `Company Name,InfiAP HRMS\nEmployee,${entry.name}\nRole,${entry.role}\nDepartment,${entry.department}\nPeriod,${entry.month}/${entry.year}\n\nBasic Salary,${entry.basicSalary}\nDeductions,${entry.deductions}\nNet Salary,${entry.netSalary}\nStatus,${entry.status}`;
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payslip_${entry.name.replace(/\s+/g, '_')}_${entry.month}_${entry.year}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification(`Downloaded payslip for ${entry.name}`);
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] w-full gap-6 pt-4 overflow-hidden">
 
@@ -436,14 +448,6 @@ const PayrollManagement = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Payroll</h1>
           <p className="text-sm text-slate-400 mt-0.5">Manage salaries, deductions, and disbursements</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/payroll/transfers')}
-            className="px-4 py-2 border border-slate-200 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            Transfer Logs
-          </button>
         </div>
       </div>
 
@@ -660,20 +664,12 @@ const PayrollManagement = () => {
                             );
                           })()}
                           {String(entry.status).toLowerCase() !== 'not assigned' && (
-                            <>
                               <button
-                                onClick={() => showNotification(`Downloading payslip for ${entry.name}`)}
+                                onClick={() => handleDownloadPayslip(entry)}
                                 className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                               >
                                 <Download size={16} />
                               </button>
-                              <button
-                                onClick={() => navigate(`/payroll/payslip/${entry.id}`)}
-                                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                              >
-                                <ArrowRight size={16} />
-                              </button>
-                            </>
                           )}
                         </div>
                       </td>

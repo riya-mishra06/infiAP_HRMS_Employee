@@ -294,130 +294,112 @@ const AdminDashboard = () => {
             </div>
          </div>
 
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="rounded-[32px] border border-slate-100 bg-white p-8 shadow-sm">
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
                <div className="flex items-center gap-3 mb-4 text-slate-400">
                   <Activity size={16} />
                   <span className="text-[10px] font-black uppercase tracking-[0.2em]">Overview</span>
                </div>
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {stats.map((stat) => (
-                     <div key={stat.label} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                        <stat.icon size={16} className="text-slate-400 mb-3" />
-                        <p className="text-2xl font-black text-slate-900 leading-none mb-1">{stat.value}</p>
+                     <div key={stat.label} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 hover:border-slate-200 hover:bg-white transition-all group cursor-default">
+                        <stat.icon size={16} className="text-slate-400 mb-3 group-hover:text-indigo-500 transition-colors" />
+                        <p className="text-xl font-black text-slate-900 leading-none mb-1">{stat.value}</p>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{stat.label}</p>
-                        <p className="mt-2 text-[9px] font-black uppercase tracking-widest text-slate-300">{stat.helper}</p>
+                        <p className="mt-2 text-[8px] font-black uppercase tracking-widest text-slate-300">{stat.helper}</p>
                      </div>
                   ))}
                   {/* Salary Assignment Card */}
-                  <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 col-span-2">
-                     <div className="flex items-center justify-between">
-                        <div>
-                           <Wallet size={16} className="text-indigo-500 mb-3" />
-                           <p className="text-lg font-black text-slate-900 leading-none mb-1">Assign Salary</p>
-                           <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Set employee salary</p>
-                        </div>
-                        <button
-                           onClick={openAssignModal}
-                           className="px-4 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-800 transition-colors"
-                        >
-                           Assign
-                        </button>
+                  <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 col-span-2 md:col-span-1 flex flex-col justify-between">
+                     <div>
+                        <Wallet size={16} className="text-indigo-500 mb-3" />
+                        <p className="text-base font-black text-slate-900 leading-none mb-1">Assign Salary</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Set payroll</p>
                      </div>
+                     <button
+                        onClick={openAssignModal}
+                        className="mt-4 w-full py-2 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-800 transition-colors"
+                     >
+                        Assign
+                     </button>
                   </div>
                </div>
             </div>
-            <div className="rounded-[32px] border border-slate-100 bg-white p-8 shadow-sm">
+            <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm flex flex-col">
                <div className="flex items-center justify-between mb-6">
                   <div>
                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Snapshot</p>
-                     <h2 className="text-xl font-black text-slate-900 mt-1">Current Month</h2>
+                     <h2 className="text-lg font-black text-slate-900 mt-1">Current Month</h2>
                   </div>
                   <Layers size={18} className="text-slate-300" />
                </div>
 
-               <div className="space-y-4 text-sm text-slate-600 font-medium">
-                  <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-                     <span>Open positions</span>
+               <div className="space-y-3 text-sm text-slate-600 font-medium flex-1">
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5">
+                     <span className="text-xs">Open positions</span>
                      <span className="font-black text-slate-900">{String(insights?.openPositions || jobs.filter(j => j.status === 'Active').length || 0).padStart(2, '0')}</span>
                   </div>
-                  <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-                     <span>Monthly payroll</span>
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5">
+                     <span className="text-xs">Monthly payroll</span>
                      <span className="font-black text-slate-900">{formatCurrency(insights?.monthlyPayroll || 0)}</span>
                   </div>
-                  <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-                     <span>Teams</span>
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5">
+                     <span className="text-xs">Teams</span>
                      <span className="font-black text-slate-900">{String(teams.length || summary.teams || 0).padStart(2, '0')}</span>
                   </div>
-                  <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-                     <span>Prepared by</span>
-                     <span className="font-black text-slate-900">{user?.name || 'Admin'}</span>
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5">
+                     <span className="text-xs">Prepared by</span>
+                     <span className="font-black text-slate-900 truncate max-w-[100px]">{user?.name || 'Admin'}</span>
                   </div>
                </div>
             </div>
          </div>
 
-         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-1 rounded-[28px] border border-slate-100 bg-white p-6 shadow-sm">
-               <div className="flex items-center justify-between mb-5">
+         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="xl:col-span-1 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+               <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xs font-black uppercase tracking-widest text-slate-700">Departments</h3>
-                  <button onClick={() => navigate('/admin/departments')} className="text-[10px] font-black uppercase tracking-widest text-indigo-600">View all</button>
+                  <button onClick={() => navigate('/admin/departments')} className="text-[9px] font-black uppercase tracking-widest text-indigo-600 hover:underline">View all</button>
                </div>
-               <div className="space-y-3">
+               <div className="space-y-2">
                   {recentDepartments.length > 0 ? recentDepartments.map((department) => (
-                     <div key={department.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                        <p className="font-black text-slate-900">{department.name}</p>
-                        <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-slate-400">{department.head}</p>
-                        <div className="mt-3 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+                     <div key={department.id} className="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 hover:bg-white transition-colors">
+                        <p className="text-sm font-black text-slate-900">{department.name}</p>
+                        <p className="mt-0.5 text-[9px] font-black uppercase tracking-widest text-slate-400">{department.head}</p>
+                        <div className="mt-2.5 flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-slate-500">
                            <span>{department.teams} teams</span>
-                           <span>{department.employees} employees</span>
+                           <span>{department.employees} members</span>
                         </div>
                      </div>
                   )) : (
-                     <p className="text-sm text-slate-400">No departments loaded.</p>
+                     <p className="text-xs text-slate-400 p-4 text-center border border-dashed rounded-xl">No departments loaded.</p>
                   )}
                </div>
             </div>
 
-            <div className="xl:col-span-1 rounded-[28px] border border-slate-100 bg-white p-6 shadow-sm">
-               <div className="flex items-center justify-between mb-5">
+            <div className="xl:col-span-1 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+               <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xs font-black uppercase tracking-widest text-slate-700">Open Jobs</h3>
-                  <button onClick={() => navigate('/admin/recruitment-control/hub')} className="text-[10px] font-black uppercase tracking-widest text-indigo-600">View all</button>
+                  <button onClick={() => navigate('/admin/recruitment-control/hub')} className="text-[9px] font-black uppercase tracking-widest text-indigo-600 hover:underline">View all</button>
                </div>
-               <div className="space-y-3">
+               <div className="space-y-2">
                   {recentJobs.length > 0 ? recentJobs.map((job) => (
-                     <div key={job.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                     <div key={job.id} className="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 hover:bg-white transition-colors">
                         <div className="flex items-start justify-between gap-4">
                            <div>
-                              <p className="font-black text-slate-900">{job.title}</p>
-                              <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-slate-400">{job.department}</p>
+                              <p className="text-sm font-black text-slate-900">{job.title}</p>
+                              <p className="mt-0.5 text-[9px] font-black uppercase tracking-widest text-slate-400">{job.department}</p>
                            </div>
-                           <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">{job.status}</span>
+                           <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">{job.status}</span>
                         </div>
-                        <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{job.applicants} applicants</p>
+                        <p className="mt-2.5 text-[8px] font-black uppercase tracking-widest text-slate-500">{job.applicants} applicants</p>
                      </div>
                   )) : (
-                     <p className="text-sm text-slate-400">No jobs loaded.</p>
+                     <p className="text-xs text-slate-400 p-4 text-center border border-dashed rounded-xl">No jobs loaded.</p>
                   )}
                </div>
             </div>
 
-            <div className="xl:col-span-1 rounded-[28px] border border-slate-100 bg-white p-6 shadow-sm">
-               <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-700">Recent Activity</h3>
-                  <Activity size={16} className="text-slate-300" />
-               </div>
-               <div className="space-y-3">
-                  {recentActivity.length > 0 ? recentActivity.map((entry) => (
-                     <div key={entry.id || entry._id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                        <p className="font-black text-slate-900">{entry.title || entry.action || 'Activity'}</p>
-                        <p className="mt-1 text-sm text-slate-500">{entry.message || entry.description || 'Live update received.'}</p>
-                     </div>
-                  )) : (
-                     <p className="text-sm text-slate-400">No recent activity.</p>
-                  )}
-               </div>
-            </div>
          </div>
 
          <div className="flex flex-wrap gap-3">

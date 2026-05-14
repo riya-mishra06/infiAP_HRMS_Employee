@@ -25,17 +25,7 @@ const AdminSidebar = () => {
 
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
-    {
-      name: 'Employees',
-      icon: Users,
-      path: '/admin/employees',
-      hasDropdown: true,
-      subItems: [
-        { name: 'Employee List', path: '/admin/employees' },
-        { name: 'View Profile', path: '/admin/employees/view' },
-        { name: 'Edit Profile', path: '/admin/employees/edit' },
-      ]
-    },
+    { name: 'Employees', icon: Users, path: '/admin/employees' },
     { name: 'Departments', icon: Building2, path: '/admin/departments' },
     { name: 'Recruitment', icon: Briefcase, path: '/admin/recruitment-control/hub' },
     { name: 'Payroll', icon: CreditCard, path: '/admin/payroll' },

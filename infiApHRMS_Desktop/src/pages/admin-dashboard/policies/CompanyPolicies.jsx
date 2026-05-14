@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Search, FileText, Clock, Loader2, X, ExternalLink } from 'lucide-react';
+import { Plus, Search, FileText, Clock, Loader2, X, ExternalLink, ShieldCheck, FileCheck, Scale } from 'lucide-react';
 import api from '../../../utils/axios';
 
 const PRIVACY_POLICY = {
@@ -121,10 +121,17 @@ const CompanyPolicies = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editingPolicyId, setEditingPolicyId] = useState(null);
+  const [newPolicyData, setNewPolicyData] = useState({
+    title: '',
+    category: 'Legal',
+    status: 'Draft',
+    content: ''
+  });
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
-  // Built-in documents
   const builtInDocs = [PRIVACY_POLICY, TERMS_OF_SERVICE];
 
   const fetchPolicies = async () => {
@@ -134,7 +141,6 @@ const CompanyPolicies = () => {
       const data = res?.data?.data || res?.data || [];
       setPolicies(data);
     } catch (err) {
-      // debug log removed
       setPolicies([]);
     } finally {
       setLoading(false);
@@ -145,13 +151,77 @@ const CompanyPolicies = () => {
     fetchPolicies();
   }, []);
 
+  const openCreateModal = () => {
+    setEditingPolicyId(null);
+    setNewPolicyData({ title: '', category: 'Legal', status: 'Draft', content: '' });
+    setCreateModalOpen(true);
+  };
+
+  const handleEditPolicy = (e, policy) => {
+    e.stopPropagation();
+    setEditingPolicyId(policy._id || policy.title);
+    setNewPolicyData({
+      title: policy.title,
+      category: policy.category || 'General',
+      status: policy.status || 'Active',
+      content: policy.content || policy.description || ''
+    });
+    setCreateModalOpen(true);
+  };
+
+  const handleDeletePolicy = (e, policyId) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this policy?')) {
+      setPolicies(prev => prev.filter(p => (p._id || p.title) !== policyId));
+    }
+  };
+
+  const handleCreatePolicy = async (e) => {
+    e.preventDefault();
+    if (!newPolicyData.title.trim() || !newPolicyData.content.trim()) return;
+
+    if (editingPolicyId) {
+      setPolicies(prev => prev.map(p => 
+        (p._id || p.title) === editingPolicyId 
+          ? { ...p, ...newPolicyData, updatedAt: new Date().toISOString() } 
+          : p
+      ));
+    } else {
+      const newPolicy = {
+        _id: Date.now().toString(),
+        ...newPolicyData,
+        updatedAt: new Date().toISOString()
+      };
+      setPolicies(prev => [newPolicy, ...prev]);
+    }
+
+    setCreateModalOpen(false);
+    setEditingPolicyId(null);
+    setNewPolicyData({ title: '', category: 'Legal', status: 'Draft', content: '' });
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingDoc(true);
+    
+    // Simulate reading the file
+    setTimeout(() => {
+      setNewPolicyData(prev => ({
+        ...prev,
+        content: prev.content + `\n\n[Attached Document: ${file.name}]`
+      }));
+      setUploadingDoc(false);
+    }, 800);
+  };
+
   const allPolicies = [...builtInDocs, ...policies];
 
   const stats = useMemo(() => ({
     total: allPolicies.length,
     active: allPolicies.filter(p => String(p.status).toLowerCase() === 'active').length,
     draft: allPolicies.filter(p => String(p.status).toLowerCase() === 'draft').length,
-  }), [policies]);
+  }), [allPolicies]);
 
   const filteredPolicies = allPolicies.filter((policy) => {
     const query = searchQuery.toLowerCase();
@@ -162,121 +232,345 @@ const CompanyPolicies = () => {
 
   const getStatusStyle = (status) => {
     const s = String(status).toLowerCase();
-    if (s === 'active') return 'bg-green-100 text-green-700';
-    if (s === 'draft') return 'bg-amber-100 text-amber-700';
-    return 'bg-gray-100 text-gray-600';
+    if (s === 'active') return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+    if (s === 'draft') return 'bg-amber-50 text-amber-600 border-amber-100';
+    return 'bg-slate-50 text-slate-500 border-slate-200';
   };
 
   const isBuiltIn = (policy) => builtInDocs.some(b => b.title === policy.title);
 
+  const getCategoryIcon = (category) => {
+    const cat = String(category).toLowerCase();
+    if (cat.includes('legal')) return Scale;
+    if (cat.includes('security')) return ShieldCheck;
+    return FileCheck;
+  };
+
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+      
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-2">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Company Policies</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage and view company policies and legal documents</p>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1 uppercase">Company Policies</h1>
+          <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] leading-none">Manage legal documents and corporate governance</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+        <div className="flex items-center gap-4">
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
             <input
               type="text"
               placeholder="Search policies..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-300 w-56"
+              className="bg-white border border-slate-100 rounded-xl pl-11 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all w-[240px] shadow-sm"
             />
           </div>
-          <button className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
-            <Plus size={18} />
+          <button 
+            onClick={openCreateModal}
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-200 active:scale-95"
+          >
+            <Plus size={16} strokeWidth={2.5} />
+            New Policy
           </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white p-4 rounded-xl border border-gray-100">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Total</p>
-          <p className="text-2xl font-semibold text-gray-900 mt-1">{stats.total}</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-2">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <FileText size={20} />
+          </div>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Documents</p>
+            <p className="text-2xl font-black text-slate-800 leading-none">{stats.total}</p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Active</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">{stats.active}</p>
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <ShieldCheck size={20} />
+          </div>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Policies</p>
+            <p className="text-2xl font-black text-emerald-600 leading-none">{stats.active}</p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Draft</p>
-          <p className="text-2xl font-semibold text-amber-600 mt-1">{stats.draft}</p>
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <Clock size={20} />
+          </div>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Drafts</p>
+            <p className="text-2xl font-black text-amber-600 leading-none">{stats.draft}</p>
+          </div>
         </div>
       </div>
 
-      {/* Policy List */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-          <span className="ml-3 text-gray-500">Loading policies...</span>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {filteredPolicies.map((policy, idx) => (
-            <div
-              key={policy._id || idx}
-              onClick={() => setSelectedPolicy(policy)}
-              className="bg-white p-5 rounded-xl border border-gray-100 hover:border-gray-200 cursor-pointer transition-colors"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-4 min-w-0">
-                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-500 shrink-0">
-                    <FileText size={18} />
+      {/* Policy Grid */}
+      <div className="px-2">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm gap-3">
+            <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading documents...</span>
+          </div>
+        ) : filteredPolicies.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm gap-4">
+            <div className="w-14 h-14 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center">
+              <FileText size={24} />
+            </div>
+            <div className="text-center">
+              <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">No policies found</h3>
+              <p className="text-xs text-slate-400 mt-1">Try adjusting your search query.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredPolicies.map((policy, idx) => {
+              const Icon = getCategoryIcon(policy.category);
+              return (
+                <div
+                  key={policy._id || idx}
+                  onClick={() => setSelectedPolicy(policy)}
+                  className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 cursor-pointer transition-all duration-300 group flex flex-col"
+                >
+                  <div className="flex items-start justify-between gap-4 mb-6">
+                    <div className="w-12 h-12 bg-slate-50 text-slate-500 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                      <Icon size={20} />
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${getStatusStyle(policy.status)}`}>
+                      {policy.status || 'Active'}
+                    </span>
                   </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-gray-900">{policy.title}</h3>
+                  
+                  <div className="mb-6 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight group-hover:text-indigo-600 transition-colors line-clamp-1">{policy.title}</h3>
                       {isBuiltIn(policy) && (
-                        <span className="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 rounded">Built-in</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md shrink-0">Default</span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 mt-0.5">{policy.category || 'General'}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{policy.category || 'General'}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-50 mt-auto relative z-10">
+                    <div className="flex items-center gap-1.5 text-slate-400">
+                      <Clock size={12} />
+                      <span className="text-[9px] font-bold uppercase tracking-widest">
+                        {policy.updatedAt ? new Date(policy.updatedAt).toLocaleDateString('en-IN') : 'Recently'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!isBuiltIn(policy) && (
+                        <>
+                          <button 
+                            onClick={(e) => handleEditPolicy(e, policy)}
+                            className="text-[9px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-700 px-2 py-1 rounded-md hover:bg-indigo-50 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            onClick={(e) => handleDeletePolicy(e, policy._id || policy.title)}
+                            className="text-[9px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-700 px-2 py-1 rounded-md hover:bg-rose-50 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                      <ExternalLink size={14} className="text-slate-300 group-hover:text-indigo-500 transition-colors ml-2" />
+                    </div>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(policy.status)}`}>
-                  {policy.status || 'Active'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <Clock size={14} />
-                  <span>Updated {policy.updatedAt ? new Date(policy.updatedAt).toLocaleDateString('en-IN') : 'Recently'}</span>
-                </div>
-                <ExternalLink size={14} className="text-gray-400" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-      {/* Policy Detail Modal */}
+      {/* Policy Modal */}
       {selectedPolicy && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedPolicy(null)} />
-          <div className="relative bg-white w-full max-w-2xl max-h-[80vh] rounded-xl shadow-xl overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedPolicy(null)} />
+          <div className="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-[32px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            
+            {/* Modal Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-8 border-b border-slate-100 bg-slate-50/50">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">{selectedPolicy.title}</h2>
-                <p className="text-sm text-gray-500">{selectedPolicy.category}</p>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${getStatusStyle(selectedPolicy.status)}`}>
+                    {selectedPolicy.status || 'Active'}
+                  </span>
+                  {isBuiltIn(selectedPolicy) && (
+                    <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg">Built-in Document</span>
+                  )}
+                </div>
+                <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight leading-none">{selectedPolicy.title}</h2>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">{selectedPolicy.category || 'General'}</p>
               </div>
               <button
                 onClick={() => setSelectedPolicy(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm shrink-0"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
-              <pre className="text-sm text-gray-600 whitespace-pre-wrap font-sans leading-relaxed">
-                {selectedPolicy.content || selectedPolicy.description || 'No content available.'}
-              </pre>
+
+            {/* Modal Content */}
+            <div className="p-8 overflow-y-auto">
+              <div className="max-w-3xl mx-auto prose prose-slate prose-sm sm:prose-base prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-a:text-indigo-600 prose-a:font-bold prose-p:text-slate-600 prose-p:font-medium prose-p:leading-relaxed">
+                <pre className="whitespace-pre-wrap font-sans text-sm text-slate-600 leading-relaxed font-medium">
+                  {selectedPolicy.content || selectedPolicy.description || 'No content available.'}
+                </pre>
+              </div>
             </div>
+            
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+               <button
+                  onClick={() => setSelectedPolicy(null)}
+                  className="px-8 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-md active:scale-95"
+               >
+                  Close Document
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Policy Modal */}
+      {createModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setCreateModalOpen(false)} />
+          <div className="relative bg-white w-full max-w-2xl max-h-[90vh] rounded-[32px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            
+            <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-100 bg-slate-50/50 shrink-0">
+              <div>
+                <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight leading-none">
+                  {editingPolicyId ? 'Edit Policy' : 'Create Policy'}
+                </h2>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">
+                  {editingPolicyId ? 'Modify existing document' : 'Add a new company policy or document'}
+                </p>
+              </div>
+              <button
+                onClick={() => setCreateModalOpen(false)}
+                className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm shrink-0"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePolicy} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 sm:p-8 overflow-y-auto space-y-6">
+                
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Policy Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Remote Work Policy 2025"
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 placeholder:text-slate-300 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all shadow-inner"
+                    value={newPolicyData.title}
+                    onChange={(e) => setNewPolicyData({...newPolicyData, title: e.target.value})}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Category</label>
+                    <div className="relative">
+                      <select
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all shadow-inner appearance-none"
+                        value={newPolicyData.category}
+                        onChange={(e) => setNewPolicyData({...newPolicyData, category: e.target.value})}
+                      >
+                        <option value="Legal">Legal</option>
+                        <option value="Security">Security</option>
+                        <option value="HR">HR</option>
+                        <option value="General">General</option>
+                        <option value="Operations">Operations</option>
+                      </select>
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Initial Status</label>
+                    <div className="relative">
+                      <select
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all shadow-inner appearance-none"
+                        value={newPolicyData.status}
+                        onChange={(e) => setNewPolicyData({...newPolicyData, status: e.target.value})}
+                      >
+                        <option value="Draft">Draft</option>
+                        <option value="Active">Active</option>
+                      </select>
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Upload Document (Optional)</label>
+                  <div className="relative group">
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt"
+                      onChange={handleFileUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="w-full bg-white border-2 border-dashed border-slate-200 rounded-2xl px-5 py-6 text-center group-hover:border-indigo-400 group-hover:bg-indigo-50/50 transition-all">
+                      {uploadingDoc ? (
+                        <div className="flex flex-col items-center justify-center gap-2 text-indigo-500">
+                          <Loader2 size={24} className="animate-spin" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Uploading...</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-2 text-slate-500 group-hover:text-indigo-500">
+                          <FileText size={24} className="opacity-50" />
+                          <span className="text-sm font-bold">Click to browse or drag file here</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">PDF, DOCX, TXT up to 10MB</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Policy Content / Description *</label>
+                  <textarea
+                    required
+                    placeholder="Write or paste the policy content here..."
+                    rows={8}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium text-slate-700 placeholder:text-slate-300 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all shadow-inner resize-y min-h-[150px]"
+                    value={newPolicyData.content}
+                    onChange={(e) => setNewPolicyData({...newPolicyData, content: e.target.value})}
+                  />
+                </div>
+
+              </div>
+
+              <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setCreateModalOpen(false)}
+                  className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newPolicyData.title.trim() || !newPolicyData.content.trim()}
+                  className="px-8 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {editingPolicyId ? 'Save Changes' : 'Create Policy'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

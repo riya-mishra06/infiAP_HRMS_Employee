@@ -30,19 +30,24 @@ import {
   Tooltip as RechartsTooltip
 } from 'recharts';
 import { useEmployeeContext } from '../../../context/EmployeeContext';
+import { useAdminDashboard } from '../../../context/AdminDashboardContext';
 
 const EmployeeDirectory = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
   const { employees = [], loading, fetchEmployees } = useEmployeeContext();
+  const { departments = [], fetchDepartments } = useAdminDashboard();
 
-  // Load employees once if the directory is empty.
+  // Load employees and departments once if empty.
   useEffect(() => {
     if ((!employees || employees.length === 0) && typeof fetchEmployees === 'function') {
       fetchEmployees({ limit: 50 });
     }
-  }, [employees, fetchEmployees]);
+    if ((!departments || departments.length === 0) && typeof fetchDepartments === 'function') {
+      fetchDepartments();
+    }
+  }, [employees, fetchEmployees, departments, fetchDepartments]);
 
   // Determine correct paths based on route context
   const basePath = isAdminRoute ? '/admin' : '';
@@ -59,19 +64,40 @@ const EmployeeDirectory = () => {
     joiningDate: ''
   });
 
-  const deptData = [
-    { name: 'Eng', value: 42, color: '#6366f1' },
-    { name: 'Design', value: 12, color: '#ec4899' },
-    { name: 'Ops', value: 28, color: '#f59e0b' },
-    { name: 'HR', value: 8, color: '#10b981' },
-    { name: 'Mark', value: 15, color: '#3b82f6' }
-  ];
+  // Generate dynamic department stats for the chart
+  const deptData = useMemo(() => {
+    const counts = {};
+    (employees || []).forEach(emp => {
+      const dept = emp.department || 'Other';
+      counts[dept] = (counts[dept] || 0) + 1;
+    });
+
+    const colors = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#f43f5e'];
+    
+    return Object.keys(counts).map((name, index) => ({
+      name: name.length > 6 ? name.substring(0, 5) + '..' : name,
+      fullName: name,
+      value: counts[name],
+      color: colors[index % colors.length]
+    }));
+  }, [employees]);
 
   // --- FILTER LOGIC ---
   const filteredEmployees = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    
     return (employees || []).filter(emp => {
-      const matchesSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        emp.email.toLowerCase().includes(searchQuery.toLowerCase());
+      const name = (emp.name || '').toLowerCase();
+      const email = (emp.email || '').toLowerCase();
+      const dept = (emp.department || '').toLowerCase();
+      const role = (emp.role || '').toLowerCase();
+
+      const matchesSearch = !query || 
+        name.includes(query) || 
+        email.includes(query) ||
+        dept.includes(query) ||
+        role.includes(query);
+
       const matchesDept = filters.department === 'All Departments' || emp.department === filters.department;
       const matchesStatus = filters.status === 'All Status' || emp.status === filters.status;
 
@@ -90,6 +116,43 @@ const EmployeeDirectory = () => {
   };
 
   const handleExport = () => {
+    if (!filteredEmployees || filteredEmployees.length === 0) {
+      showNotification("No employee data to export.");
+      return;
+    }
+
+    // CSV Headers
+    const headers = ["ID", "Name", "Email", "Phone", "Department", "Role", "Status", "Joining Date"];
+    
+    // CSV Rows
+    const rows = filteredEmployees.map(emp => [
+      emp.employeeId || emp.id || "",
+      emp.name || "N/A",
+      emp.email || "N/A",
+      emp.phone || "N/A",
+      emp.department || "General",
+      emp.role || "Employee",
+      emp.status || "Active",
+      emp.joiningDate ? new Date(emp.joiningDate).toLocaleDateString() : "N/A"
+    ]);
+
+    // Combine into CSV string
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Employee_Directory_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
     showNotification("Employee data exported to CSV successfully.");
   };
 
@@ -192,9 +255,9 @@ const EmployeeDirectory = () => {
                          onChange={(e) => handleFilterChange('department', e.target.value)}
                        >
                           <option>All Departments</option>
-                          <option>Engineering</option>
-                          <option>Design</option>
-                          <option>Operations</option>
+                          {departments.map(dept => (
+                            <option key={dept.id} value={dept.name}>{dept.name}</option>
+                          ))}
                        </select>
                     </div>
                  </div>

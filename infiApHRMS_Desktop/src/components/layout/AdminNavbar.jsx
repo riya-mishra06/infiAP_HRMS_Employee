@@ -1,24 +1,60 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, Bell, Check, X, Clock } from 'lucide-react';
+import { Search, Bell, Check, X, Clock, Users, Building2, Briefcase, ChevronRight, User, Shield, Key, Settings, LogOut, Mail, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
+import { useAdminDashboard } from '../../context/AdminDashboardContext';
 
 
-const AdminNavbar = () => {
+const AdminNavbar = ({ setMobileMenuOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { notifications, markAsRead, clearNotifications } = useNotifications();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef(null);
+  const { staffDirectory, departments, jobs } = useAdminDashboard();
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const notificationDropdownRef = useRef(null);
+  const profileDropdownRef = useRef(null);
+  const searchRef = useRef(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  // Search Logic
+  const filteredResults = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    const query = searchTerm.toLowerCase();
+
+    const employeeResults = (staffDirectory || [])
+      .filter(emp => emp.name?.toLowerCase().includes(query) || emp.employeeId?.toLowerCase().includes(query))
+      .slice(0, 4)
+      .map(emp => ({ ...emp, type: 'employee', icon: Users, path: `/admin/employees/profile/${emp._id || emp.id}` }));
+
+    const departmentResults = (departments || [])
+      .filter(dept => (dept.name || '').toLowerCase().includes(query))
+      .slice(0, 3)
+      .map(dept => ({ ...dept, type: 'department', icon: Building2, path: '/admin/department-management' }));
+
+    const jobResults = (jobs || [])
+      .filter(job => (job.title || '').toLowerCase().includes(query))
+      .slice(0, 3)
+      .map(job => ({ ...job, type: 'job', icon: Briefcase, path: '/admin/recruitment-control/hub' }));
+
+    return [...employeeResults, ...departmentResults, ...jobResults];
+  }, [searchTerm, staffDirectory, departments, jobs]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
+      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
+        setShowNotificationDropdown(false);
+      }
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSearchResults(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -52,7 +88,7 @@ const AdminNavbar = () => {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path.includes('/dashboard')) return 'Dashboard';
-    if (path.includes('/department-management')) return 'Department ';
+    if (path.includes('/department-management')) return 'Department Management';
     if (path.includes('/payroll-management')) return 'Payroll';
     if (path.includes('/recruitment-control')) return 'Recruitment';
     if (path.includes('/policies')) return 'Company Policies';
@@ -73,55 +109,57 @@ const AdminNavbar = () => {
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4E63F0&color=fff`;
 
   return (
-    <div className="h-20 bg-white border-b border-slate-100 sticky top-0 z-10 flex items-center justify-between px-8 w-full">
-      <div className="flex items-center gap-6 min-w-0">
+    <div className="h-16 md:h-20 bg-white border-b border-slate-100 sticky top-0 z-10 flex items-center justify-between px-4 md:px-8 w-full">
+      <div className="flex items-center gap-4 md:gap-6 min-w-0">
+        <button 
+          onClick={() => setMobileMenuOpen?.(true)}
+          className="p-2 -ml-2 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-600 lg:hidden transition-colors"
+        >
+          <Menu size={24} />
+        </button>
         <div className="min-w-0">
-          <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Admin Workspace</p>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight truncate">{getPageTitle()}</h1>
-        </div>
-
-        <div className="relative group w-[380px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-hover:text-indigo-500 transition-colors" size={18} />
-          <input
-            type="text"
-            placeholder="Search live records..."
-            className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-4 py-2.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 transition-all placeholder:text-slate-300"
-          />
+          <p className="hidden md:block text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Admin Workspace</p>
+          <h1 className="text-lg md:text-xl font-black text-slate-900 tracking-tight truncate">{getPageTitle()}</h1>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="relative" ref={dropdownRef}>
+        {/* Notification Dropdown */}
+        <div className="relative" ref={notificationDropdownRef}>
           <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="text-slate-400 hover:text-indigo-600 p-2.5 hover:bg-slate-50 rounded-xl relative transition-all group"
+            onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+            className={`p-2.5 rounded-xl relative transition-all group ${
+              showNotificationDropdown ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-50'
+            }`}
           >
             <Bell size={20} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </button>
 
-          {showDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
+          {showNotificationDropdown && (
+            <div className="absolute right-0 top-full mt-3 w-80 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between px-4 py-4 border-b border-slate-50 bg-slate-50/50">
                 <div className="flex items-center gap-2">
-                  <Bell size={16} className="text-slate-600" />
-                  <span className="font-bold text-sm text-slate-800">Notifications</span>
-                  {unreadCount > 0 && (
-                    <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">
-                      {unreadCount} unread
-                    </span>
-                  )}
+                  <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
+                    <Bell size={16} className="text-indigo-600" />
+                  </div>
+                  <div>
+                    <span className="font-black text-xs text-slate-800 uppercase tracking-tight">Notifications</span>
+                    {unreadCount > 0 && (
+                      <p className="text-[10px] text-indigo-600 font-bold">{unreadCount} new alerts</p>
+                    )}
+                  </div>
                 </div>
                 {unreadCount > 0 && (
                   <button
                     onClick={() => notifications.forEach(n => !n.read && markAsRead(n.id))}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                    className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-widest bg-white px-2 py-1 rounded-md border border-indigo-100 transition-all"
                   >
-                    Mark all read
+                    Clear All
                   </button>
                 )}
               </div>
@@ -172,7 +210,7 @@ const AdminNavbar = () => {
                 <div className="px-4 py-3 border-t border-slate-100">
                   <button
                     onClick={() => {
-                      setShowDropdown(false);
+                      setShowNotificationDropdown(false);
                       navigate('/admin/notifications');
                     }}
                     className="w-full text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium"
@@ -185,26 +223,105 @@ const AdminNavbar = () => {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate('/admin/employees/view')}
-          className="flex items-center gap-3 pl-4 border-l border-slate-100 group cursor-pointer"
-        >
-          <div className="text-right hidden md:block">
-            <p className="text-sm font-black text-slate-800 leading-none mb-1 group-hover:text-indigo-600 transition-colors">{displayName}</p>
-            <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">{displayRole}</p>
-          </div>
-          <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 p-0.5 bg-white group-hover:border-indigo-200 transition-all shadow-sm">
-            <img
-              src={profileImage || fallbackAvatar}
-              alt={displayName}
-              onError={(event) => {
-                event.currentTarget.src = fallbackAvatar;
-              }}
-              className="w-full h-full object-cover rounded-[8px]"
-            />
-          </div>
-        </button>
+        {/* Profile Dropdown */}
+        <div className="relative" ref={profileDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+            className={`flex items-center gap-3 pl-4 border-l border-slate-100 group cursor-pointer transition-all ${
+              showProfileDropdown ? 'opacity-80' : ''
+            }`}
+          >
+            <div className="text-right hidden md:block">
+              <p className="text-sm font-black text-slate-800 leading-none mb-1 group-hover:text-indigo-600 transition-colors">
+                {displayName}
+              </p>
+              <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">
+                {displayRole}
+              </p>
+            </div>
+            <div className={`w-10 h-10 rounded-xl overflow-hidden border p-0.5 bg-white transition-all shadow-sm ${
+              showProfileDropdown ? 'border-indigo-500 ring-4 ring-indigo-500/10' : 'border-slate-100 group-hover:border-indigo-200'
+            }`}>
+              <img
+                src={profileImage || fallbackAvatar}
+                alt={displayName}
+                onError={(event) => {
+                  event.currentTarget.src = fallbackAvatar;
+                }}
+                className="w-full h-full object-cover rounded-[8px]"
+              />
+            </div>
+          </button>
+
+          {showProfileDropdown && (
+            <div className="absolute right-0 top-full mt-3 w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-5 bg-gradient-to-br from-slate-50 to-white border-b border-slate-50">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-12 h-12 rounded-xl border-2 border-white shadow-sm overflow-hidden bg-indigo-50">
+                    <img
+                      src={profileImage || fallbackAvatar}
+                      alt={displayName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-slate-800 truncate">{displayName}</p>
+                    <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{displayRole}</p>
+                  </div>
+                </div>
+                <div className="space-y-1.5 pt-3 border-t border-slate-100/50">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Mail size={12} />
+                    <p className="text-[10px] font-medium truncate">{user?.email || 'admin@institutional.com'}</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Clock size={12} />
+                    <p className="text-[10px] font-medium italic">Last login: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-2">
+                {[
+                  { label: 'View Profile', icon: User, path: '/admin/profile' },
+                  { label: 'Edit Profile', icon: Settings, path: '/admin/profile/edit' },
+                  { label: 'Reset Password', icon: Key, path: '/admin/reset-password' },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => {
+                      navigate(item.path);
+                      setShowProfileDropdown(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all group text-left"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                      <item.icon size={16} className="text-slate-400 group-hover:text-indigo-600" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{item.label}</span>
+                    <ChevronRight size={12} className="ml-auto text-slate-200 group-hover:text-slate-400 transition-all opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0" />
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-2 border-t border-slate-50 bg-slate-50/30">
+                <button
+                  onClick={() => {
+                    setShowProfileDropdown(false);
+                    logout();
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-all group text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-red-50/50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all text-red-500">
+                    <LogOut size={16} />
+                  </div>
+                  <span className="text-xs font-black text-red-600 uppercase tracking-widest group-hover:text-red-700 transition-colors">Logout Account</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

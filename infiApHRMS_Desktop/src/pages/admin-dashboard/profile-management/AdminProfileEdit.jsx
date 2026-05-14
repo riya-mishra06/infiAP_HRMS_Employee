@@ -225,7 +225,7 @@ const AdminProfileEdit = () => {
       <div className="flex items-center justify-between border-b border-slate-50 pb-8">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate('/admin/employees/view')}
+            onClick={() => navigate('/admin/profile')}
             className="p-2.5 hover:bg-slate-100 rounded-xl transition-colors"
             aria-label="Back to profile"
           >
