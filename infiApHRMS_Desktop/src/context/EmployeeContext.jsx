@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getEmployees, createEmployee as apiCreateEmployee, updateEmployee as apiUpdateEmployee, getEmployeeProfile as apiGetEmployeeProfile } from '../services/hrApi';
+import { getEmployees, createEmployee as apiCreateEmployee, updateEmployee as apiUpdateEmployee, getEmployeeProfile as apiGetEmployeeProfile, deleteEmployee as apiDeleteEmployee } from '../services/hrApi';
 import { useAuth } from './AuthContext';
 
 const EmployeeContext = createContext();
@@ -200,6 +200,20 @@ export const EmployeeProvider = ({ children }) => {
       return null;
     }
   };
+  
+  // ── Delete employee via API ─────────────────────────────────────────────
+  const deleteEmployee = async (id) => {
+    setError(null);
+    try {
+      await apiDeleteEmployee(id);
+      setEmployees(prev => prev.filter(emp => emp.id !== id && emp._id !== id));
+      return { success: true };
+    } catch (err) {
+      const message = err.response?.data?.message || err.response?.data?.error || 'Failed to delete employee';
+      setError(message);
+      return { success: false, error: message };
+    }
+  };
 
   // ── Remove from local state (soft delete) ──────────────────────────────
   const removeEmployee = (id) => {
@@ -217,6 +231,7 @@ export const EmployeeProvider = ({ children }) => {
         addEmployee,
         updateEmployee,
         removeEmployee,
+        deleteEmployee,
         getProfile,
       }}
     >

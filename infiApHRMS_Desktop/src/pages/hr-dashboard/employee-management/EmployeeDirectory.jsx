@@ -19,7 +19,8 @@ import {
   Filter,
   ArrowRight,
   FileText,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import {
   BarChart,
@@ -36,7 +37,7 @@ const EmployeeDirectory = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const { employees = [], loading, fetchEmployees } = useEmployeeContext();
+  const { employees = [], loading, fetchEmployees, deleteEmployee } = useEmployeeContext();
   const { departments = [], fetchDepartments } = useAdminDashboard();
 
   // Load employees and departments once if empty.
@@ -115,6 +116,21 @@ const EmployeeDirectory = () => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleDelete = async (id, name) => {
+    if (window.confirm(`Are you sure you want to delete employee "${name}"? This will permanently remove all their data.`)) {
+      try {
+        const result = await deleteEmployee(id);
+        if (result.success) {
+          showNotification(`Employee ${name} deleted successfully.`);
+        } else {
+          showNotification(result.error || "Failed to delete employee.");
+        }
+      } catch (err) {
+        showNotification("An error occurred during deletion.");
+      }
+    }
+  };
+
   const handleExport = () => {
     if (!filteredEmployees || filteredEmployees.length === 0) {
       showNotification("No employee data to export.");
@@ -181,7 +197,7 @@ const EmployeeDirectory = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0">
         <div>
-          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 underline decoration-indigo-300 underline-offset-4 uppercase">Employee Directory</h1>
+          <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 underline decoration-indigo-300 underline-offset-4 uppercase">Employee Directory</h1>
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">Manage Your Team Members</p>
         </div>
         <div className="flex items-center gap-3 self-start lg:self-center">
@@ -201,7 +217,7 @@ const EmployeeDirectory = () => {
       </div>
 
       {/* Main Workspace Grid */}
-      <div className="flex-1 grid grid-cols-1 xl:grid-cols-4 gap-8 overflow-hidden min-h-0" onClick={() => setActiveActionId(null)}>
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-8 overflow-hidden min-h-0" onClick={() => setActiveActionId(null)}>
         
         {/* Sidebar */}
         <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto no-scrollbar pb-6">
@@ -265,7 +281,7 @@ const EmployeeDirectory = () => {
            </div>
 
            {/* Table */}
-           <div className="flex-1 overflow-y-auto no-scrollbar relative">
+           <div className="flex-1 overflow-x-auto no-scrollbar relative">
               <table className="w-full text-left border-collapse">
                  <thead className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200">
                     <tr>
@@ -329,6 +345,13 @@ const EmployeeDirectory = () => {
                                    >
                                       <Edit3 size={16} className="text-slate-400" />
                                       Edit
+                                   </button>
+                                   <button
+                                     onClick={() => handleDelete(emp.id, emp.name)}
+                                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                                   >
+                                      <Trash2 size={16} className="text-red-400" />
+                                      Delete
                                    </button>
                                 </div>
                              )}

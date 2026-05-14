@@ -9,7 +9,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getAttendanceReports, generateAttendanceReport } from '../../../services/hrApi';
+import { getAttendanceReports } from '../../../services/hrApi';
 
 const STATUS_STYLES = {
   Ready: 'bg-emerald-50 text-emerald-700 border-emerald-100',
@@ -30,7 +30,6 @@ const AttendanceReports = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
   const showNotification = (msg) => {
@@ -106,19 +105,6 @@ const AttendanceReports = () => {
     fetchReports();
   }, []);
 
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    try {
-      await generateAttendanceReport({ type: 'Standard' });
-      showNotification('Report generated successfully');
-      fetchReports();
-    } catch (err) {
-      // debug error removed
-      showNotification('Failed to generate report');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleExport = () => {
     setIsExporting(true);
@@ -173,18 +159,6 @@ const AttendanceReports = () => {
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">View and manage attendance report archives</p>
         </div>
         <div className="flex items-center gap-3 self-start lg:self-center">
-          <button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
-          >
-            {isGenerating ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <FileText size={18} className="text-slate-400" />
-            )}
-            Generate Report
-          </button>
           <button
             onClick={handleExport}
             disabled={isExporting || reports.length === 0}

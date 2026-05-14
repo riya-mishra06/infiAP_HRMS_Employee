@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Search, Bell, User, Check, X, Clock, Shield, Key, Settings, LogOut, Menu } from 'lucide-react';
+import { Search, Bell, User, Check, X, Clock, Shield, Key, Settings, LogOut, Menu, Mail, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getHrProfile } from '../../services/hrApi';
 import { useAuth } from '../../context/AuthContext';
@@ -84,7 +84,7 @@ const Navbar = ({ setMobileMenuOpen }) => {
   const displayRole = 'HR Panel';
 
   return (
-    <div className="h-16 md:h-20 bg-white border-b border-[#E7EBF7] sticky top-0 z-10 flex items-center justify-between px-4 md:px-8 w-full">
+    <div className="h-16 md:h-20 bg-white border-b border-[#E7EBF7] sticky top-0 z-10 flex items-center justify-between px-3 md:px-8 w-full">
       
       <div className="flex items-center gap-4 md:gap-6 flex-1 max-w-2xl">
         <button 
@@ -98,7 +98,7 @@ const Navbar = ({ setMobileMenuOpen }) => {
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center gap-4 pl-6">
+      <div className="flex items-center gap-2 md:gap-4 pl-2 md:pl-6">
 
         <div className="relative" ref={notificationDropdownRef}>
           <button
@@ -198,48 +198,68 @@ const Navbar = ({ setMobileMenuOpen }) => {
 
         {/* Profile Dropdown */}
         <div className="relative" ref={profileDropdownRef}>
-          <div 
+          <button
+            type="button"
             onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-            className={`flex items-center gap-3 pl-2 pr-2 group cursor-pointer hover:bg-[#F4F7FD] rounded-xl py-1.5 px-2 transition-all ${
-              showProfileDropdown ? 'bg-[#F4F7FD]' : ''
+            className={`flex items-center gap-3 pl-4 border-l border-slate-100 group cursor-pointer transition-all ${
+              showProfileDropdown ? 'opacity-80' : ''
             }`}
           >
             <div className="text-right hidden md:block">
-              <p className="text-sm font-black text-[#1E2A54] leading-none mb-1 group-hover:text-[#4E63F0] transition-colors">
+              <p className="text-sm font-black text-slate-800 leading-none mb-1 group-hover:text-indigo-600 transition-colors">
                 {displayName}
               </p>
-              <p className="text-[10px] text-[#90A0C8] font-bold tracking-[0.2em] uppercase">
+              <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">
                 {displayRole}
               </p>
             </div>
-
-            <div className={`w-10 h-10 rounded-xl overflow-hidden border p-0.5 bg-white transition-all ${
-              showProfileDropdown ? 'border-[#4E63F0] ring-4 ring-[#4E63F0]/10' : 'border-[#E7EBF7] group-hover:border-[#C7D2FA]'
+            <div className={`w-10 h-10 rounded-xl overflow-hidden border p-0.5 bg-white transition-all shadow-sm ${
+              showProfileDropdown ? 'border-indigo-500 ring-4 ring-indigo-500/10' : 'border-slate-100 group-hover:border-indigo-200'
             }`}>
               <img
-                src={profile?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=5a54e8&color=fff`}
-                alt="User"
-                className="w-full h-full object-cover rounded-[10px]"
-                onError={(e) => {
-                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=5a54e8&color=fff`;
+                src={profile?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4E63F0&color=fff`}
+                alt={displayName}
+                onError={(event) => {
+                  event.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4E63F0&color=fff`;
                 }}
+                className="w-full h-full object-cover rounded-[8px]"
               />
             </div>
-          </div>
+          </button>
 
           {showProfileDropdown && (
-            <div className="absolute right-0 top-full mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-[#E7EBF7] overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
-              <div className="p-4 bg-[#F4F7FD]/50 border-b border-[#E7EBF7]">
-                <p className="text-[10px] font-black text-[#90A0C8] uppercase tracking-[0.2em] mb-1">HR Portal</p>
-                <p className="text-sm font-black text-[#1E2A54] truncate">{displayName}</p>
-                <p className="text-[10px] font-bold text-[#4E63F0] uppercase tracking-wider">{displayRole}</p>
+            <div className="absolute right-0 top-full mt-3 w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-5 bg-gradient-to-br from-slate-50 to-white border-b border-slate-50">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-12 h-12 rounded-xl border-2 border-white shadow-sm overflow-hidden bg-indigo-50">
+                    <img
+                      src={profile?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4E63F0&color=fff`}
+                      alt={displayName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-slate-800 truncate">{displayName}</p>
+                    <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{displayRole}</p>
+                  </div>
+                </div>
+                <div className="space-y-1.5 pt-3 border-t border-slate-100/50">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Mail size={12} />
+                    <p className="text-[10px] font-medium truncate">{user?.email || 'hr@infiAp.com'}</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Clock size={12} />
+                    <p className="text-[10px] font-medium italic">Last login: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                </div>
               </div>
               
               <div className="p-2">
                 {[
-                  { label: 'My Profile', icon: User, path: '/profile' },
-                  { label: 'Account Details', icon: Shield, path: '/settings' },
-                  { label: 'Change Password', icon: Key, path: '/settings' },
+                  { label: 'View Profile', icon: User, path: '/profile' },
+                  { label: 'Edit Profile', icon: Settings, path: '/profile/edit' },
+                  { label: 'Security Details', icon: Shield, path: '/settings' },
                 ].map((item) => (
                   <button
                     key={item.label}
@@ -247,17 +267,18 @@ const Navbar = ({ setMobileMenuOpen }) => {
                       navigate(item.path);
                       setShowProfileDropdown(false);
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F4F7FD] transition-all group text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all group text-left"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-[#F4F7FD] flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
-                      <item.icon size={16} className="text-[#7E8AB2] group-hover:text-[#4E63F0]" />
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                      <item.icon size={16} className="text-slate-400 group-hover:text-indigo-600" />
                     </div>
-                    <span className="text-xs font-bold text-[#5B6B9E] group-hover:text-[#1E2A54] transition-colors">{item.label}</span>
+                    <span className="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{item.label}</span>
+                    <ChevronRight size={12} className="ml-auto text-slate-200 group-hover:text-slate-400 transition-all opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0" />
                   </button>
                 ))}
               </div>
 
-              <div className="p-2 border-t border-[#E7EBF7] bg-[#F4F7FD]/30">
+              <div className="p-2 border-t border-slate-50 bg-slate-50/30">
                 <button
                   onClick={() => {
                     setShowProfileDropdown(false);
@@ -268,7 +289,7 @@ const Navbar = ({ setMobileMenuOpen }) => {
                   <div className="w-8 h-8 rounded-lg bg-red-50/50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all text-red-500">
                     <LogOut size={16} />
                   </div>
-                  <span className="text-xs font-bold text-red-600 group-hover:text-red-700 transition-colors">Logout Account</span>
+                  <span className="text-xs font-black text-red-600 uppercase tracking-widest group-hover:text-red-700 transition-colors">Logout Account</span>
                 </button>
               </div>
             </div>

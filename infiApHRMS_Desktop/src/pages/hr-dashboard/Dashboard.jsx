@@ -18,6 +18,7 @@ import {
    Briefcase,
 } from 'lucide-react';
 import { hrService } from '../../services/hr.service';
+import { useAuth } from '../../context/AuthContext';
 
 const toNumber = (...values) => {
    for (const value of values) {
@@ -29,6 +30,7 @@ const toNumber = (...values) => {
 
 const Dashboard = () => {
    const navigate = useNavigate();
+   const { user } = useAuth();
    const [loading, setLoading] = useState(true);
    const [summaryData, setSummaryData] = useState({
       employees: 0,
@@ -147,6 +149,13 @@ const Dashboard = () => {
       },
    ]), [summaryData]);
 
+   const getGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) return 'Good Morning';
+      if (hour < 17) return 'Good Afternoon';
+      return 'Good Evening';
+   };
+
    const recentActivity = [
       { title: `${summaryData.employees} employees currently in the system`, time: 'Live', type: 'SYSTEM' },
       { title: `${summaryData.activeJobs} active jobs waiting for candidates`, time: 'Live', type: 'HIRING' },
@@ -173,10 +182,18 @@ const Dashboard = () => {
 
    return (
       <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 pb-40">
-         <div className="flex items-center justify-between border-b border-slate-50 pb-8">
-            <div>
-               <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2">HR Management Console</h1>
-               <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none">Operational Insights & Workforce Orchestration</p>
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-50 pb-8">
+            <div className="space-y-1">
+               <div className="flex items-center gap-3 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">System Live</span>
+               </div>
+               <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight leading-none">
+                  HR <span className="text-indigo-600">Dashboard</span>
+               </h1>
+               <p className="text-sm font-bold text-slate-400">
+                  {getGreeting()}, {user?.name || 'HR Manager'}. Here's your organizational overview for today.
+               </p>
             </div>
             <button
                onClick={() => navigate('/employees/add')}
@@ -192,7 +209,7 @@ const Dashboard = () => {
             </div>
          ) : null}
 
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6">
             {stats.map((stat, i) => (
                <StatCard key={i} {...stat} />
             ))}
@@ -207,7 +224,7 @@ const Dashboard = () => {
                         Full Directory
                      </button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                      {[
                         { label: 'My Profile', icon: User, path: '/profile' },
                         { label: 'View Attendance', icon: UserCheck, path: '/attendance' },
@@ -216,7 +233,7 @@ const Dashboard = () => {
                         <button
                            key={i}
                            onClick={() => navigate(action.path)}
-                           className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-50/50 transition-all group"
+                           className="flex items-center gap-4 p-4 md:p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-50/50 transition-all group"
                         >
                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-indigo-600 shadow-sm transition-transform group-hover:scale-110">
                               <action.icon size={18} />

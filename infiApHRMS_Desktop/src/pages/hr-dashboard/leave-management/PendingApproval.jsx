@@ -101,6 +101,7 @@ const PendingApproval = () => {
       setRequests(prev => prev.filter(r => r.id !== request.id));
       setShowModal(false);
       setApproval({ approved: null, remarks: '' });
+      navigate('/leave');
     } catch (err) {
       // debug error removed
     } finally {

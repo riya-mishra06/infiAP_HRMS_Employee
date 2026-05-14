@@ -54,7 +54,8 @@ const normalizeSummary = (data = {}, fallbacks = {}) => ({
   monthlyPayroll: Number(data.monthlyPayroll ?? 0),
   openPositions: Number(data.openPositions ?? data.activeJobs ?? fallbacks.activeJobs ?? 0),
   newHires: Number(data.newHires ?? 0),
-  announcements: Number(data.announcements ?? 0)
+  announcements: Number(data.announcements ?? 0),
+  resignations: Number(data.resignations ?? data.totalResignations ?? fallbacks.resignations ?? 0)
 });
 
 const normalizeDepartment = (department) => ({
@@ -143,7 +144,8 @@ export const AdminDashboardProvider = ({ children }) => {
     activeStaff: 0,
     activeJobs: defaultJobs.length,
     pendingLeaves: 0,
-    announcements: 0
+    announcements: 0,
+    resignations: 0
   }));
   const [insights, setInsights] = useState(null);
   const [departments, setDepartments] = useState([]);
@@ -152,6 +154,7 @@ export const AdminDashboardProvider = ({ children }) => {
   const [staffDirectory, setStaffDirectory] = useState([]);
   const [pendingLeaves, setPendingLeaves] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [resignations, setResignations] = useState([]);
 
   const isAdminView = ['admin', 'main admin', 'hr'].includes(String(role || '').toLowerCase());
 
@@ -162,7 +165,8 @@ export const AdminDashboardProvider = ({ children }) => {
       employees: staffDirectory.length,
       activeStaff: staffDirectory.length,
       activeJobs: jobs.filter((job) => job.status === 'Active').length || defaultJobs.length,
-      pendingLeaves: pendingLeaves.length
+      pendingLeaves: pendingLeaves.length,
+      resignations: resignations.length
     };
 
     try {
@@ -274,6 +278,17 @@ export const AdminDashboardProvider = ({ children }) => {
       return activities;
     }
   };
+  
+  const fetchResignations = async () => {
+    try {
+      const res = await api.get('/hr/resignation/register');
+      const data = res.data?.data || res.data || [];
+      setResignations(data);
+      return data;
+    } catch (error) {
+      return resignations;
+    }
+  };
 
   const addDepartment = async (payload) => {
     const parsedTeams = Number(payload.teams);
@@ -301,6 +316,36 @@ export const AdminDashboardProvider = ({ children }) => {
       return {
         success: false,
         error: error.response?.data?.message || error.response?.data?.error || 'Failed to create department'
+      };
+    }
+  };
+
+  const updateDepartment = async (deptId, payload) => {
+    try {
+      const res = await api.patch(`/admin-dashboard/departments/${deptId}`, payload);
+      const updated = normalizeDepartment(res.data?.data || payload);
+      setDepartments((prev) => prev.map((dept) => (dept.id === deptId ? updated : dept)));
+      await fetchDepartments();
+      await fetchSummary();
+      return { success: true, data: updated };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.response?.data?.error || 'Failed to update department'
+      };
+    }
+  };
+
+  const deleteDepartment = async (deptId) => {
+    try {
+      await api.delete(`/admin-dashboard/departments/${deptId}`);
+      setDepartments((prev) => prev.filter((dept) => dept.id !== deptId));
+      await fetchSummary();
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.response?.data?.error || 'Failed to delete department'
       };
     }
   };
@@ -426,7 +471,8 @@ export const AdminDashboardProvider = ({ children }) => {
         fetchStaffDirectory(),
         fetchPendingLeaves(),
         fetchActivities(),
-        fetchInsights()
+        fetchInsights(),
+        fetchResignations()
       ]);
       await fetchSummary();
     } catch (error) {
@@ -460,6 +506,7 @@ export const AdminDashboardProvider = ({ children }) => {
         staffDirectory,
         pendingLeaves,
         activities,
+        resignations,
         totals,
         refreshAll,
         fetchSummary,
@@ -470,7 +517,10 @@ export const AdminDashboardProvider = ({ children }) => {
         fetchStaffDirectory,
         fetchPendingLeaves,
         fetchActivities,
+        fetchResignations,
         addDepartment,
+        updateDepartment,
+        deleteDepartment,
         addTeam,
         updateTeam,
         deleteTeam,

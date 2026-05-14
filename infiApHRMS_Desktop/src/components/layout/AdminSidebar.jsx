@@ -27,7 +27,6 @@ const AdminSidebar = () => {
     { name: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
     { name: 'Employees', icon: Users, path: '/admin/employees' },
     { name: 'Departments', icon: Building2, path: '/admin/departments' },
-    { name: 'Recruitment', icon: Briefcase, path: '/admin/recruitment-control/hub' },
     { name: 'Payroll', icon: CreditCard, path: '/admin/payroll' },
     { name: 'Settings', icon: Settings, path: '/admin/settings' },
   ];

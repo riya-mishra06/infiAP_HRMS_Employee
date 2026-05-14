@@ -13,7 +13,7 @@ const DashboardLayout = ({ children }) => {
       {/* Right Column (Navbar + Content) */}
       <div className="flex-1 flex flex-col min-w-0 lg:ml-80">
         <Navbar setMobileMenuOpen={setMobileMenuOpen} />
-        <main className="p-4 md:p-6 lg:p-8 w-full">
+        <main className="p-3 md:p-6 lg:p-8 w-full">
           <div className="w-full">
             {children}
           </div>

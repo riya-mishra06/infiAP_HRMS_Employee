@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2,
@@ -113,42 +113,125 @@ const Departments = () => {
           <div className="rounded-3xl border border-slate-100 bg-white p-8 text-sm font-bold text-slate-500">Loading live departments...</div>
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredDepartments.map((dept, idx) => (
-            <div key={idx} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group relative overflow-hidden">
-              <div className="flex justify-between items-start mb-6 relative z-10">
-                <div className="px-3 py-1.5 rounded-full text-[9px] font-black tracking-[0.2em] uppercase bg-slate-50 text-slate-500">
-                  {dept.sub}
+          {filteredDepartments.map((dept, idx) => {
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const menuRef = useRef(null);
+
+            useEffect(() => {
+              const handleClickOutside = (event) => {
+                if (menuRef.current && !menuRef.current.contains(event.target)) {
+                  setIsMenuOpen(false);
+                }
+              };
+              if (isMenuOpen) {
+                document.addEventListener('mousedown', handleClickOutside);
+              }
+              return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, [isMenuOpen]);
+
+            const handleDelete = async () => {
+              if (window.confirm(`Are you sure you want to delete the ${dept.name} department? This action cannot be undone.`)) {
+                const result = await deleteDepartment(dept.id);
+                if (result.success) {
+                  // refresh data
+                  fetchDepartments();
+                } else {
+                  alert(result.error || 'Failed to delete department');
+                }
+              }
+            };
+
+            const editRoute = role === 'HR' ? `/departments/edit/${dept.id}` : `/admin/department-management/edit/${dept.id}`;
+
+            return (
+              <div key={idx} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group relative overflow-hidden">
+                <div className="flex justify-between items-start mb-6 relative z-10">
+                  <div className="px-3 py-1.5 rounded-full text-[9px] font-black tracking-[0.2em] uppercase bg-slate-50 text-slate-500">
+                    {dept.sub}
+                  </div>
+                  <div className="relative" ref={menuRef}>
+                    <button 
+                      onClick={() => setIsMenuOpen(!isMenuOpen)}
+                      className={`transition-colors p-1.5 rounded-lg ${isMenuOpen ? 'bg-indigo-50 text-indigo-600' : 'text-slate-200 hover:text-slate-400 hover:bg-slate-50'}`}
+                    >
+                      <MoreVertical size={18} />
+                    </button>
+
+                    {isMenuOpen && (
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-2">
+                          <button
+                            onClick={() => {
+                              navigate(teamRoute);
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all group/item text-left"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover/item:bg-white group-hover/item:shadow-sm transition-all">
+                              <LayoutGrid size={14} className="text-slate-400 group-hover/item:text-indigo-600" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 group-hover/item:text-slate-900 transition-colors">View Teams</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              navigate(editRoute);
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all group/item text-left"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover/item:bg-white group-hover/item:shadow-sm transition-all">
+                              <Plus size={14} className="text-slate-400 group-hover/item:text-indigo-600 rotate-45" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 group-hover/item:text-slate-900 transition-colors">Edit Dept</span>
+                          </button>
+                        </div>
+
+                        <div className="p-2 border-t border-slate-50 bg-slate-50/30">
+                          <button
+                            onClick={() => {
+                              handleDelete();
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-all group/item text-left"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-red-50/50 flex items-center justify-center group-hover/item:bg-white group-hover/item:shadow-sm transition-all text-red-500">
+                              <Plus size={14} className="rotate-45" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-red-600 group-hover/item:text-red-700 transition-colors">Delete Dept</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <button className="text-slate-200 hover:text-slate-400 transition-colors p-1.5 hover:bg-slate-50 rounded-lg">
-                  <MoreVertical size={18} />
+
+                <div className="relative z-10 space-y-1 mb-6">
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors">{dept.name}</h3>
+                  <p className="text-xs text-slate-500">Head: {dept.head}</p>
+                </div>
+
+                <div className="relative z-10 flex items-center gap-6 mb-6 text-sm text-slate-600">
+                  <div>
+                    <span className="block text-xl font-black text-slate-900">{dept.teams}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Teams</span>
+                  </div>
+                  <div>
+                    <span className="block text-xl font-black text-slate-900">{dept.employees}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Employees</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => navigate(teamRoute)}
+                  className="relative z-10 w-full py-3 bg-slate-50 text-slate-600 font-black rounded-xl group-hover:bg-slate-900 group-hover:text-white transition-all duration-300 text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"
+                >
+                  View Teams
+                  <ChevronRight size={12} />
                 </button>
               </div>
-
-              <div className="relative z-10 space-y-1 mb-6">
-                <h3 className="text-xl font-black text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors">{dept.name}</h3>
-                <p className="text-xs text-slate-500">Head: {dept.head}</p>
-              </div>
-
-              <div className="relative z-10 flex items-center gap-6 mb-6 text-sm text-slate-600">
-                <div>
-                  <span className="block text-xl font-black text-slate-900">{dept.teams}</span>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Teams</span>
-                </div>
-                <div>
-                  <span className="block text-xl font-black text-slate-900">{dept.employees}</span>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Employees</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => navigate(teamRoute)}
-                className="relative z-10 w-full py-3 bg-slate-50 text-slate-600 font-black rounded-xl group-hover:bg-slate-900 group-hover:text-white transition-all duration-300 text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"
-              >
-                View Teams
-                <ChevronRight size={12} />
-              </button>
-            </div>
-          ))}
+            );
+          })}
 
           {!searchQuery && (
             <div

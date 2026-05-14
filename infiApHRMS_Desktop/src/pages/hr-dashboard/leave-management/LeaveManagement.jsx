@@ -142,6 +142,41 @@ const LeaveManagement = () => {
     });
   }, [activeStatus, requests, searchQuery]);
 
+  const handleExport = () => {
+    if (!filteredRequests.length) {
+      setError('No leave data to export.');
+      return;
+    }
+
+    const headers = ["Employee Name", "ID", "Department", "Leave Type", "Start Date", "End Date", "Days", "Status", "Reason"];
+    const rows = filteredRequests.map(req => [
+      req.employeeName,
+      req.employeeId,
+      req.department,
+      req.leaveType,
+      req.startDate ? new Date(req.startDate).toLocaleDateString() : 'N/A',
+      req.endDate ? new Date(req.endDate).toLocaleDateString() : 'N/A',
+      req.days,
+      req.status,
+      req.reason
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Leave_Requests_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const statCards = [
     { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-amber-600', status: 'Pending' },
     { label: 'Approved', value: stats.approved, icon: CheckCircle2, color: 'text-emerald-600', status: 'Approved' },
@@ -153,8 +188,8 @@ const LeaveManagement = () => {
     <div className="flex flex-col h-[calc(100vh-120px)] w-full gap-6 pt-4 overflow-hidden text-left">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Leave Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Live leave requests, approval status, and today&apos;s absence count.</p>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Leave Management</h1>
+          <p className="text-xs md:text-sm text-slate-500 mt-1">Live leave requests, approval status, and today&apos;s absence count.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -229,7 +264,7 @@ const LeaveManagement = () => {
           </div>
         )}
 
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-x-auto no-scrollbar relative">
           <table className="w-full text-left">
             <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-100">
               <tr>
@@ -297,7 +332,7 @@ const LeaveManagement = () => {
           <div className="flex items-center gap-4">
             <span>{pendingCount} pending detailed approval(s)</span>
             <button
-              onClick={() => window.print()}
+              onClick={handleExport}
               className="flex items-center gap-2 text-slate-700 hover:text-slate-900"
             >
               <Download size={14} />

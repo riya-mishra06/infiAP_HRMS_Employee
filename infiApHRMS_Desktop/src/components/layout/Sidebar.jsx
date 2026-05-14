@@ -195,7 +195,7 @@ const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen }) => {
       name: role === 'HR' ? 'Recruitment' : 'Recruitment',
       icon: Briefcase,
       path: role === 'HR' ? '/recruitment' : '/admin/recruitment-control/hub',
-      roles: ['HR', 'Admin']
+      roles: ['HR']
     },
     {
       name: role === 'HR' ? 'Payroll' : 'Payroll',
@@ -225,7 +225,7 @@ const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen }) => {
       name: 'Resignation',
       icon: DoorOpen,
       path: '/resignation',
-      roles: ['HR']
+      roles: ['HR', 'Admin']
     },
     {
       name: role === 'HR' ? 'Settings' : 'System Settings',

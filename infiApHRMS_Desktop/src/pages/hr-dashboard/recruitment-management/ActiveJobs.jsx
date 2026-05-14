@@ -6,7 +6,8 @@ import {
     ArrowLeft, 
     Plus, 
     Search, 
-    MoreVertical, 
+    MoreVertical,
+    X,
     MapPin, 
     Users, 
     Calendar,
@@ -18,8 +19,20 @@ import { useJobContext } from '../../../context/JobContext';
 
 const ActiveJobs = () => {
     const navigate = useNavigate();
-    const { jobs, totals } = useJobContext();
+    const { jobs, totals, deleteJob } = useJobContext();
     const [searchQuery, setSearchQuery] = useState('');
+    const [isDeleting, setIsDeleting] = useState(null);
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to decommission this job requisition? This action is permanent.")) {
+            setIsDeleting(id);
+            try {
+                await deleteJob(id);
+            } finally {
+                setIsDeleting(null);
+            }
+        }
+    };
 
     const filteredJobs = jobs.filter(job => 
         job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -147,10 +160,22 @@ const ActiveJobs = () => {
                                         {job.status}
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <button className="p-4 bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white rounded-2xl transition-all active:scale-95">
-                                            <MoreVertical size={20} />
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(job.id);
+                                            }}
+                                            disabled={isDeleting === job.id}
+                                            className="p-4 bg-rose-50 text-rose-400 hover:bg-rose-600 hover:text-white rounded-2xl transition-all active:scale-95 disabled:opacity-50"
+                                            title="Delete Job"
+                                        >
+                                            {isDeleting === job.id ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div> : <X size={20} />}
                                         </button>
-                                        <button className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-indigo-600 transition-all shadow-lg shadow-slate-100 group-hover:shadow-indigo-100 active:scale-95">
+                                        <button 
+                                            onClick={() => navigate(`/recruitment/active-jobs/${job.id}`)}
+                                            className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-indigo-600 transition-all shadow-lg shadow-slate-100 group-hover:shadow-indigo-100 active:scale-95"
+                                            title="View Details"
+                                        >
                                             <ChevronRight size={20} strokeWidth={3} />
                                         </button>
                                     </div>

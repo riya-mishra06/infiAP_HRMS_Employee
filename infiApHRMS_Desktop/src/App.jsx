@@ -191,6 +191,7 @@ function AppContent() {
 
                       {/* Department  */}
                       <Route path="/department-management/create" element={<CreateDepartment />} />
+                      <Route path="/department-management/edit/:id" element={<CreateDepartment />} />
                       <Route path="/department-management/teams" element={<ManageTeams />} />
                       <Route path="/department-management/teams/create" element={<CreateTeam />} />
                       <Route path="/department-management/teams/edit/:id" element={<EditTeam />} />
@@ -212,13 +213,6 @@ function AppContent() {
                       <Route path="/payroll-management/secure-sharing" element={<SecureDocument />} />
                       <Route path="/payroll-management/expired" element={<LinkExpired />} />
                       <Route path="/payroll-management/verify" element={<SharingSecurity />} />
-
-                      {/* Recruitment */}
-                      <Route path="/recruitment-control/hub" element={<RecruitmentHub />} />
-                      <Route path="/recruitment-control/analytics" element={<RecruitmentAnalytics />} />
-                      <Route path="/recruitment-control/create" element={<CreateJob />} />
-                      <Route path="/recruitment-control/tracking" element={<CandidateTracking />} />
-                      <Route path="/recruitment-control/interviews" element={<InterviewManagement />} />
 
                       <Route path="/policies" element={<CompanyPolicies />} />
                       <Route path="/settings" element={<SystemSettings />} />
@@ -271,6 +265,7 @@ function AppContent() {
                       {/* Departments (HR accessible) */}
                       <Route path="/departments" element={<AdminDepartments />} />
                       <Route path="/departments/create" element={<CreateDepartment />} />
+                      <Route path="/departments/edit/:id" element={<CreateDepartment />} />
                       <Route path="/departments/teams" element={<ManageTeams />} />
                       <Route path="/departments/teams/create" element={<CreateTeam />} />
                       <Route path="/departments/teams/edit/:id" element={<EditTeam />} />

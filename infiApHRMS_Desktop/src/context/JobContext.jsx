@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { getRecruitmentJobs, createRecruitmentJob } from '../services/hrApi';
+import { getRecruitmentJobs, createRecruitmentJob, updateRecruitmentJob, deleteRecruitmentJob } from '../services/hrApi';
 import { useAuth } from './AuthContext';
 
 const JobContext = createContext();
@@ -109,13 +109,46 @@ export const JobProvider = ({ children }) => {
     }
   };
 
+  // Update job via API
+  const updateJob = async (id, updatedData) => {
+    try {
+      await updateRecruitmentJob(id, updatedData);
+      setJobs(prev => prev.map(j => j.id === id ? { ...j, ...updatedData } : j));
+      return { success: true };
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update job');
+      return { success: false, error: err.message };
+    }
+  };
+
+  // Delete job via API
+  const deleteJob = async (id) => {
+    try {
+      await deleteRecruitmentJob(id);
+      setJobs(prev => prev.filter(j => j.id !== id));
+      return { success: true };
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete job');
+      return { success: false, error: err.message };
+    }
+  };
+
   const totals = useMemo(() => ({
     activeCount: jobs.filter(j => j.status === 'Active' || j.status === 'Open').length,
     totalApplicants: jobs.reduce((acc, current) => acc + (current.applicants || 0), 0),
   }), [jobs]);
 
   return (
-    <JobContext.Provider value={{ jobs, addJob, totals, loading, error, fetchJobs }}>
+    <JobContext.Provider value={{ 
+      jobs, 
+      addJob, 
+      updateJob, 
+      deleteJob, 
+      totals, 
+      loading, 
+      error, 
+      fetchJobs 
+    }}>
       {children}
     </JobContext.Provider>
   );

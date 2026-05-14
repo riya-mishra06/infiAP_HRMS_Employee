@@ -118,55 +118,65 @@ const ResignationHub = () => {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] w-full gap-6 pt-4 overflow-hidden text-left">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 shrink-0">
+    <div className="flex flex-col min-h-[calc(100vh-120px)] w-full gap-8 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-700 text-left pb-20">
+      
+      {/* Premium Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Resignation Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Live resignation register and offboarding status.</p>
+          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 underline decoration-rose-300 underline-offset-8">Resignation Register</h1>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-4 leading-none">Offboarding Lifecycle & Compliance Node Management</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/resignation/submit')}
-            className="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2"
+            className="px-8 py-4 bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-rose-700 transition-all shadow-2xl shadow-rose-100 flex items-center gap-3 active:scale-95 group"
           >
-            <FileSignature size={16} />
-            Submit
+            <UserX size={16} strokeWidth={3} className="group-hover:rotate-12 transition-transform" />
+            New Resignation
           </button>
           <button
             onClick={fetchResignations}
             disabled={loading}
-            className="px-4 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center gap-2"
+            className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            Refresh
+            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 shrink-0">
+      {/* Analytics Architecture */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 shrink-0">
         {cards.map((card) => (
-          <div key={card.label} className="bg-white border border-slate-100 rounded-2xl p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{card.label}</p>
-              <card.icon size={20} className={card.color} />
+          <div key={card.label} className="bg-white border border-slate-50 rounded-[32px] p-8 shadow-soft hover:shadow-3xl transition-all group border-b-4" style={{ borderBottomColor: card.color.includes('rose') ? '#f43f5e' : card.color.includes('amber') ? '#f59e0b' : card.color.includes('blue') ? '#3b82f6' : '#10b981' }}>
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{card.label}</p>
+              <div className={`p-3 rounded-2xl bg-slate-50 group-hover:bg-slate-900 group-hover:text-white transition-all`}>
+                <card.icon size={20} />
+              </div>
             </div>
-            <p className="text-3xl font-black text-slate-900 mt-4">{card.value}</p>
+            <div className="flex items-end justify-between">
+                <p className="text-4xl font-black text-slate-800 tracking-tighter leading-none">{card.value}</p>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Nodes</span>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden flex-1 min-h-0 flex flex-col">
-        <div className="p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
+      {/* Main Repository Area */}
+      <div className="bg-white border border-slate-50 rounded-[44px] shadow-soft overflow-hidden flex-1 min-h-[500px] flex flex-col">
+        
+        {/* Table Toolbar */}
+        <div className="p-8 border-b border-slate-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-slate-50/20">
+          <div className="flex flex-wrap items-center gap-3">
             {statuses.map((status) => (
               <button
                 key={status}
                 onClick={() => setActiveStatus(status)}
-                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${
+                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
                   activeStatus === status
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-xl'
+                    : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50 hover:text-slate-800'
                 }`}
               >
                 {status}
@@ -174,80 +184,106 @@ const ResignationHub = () => {
             ))}
           </div>
 
-          <div className="relative w-full lg:w-80">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+          <div className="relative w-full lg:w-96 group">
+            <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-rose-500 transition-colors" />
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search employee, department, status"
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+              placeholder="Search employee register..."
+              className="w-full pl-14 pr-6 py-4 bg-white border border-slate-100 rounded-[20px] text-xs font-black text-slate-600 outline-none focus:border-rose-200 transition-all shadow-sm uppercase tracking-tight placeholder:text-slate-300"
             />
           </div>
         </div>
 
         {error && (
-          <div className="m-5 p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-2xl flex items-center gap-3 text-sm font-semibold">
-            <AlertCircle size={18} />
+          <div className="m-8 p-6 bg-rose-50 border border-rose-100 text-rose-700 rounded-3xl flex items-center gap-4 text-[10px] font-black uppercase tracking-widest shadow-sm">
+            <div className="p-2 bg-white rounded-xl shadow-sm">
+                <AlertCircle size={18} className="text-rose-500" />
+            </div>
             {error}
           </div>
         )}
 
-        <div className="flex-1 overflow-auto">
-          <table className="w-full text-left">
-            <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-100">
+        {/* Data Grid */}
+        <div className="flex-1 overflow-auto no-scrollbar">
+          <table className="w-full text-left border-separate border-spacing-0">
+            <thead className="sticky top-0 bg-slate-50/80 backdrop-blur-md z-10 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Employee</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Reason</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Dates</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Action</th>
+                <th className="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Employee Node</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Resignation Intelligence</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Chronology</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <th className="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-50">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-14 text-center text-sm font-bold text-slate-500">
-                    Loading real resignation data...
+                  <td colSpan="5" className="px-10 py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <RefreshCw size={32} className="text-slate-200 animate-spin" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Synchronizing offboarding repository...</p>
+                    </div>
                   </td>
                 </tr>
               ) : filteredRequests.length ? (
                 filteredRequests.map((request) => (
-                  <tr key={request.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-6 py-5">
-                      <p className="text-sm font-black text-slate-900">{request.employeeName}</p>
-                      <p className="text-xs text-slate-500 mt-1">{request.department} • {request.role}</p>
-                    </td>
-                    <td className="px-6 py-5">
-                      <p className="text-sm font-bold text-slate-800 max-w-md truncate">{request.reason}</p>
-                      <p className="text-xs text-slate-500 mt-1">Clearance: {request.clearanceStatus}</p>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                        <Calendar size={16} className="text-slate-400" />
-                        {formatDate(request.resignationDate)}
+                  <tr key={request.id} className="group hover:bg-slate-50/50 transition-all cursor-pointer" onClick={() => navigate('/resignation/requests')}>
+                    <td className="px-10 py-6">
+                      <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-[10px] font-black group-hover:scale-110 transition-transform">
+                              {request.employeeName.split(' ').map(n=>n[0]).join('')}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-slate-800 group-hover:text-rose-600 transition-colors uppercase leading-none mb-1.5">{request.employeeName}</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{request.department} • {request.role}</p>
+                          </div>
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">Last day: {formatDate(request.lastWorkingDate)}</p>
                     </td>
-                    <td className="px-6 py-5">
-                      <span className={`inline-flex px-3 py-1 rounded-full border text-xs font-black ${statusStyles[request.status] || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                    <td className="px-8 py-6">
+                      <p className="text-xs font-bold text-slate-600 max-w-xs truncate">{request.reason}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Clearance: <span className="text-slate-600">{request.clearanceStatus}</span></p>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-tight">
+                            <Clock size={13} className="text-slate-300" />
+                            {formatDate(request.resignationDate)}
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] font-black text-rose-500 uppercase tracking-tight">
+                            <DoorOpen size={13} className="text-rose-300" />
+                            Last Day: {formatDate(request.lastWorkingDate)}
+                          </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className={`inline-flex px-4 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-widest ${statusStyles[request.status] || 'bg-slate-50 text-slate-600 border-slate-100 shadow-sm'}`}>
                         {request.status}
                       </span>
                     </td>
-                    <td className="px-6 py-5 text-right">
+                    <td className="px-10 py-6 text-right">
                       <button
-                        onClick={() => navigate('/resignation/requests')}
-                        className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-900 hover:text-white transition-all"
+                        onClick={(e) => { e.stopPropagation(); navigate('/resignation/requests'); }}
+                        className="px-6 py-2.5 bg-white border border-slate-100 rounded-xl text-[10px] font-black text-slate-400 hover:text-slate-900 hover:border-slate-900 transition-all uppercase tracking-widest active:scale-95 shadow-sm"
                       >
-                        Review
+                        Review Node
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-6 py-14 text-center">
-                    <p className="text-sm font-black text-slate-700">No resignation records found</p>
-                    <p className="text-xs text-slate-400 mt-1">This table only shows data returned by the HR API.</p>
+                  <td colSpan="5" className="px-10 py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <DoorOpen size={40} className="text-slate-100" />
+                        <div className="text-center">
+                            <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em]">Zero Resignation Records Identified</p>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2">The system repository is currently at maximum retention.</p>
+                        </div>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -255,13 +291,21 @@ const ResignationHub = () => {
           </table>
         </div>
 
-        <div className="px-5 py-4 border-t border-slate-100 flex items-center justify-between gap-3 text-xs font-bold text-slate-500">
-          <span>{filteredRequests.length} visible of {requests.length} resignation record(s)</span>
+        {/* Analytical Footer */}
+        <div className="px-10 py-6 bg-slate-900 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 text-white">
+          <div className="flex items-center gap-6">
+              <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Audit: {filteredRequests.length} / {requests.length} Nodes Resolved</p>
+              <div className="w-px h-4 bg-white/10 hidden md:block"></div>
+              <div className="flex items-center gap-2">
+                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                 <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Compliance Engine Active</p>
+              </div>
+          </div>
           <button
             onClick={() => navigate('/resignation/exit')}
-            className="text-slate-700 hover:text-slate-900"
+            className="px-6 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-white border border-white/5"
           >
-            Exit process
+            Initiate Exit Protocol
           </button>
         </div>
       </div>

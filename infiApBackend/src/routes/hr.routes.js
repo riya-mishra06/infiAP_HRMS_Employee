@@ -12,12 +12,14 @@ router.use(verifyJWT);
 // -> Welcome Page
 router.get("/dashboard/summary", hrController.getDashboardSummary);
 router.get("/profile", hrController.getHRAdminProfile);
+router.post("/recruitment/seed", verifyRole(["hr", "admin", "superadmin"]), hrController.seedRecruitmentData);
 
 // -> Employee
 router.get("/employees", hrController.getAllEmployees);
 router.post("/employees", verifyRole(["hr", "admin", "superadmin"]), hrController.addEmployee);
 router.put("/employees/:id/json", verifyRole(["hr", "admin", "superadmin"]), hrController.editEmployee);
 router.put("/employees/:id", verifyRole(["hr", "admin", "superadmin"]), uploadLimiter, uploadSingle, hrController.editEmployee);
+router.delete("/employees/:id", verifyRole(["hr", "admin", "superadmin"]), hrController.deleteEmployee);
 router.get("/employees/:id/profile", hrController.getEmployeeProfile);
 
 // -> Attendance (Detailed)
@@ -47,7 +49,10 @@ router.get("/recruitment/dashboard", hrController.getRecruitmentDashboard);
 router.get("/recruitment/candidates/tracking", hrController.getCandidateTrackingList);
 router.get("/recruitment/candidates/review", hrController.getReviewApplications);
 router.get("/recruitment/candidates/recent", hrController.getRecentCandidatesDetail);
+router.post("/recruitment/candidates", verifyRole(["hr", "admin", "superadmin"]), hrController.addCandidate);
 router.get("/recruitment/candidates/:id/profile", hrController.getCandidateProfile);
+router.put("/recruitment/candidates/:id", verifyRole(["hr", "admin", "superadmin"]), hrController.updateCandidate);
+router.delete("/recruitment/candidates/:id", verifyRole(["hr", "admin", "superadmin"]), hrController.deleteCandidate);
 router.put("/recruitment/candidates/:id/schedule-interview", verifyRole(["hr", "admin", "superadmin"]), hrController.scheduleTechnicalInterview);
 router.put("/recruitment/candidates/:id/shortlist", verifyRole(["hr", "admin", "superadmin"]), hrController.shortlistCandidate);
 router.put("/recruitment/candidates/:id/reject", verifyRole(["hr", "admin", "superadmin"]), hrController.rejectCandidate);
@@ -56,6 +61,8 @@ router.put("/recruitment/candidates/:id/select", verifyRole(["hr", "admin", "sup
 router.post("/recruitment/candidates/:id/offer", verifyRole(["hr", "admin", "superadmin"]), hrController.sendOfferLetter);
 router.get("/recruitment/jobs", hrController.getJobs);
 router.post("/recruitment/jobs", verifyRole(["hr", "admin", "superadmin"]), hrController.addJob);
+router.put("/recruitment/jobs/:id", verifyRole(["hr", "admin", "superadmin"]), hrController.updateJob);
+router.delete("/recruitment/jobs/:id", verifyRole(["hr", "admin", "superadmin"]), hrController.deleteJob);
 
 // -> Performance
 router.get("/performance/dashboard", hrController.getPerformanceDashboard);

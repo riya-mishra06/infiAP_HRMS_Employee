@@ -170,11 +170,46 @@ const AttendanceDashboard = () => {
   };
 
   const handleExport = () => {
+    if (!filteredLogs.length) {
+      showNotification("No attendance data to export.");
+      return;
+    }
+
     setIsExporting(true);
-    setTimeout(() => {
+    
+    try {
+      const headers = ["Employee Name", "Role", "Department", "Check In", "Check Out", "Duration", "Status", "Work Mode"];
+      const rows = filteredLogs.map(log => [
+        log.name,
+        log.role,
+        log.department,
+        log.checkIn,
+        log.checkOut,
+        log.duration,
+        log.status,
+        log.type
+      ]);
+
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Attendance_Report_${selectedDate}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showNotification("Attendance report exported successfully.");
+    } catch (err) {
+      showNotification("Failed to export report.");
+    } finally {
       setIsExporting(false);
-      showNotification("Attendance report (CSV) successfully exported.");
-    }, 1500);
+    }
   };
 
   const handleCorrection = async (id, action, name) => {
@@ -201,7 +236,6 @@ const AttendanceDashboard = () => {
     { title: 'Jainish checked in at 09:00 AM', time: '2 hours ago', type: 'checkin' },
     { title: 'Late arrival recorded for Sarah', time: '3 hours ago', type: 'late' },
     { title: 'New attendance correction request', time: '5 hours ago', type: 'correction' },
-    { title: 'Monthly report generated', time: '1 day ago', type: 'report' },
   ];
 
   return (
@@ -260,7 +294,7 @@ const AttendanceDashboard = () => {
         {/* Page Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 underline decoration-indigo-300 underline-offset-4 uppercase">Attendance Dashboard</h1>
+            <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 underline decoration-indigo-300 underline-offset-4 uppercase">Attendance Dashboard</h1>
             <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">Track Employee Attendance</p>
           </div>
           <div className="flex items-center gap-3 self-start lg:self-center">
@@ -322,7 +356,7 @@ const AttendanceDashboard = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto no-scrollbar relative">
             {loading ? (
               <div className="flex items-center justify-center h-[300px]">
                 <Loader2 className="animate-spin text-slate-400" size={32} />

@@ -135,12 +135,6 @@ const AdminDashboard = () => {
          helper: 'Live employee directory'
       },
       {
-         label: 'Open Jobs',
-         value: String(jobs.filter((job) => job.status === 'Active').length || summary.activeJobs),
-         icon: Briefcase,
-         helper: 'Live hiring queue'
-      },
-      {
          label: 'Pending Leaves',
          value: String(insights?.pendingLeaves || pendingLeaves.length || 0),
          icon: CalendarDays,
@@ -153,19 +147,24 @@ const AdminDashboard = () => {
          helper: 'This month'
       },
       {
+         label: 'Resignation Nodes',
+         value: String(summary.resignations || 0),
+         icon: DoorOpen,
+         helper: 'Active exit register'
+      },
+      {
          label: 'Monthly Payroll',
          value: formatCurrency(insights?.monthlyPayroll || 0),
          icon: BarChart3,
          helper: 'Current month spend'
       }
-   ], [departments.length, staffDirectory.length, jobs, summary.totalDepartments, summary.totalEmployees, summary.activeJobs, insights]);
+   ], [departments.length, staffDirectory.length, jobs, summary.totalDepartments, summary.totalEmployees, summary.activeJobs, summary.resignations, insights]);
 
    const recentDepartments = departments.slice(0, 4);
    const recentJobs = jobs.slice(0, 4);
    const recentActivity = activities.slice(0, 5);
    const quickActions = [
       { label: 'Departments', path: '/admin/departments' },
-      { label: 'Recruitment', path: '/admin/recruitment-control/hub' },
       { label: 'Payroll', path: '/admin/payroll-management' },
       { label: 'Settings', path: '/admin/settings' }
    ];
@@ -336,10 +335,6 @@ const AdminDashboard = () => {
 
                <div className="space-y-3 text-sm text-slate-600 font-medium flex-1">
                   <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5">
-                     <span className="text-xs">Open positions</span>
-                     <span className="font-black text-slate-900">{String(insights?.openPositions || jobs.filter(j => j.status === 'Active').length || 0).padStart(2, '0')}</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5">
                      <span className="text-xs">Monthly payroll</span>
                      <span className="font-black text-slate-900">{formatCurrency(insights?.monthlyPayroll || 0)}</span>
                   </div>
@@ -376,30 +371,6 @@ const AdminDashboard = () => {
                   )}
                </div>
             </div>
-
-            <div className="xl:col-span-1 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-               <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-700">Open Jobs</h3>
-                  <button onClick={() => navigate('/admin/recruitment-control/hub')} className="text-[9px] font-black uppercase tracking-widest text-indigo-600 hover:underline">View all</button>
-               </div>
-               <div className="space-y-2">
-                  {recentJobs.length > 0 ? recentJobs.map((job) => (
-                     <div key={job.id} className="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 hover:bg-white transition-colors">
-                        <div className="flex items-start justify-between gap-4">
-                           <div>
-                              <p className="text-sm font-black text-slate-900">{job.title}</p>
-                              <p className="mt-0.5 text-[9px] font-black uppercase tracking-widest text-slate-400">{job.department}</p>
-                           </div>
-                           <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">{job.status}</span>
-                        </div>
-                        <p className="mt-2.5 text-[8px] font-black uppercase tracking-widest text-slate-500">{job.applicants} applicants</p>
-                     </div>
-                  )) : (
-                     <p className="text-xs text-slate-400 p-4 text-center border border-dashed rounded-xl">No jobs loaded.</p>
-                  )}
-               </div>
-            </div>
-
          </div>
 
          <div className="flex flex-wrap gap-3">

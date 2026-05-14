@@ -348,6 +348,42 @@ const PayrollManagement = () => {
     showNotification(`Downloaded payslip for ${entry.name}`);
   };
 
+  const handleExportAll = () => {
+    if (!filteredEntries.length) {
+      showNotification("No payroll data to export.");
+      return;
+    }
+
+    const headers = ["Name", "Employee ID", "Department", "Role", "Month/Year", "Basic Salary", "Deductions", "Net Salary", "Status"];
+    const rows = filteredEntries.map(e => [
+      e.name,
+      e.employeeId,
+      e.department,
+      e.role,
+      `${e.month}/${e.year}`,
+      e.basicSalary,
+      e.deductions,
+      e.netSalary,
+      e.status
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Payroll_Export_${currentMonthLabel}_${currentYear}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showNotification("Payroll data exported successfully.");
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] w-full gap-6 pt-4 overflow-hidden">
 
@@ -444,7 +480,7 @@ const PayrollManagement = () => {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Payroll</h1>
           <p className="text-sm text-slate-400 mt-0.5">Manage salaries, deductions, and disbursements</p>
@@ -560,7 +596,7 @@ const PayrollManagement = () => {
           </div>
 
           {/* Table */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-x-auto no-scrollbar relative">
             {loading ? (
               <div className="flex flex-col items-center justify-center h-64 gap-3">
                 <Loader2 size={28} className="text-slate-400 animate-spin" />
@@ -688,6 +724,13 @@ const PayrollManagement = () => {
             </div>
             <div className="flex items-center gap-4">
               <p className="text-xs text-slate-400">Last updated: {formatDate(new Date())}</p>
+              <button
+                onClick={handleExportAll}
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white hover:bg-slate-800 rounded-lg text-xs font-medium transition-colors"
+              >
+                <Download size={14} />
+                Export CSV
+              </button>
               <button
                 onClick={() => { showNotification('Refreshing...'); fetchPayrollData(); }}
                 className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-medium transition-colors"

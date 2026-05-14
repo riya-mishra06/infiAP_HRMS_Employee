@@ -147,184 +147,195 @@ const SubmitResignation = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] w-full gap-6 pt-4 overflow-hidden text-left">
-      <div className="flex items-center gap-4 shrink-0">
+    <div className="flex flex-col min-h-[calc(100vh-120px)] w-full gap-8 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-700 text-left pb-20">
+      <div className="flex items-center gap-6 shrink-0">
         <button
           onClick={() => navigate('/resignation')}
-          className="p-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all"
+          className="p-4 bg-white border border-slate-100 text-slate-400 hover:text-slate-800 rounded-2xl shadow-sm transition-all hover:-translate-x-1 active:scale-95"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Submit Resignation</h1>
-          <p className="text-sm text-slate-500 mt-1">Submit a resignation request using your live HR profile details.</p>
+          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2 underline decoration-rose-300 underline-offset-8">Submit Resignation</h1>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-4 leading-none">Initiate Offboarding Protocol for Employee Nodes</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 flex-1 min-h-0">
-        <div className="xl:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm h-fit">
-          <h2 className="text-lg font-black text-slate-900">Employee Details</h2>
-          <p className="text-sm text-slate-500 mt-1">Loaded from your HR profile. You can edit these fields for another employee.</p>
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 flex-1 min-h-0">
+        <div className="xl:col-span-2 space-y-6">
+          <div className="bg-slate-900 p-8 rounded-[32px] text-white shadow-2xl shadow-slate-200">
+            <h2 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-white/10 pb-4">Employee Intelligence</h2>
+            
+            {loadingProfile ? (
+              <div className="py-10 flex flex-col items-center gap-4 text-slate-500">
+                <Loader2 size={24} className="animate-spin" />
+                <p className="text-[9px] font-black uppercase tracking-widest">Accessing Profile Node...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {profileError && (
+                  <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-2xl flex items-start gap-3 text-[10px] font-black uppercase tracking-widest">
+                    <AlertCircle size={16} className="shrink-0" />
+                    {profileError}
+                  </div>
+                )}
 
-          {loadingProfile ? (
-            <div className="py-10 flex items-center gap-3 text-sm font-bold text-slate-500">
-              <Loader2 size={18} className="animate-spin" />
-              Loading profile...
-            </div>
-          ) : (
-            <div className="mt-6 space-y-4">
-              {profileError && (
-                <div className="p-3 bg-amber-50 border border-amber-100 text-amber-700 rounded-2xl flex items-start gap-2 text-sm font-semibold">
-                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                  {profileError}
-                </div>
-              )}
+                {[
+                  ['Full Name', profile.employeeName || 'N/A'],
+                  ['HR Node ID', profile.employeeId || 'N/A'],
+                  ['Department', profile.department || 'N/A'],
+                  ['Designation', profile.designation || 'N/A']
+                ].map(([label, value]) => (
+                  <div key={label} className="group">
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 group-hover:text-rose-400 transition-colors">{label}</p>
+                    <p className="text-base font-black text-white tracking-tight">{value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-              {[
-                ['Default Name', profile.employeeName || 'N/A'],
-                ['Default Employee ID', profile.employeeId || 'N/A'],
-                ['Default Department', profile.department || 'N/A'],
-                ['Default Designation', profile.designation || 'N/A']
-              ].map(([label, value]) => (
-                <div key={label} className="border-b border-slate-100 pb-3">
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{label}</p>
-                  <p className="text-sm font-bold text-slate-900 mt-1">{value}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="bg-rose-50 p-8 rounded-[32px] border border-rose-100 flex items-center gap-4">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-rose-500 shadow-sm">
+                  <AlertCircle size={24} />
+              </div>
+              <div>
+                  <p className="text-[10px] font-black text-rose-900 uppercase tracking-widest">Compliance Warning</p>
+                  <p className="text-[9px] text-rose-600 font-bold uppercase tracking-widest mt-1">Submission will trigger IT and Financial clearance nodes.</p>
+              </div>
+          </div>
         </div>
 
-        <div className="xl:col-span-3 bg-white border border-slate-100 rounded-3xl shadow-sm overflow-auto">
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <div className="xl:col-span-3 bg-white border border-slate-50 rounded-[44px] shadow-soft overflow-hidden flex flex-col">
+          <form onSubmit={handleSubmit} className="p-10 space-y-8 overflow-y-auto no-scrollbar">
             {submitError && (
-              <div className="p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-2xl flex items-center gap-3 text-sm font-semibold">
-                <AlertCircle size={18} />
+              <div className="p-6 bg-rose-50 border border-rose-100 text-rose-700 rounded-3xl flex items-center gap-4 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                <AlertCircle size={20} className="text-rose-500" />
                 {submitError}
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <label className="space-y-2">
-                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Employee Name</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Employee Name</span>
                 <input
                   type="text"
                   required
                   value={formData.employeeName}
                   onChange={(event) => setFormData((prev) => ({ ...prev, employeeName: event.target.value }))}
-                  placeholder="Enter employee name"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                  placeholder="Target node name"
+                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-[20px] text-xs font-black text-slate-700 outline-none focus:border-rose-200 transition-all uppercase tracking-tight"
                 />
-              </label>
+              </div>
 
-              <label className="space-y-2">
-                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Employee ID</span>
+              <div className="space-y-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Employee ID</span>
                 <input
                   type="text"
                   required
                   value={formData.employeeId}
                   onChange={(event) => setFormData((prev) => ({ ...prev, employeeId: event.target.value }))}
-                  placeholder="Enter employee ID"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                  placeholder="System ID"
+                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-[20px] text-xs font-black text-slate-700 outline-none focus:border-rose-200 transition-all uppercase tracking-tight"
                 />
-              </label>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <label className="space-y-2">
-                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Department</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Department</span>
                 <input
                   type="text"
                   required
                   value={formData.department}
                   onChange={(event) => setFormData((prev) => ({ ...prev, department: event.target.value }))}
-                  placeholder="Enter department"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                  placeholder="Assigned department"
+                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-[20px] text-xs font-black text-slate-700 outline-none focus:border-rose-200 transition-all uppercase tracking-tight"
                 />
-              </label>
+              </div>
 
-              <label className="space-y-2">
-                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Designation</span>
+              <div className="space-y-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Designation</span>
                 <input
                   type="text"
                   value={formData.designation}
                   onChange={(event) => setFormData((prev) => ({ ...prev, designation: event.target.value }))}
-                  placeholder="Enter designation"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                  placeholder="Current role"
+                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-[20px] text-xs font-black text-slate-700 outline-none focus:border-rose-200 transition-all uppercase tracking-tight"
                 />
-              </label>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <label className="space-y-2">
-                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Notice Date</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notice Date</span>
                 <div className="relative">
-                  <Calendar size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Calendar size={16} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" />
                   <input
                     type="date"
                     required
                     value={formData.noticeDate}
                     onChange={(event) => setFormData((prev) => ({ ...prev, noticeDate: event.target.value }))}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                    className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-[20px] text-xs font-black text-slate-700 outline-none focus:border-rose-200 transition-all"
                   />
                 </div>
-              </label>
+              </div>
 
-              <label className="space-y-2">
-                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Last Working Day</span>
+              <div className="space-y-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Last Working Day</span>
                 <div className="relative">
-                  <Calendar size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Calendar size={16} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" />
                   <input
                     type="date"
                     required
                     value={formData.lastDay}
                     onChange={(event) => setFormData((prev) => ({ ...prev, lastDay: event.target.value }))}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                    className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-[20px] text-xs font-black text-slate-700 outline-none focus:border-rose-200 transition-all"
                   />
                 </div>
-              </label>
+              </div>
             </div>
 
-            <label className="space-y-2 block">
-              <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Reason</span>
+            <div className="space-y-3">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Primary Reason</span>
               <select
                 required
                 value={formData.reason}
                 onChange={(event) => setFormData((prev) => ({ ...prev, reason: event.target.value }))}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
+                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-[20px] text-xs font-black text-slate-700 outline-none focus:border-rose-200 transition-all uppercase tracking-widest"
               >
-                <option value="">Select reason</option>
+                <option value="">Select Protocol Reason</option>
                 {reasons.map((reason) => (
                   <option key={reason} value={reason}>{reason}</option>
                 ))}
               </select>
-            </label>
+            </div>
 
-            <label className="space-y-2 block">
-              <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Comments</span>
+            <div className="space-y-3">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contextual Comments</span>
               <textarea
                 value={formData.comments}
                 onChange={(event) => setFormData((prev) => ({ ...prev, comments: event.target.value }))}
-                placeholder="Add optional context for HR"
-                className="w-full h-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-slate-400 resize-none"
+                placeholder="Add optional audit context for HR nodes..."
+                className="w-full h-40 px-6 py-5 bg-slate-50 border border-slate-100 rounded-[32px] text-xs font-black text-slate-700 outline-none focus:border-rose-200 transition-all resize-none placeholder:uppercase placeholder:tracking-widest"
               />
-            </label>
+            </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <button
                 type="submit"
                 disabled={isSubmitting || loadingProfile || !formData.employeeName || !formData.employeeId || !formData.department}
-                className="flex-1 py-3 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                className="flex-1 py-5 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-[24px] hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center justify-center gap-3 shadow-2xl shadow-slate-200 active:scale-95"
               >
-                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                Submit Resignation
+                {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                Submit Protocol
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/resignation')}
-                className="px-6 py-3 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all"
+                className="px-10 py-5 bg-white border border-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-[24px] hover:bg-slate-50 transition-all active:scale-95"
               >
-                Cancel
+                Abort
               </button>
             </div>
           </form>

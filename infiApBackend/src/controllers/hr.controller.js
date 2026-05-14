@@ -11,6 +11,29 @@ const Job = require("../models/job.model");
 const logger = require("../utils/logger");
 
 // ---> Welcome Page Greeting <---
+exports.seedRecruitmentData = async (req, res) => {
+    try {
+        const sampleJobs = [
+            { title: "Senior Frontend Engineer", department: "Engineering", type: "Full-time", experience: "Senior (6+ years)", location: "Bangalore / Remote", deadline: "2024-05-30", status: "Open", applicants: 42 },
+            { title: "HR Manager", department: "People Operations", type: "Full-time", experience: "Mid-Senior (5+ years)", location: "Mumbai / Hybrid", deadline: "2024-06-15", status: "Open", applicants: 12 },
+            { title: "Product Designer", department: "Design", type: "Contract", experience: "Mid (3-5 years)", location: "Remote", deadline: "2024-05-20", status: "Open", applicants: 28 }
+        ];
+
+        const sampleCandidates = [
+            { applicantName: "Alex Rivers", email: "alex@example.com", phone: "+91 9876543210", jobTitle: "Senior Frontend Engineer", yearsOfExperience: 8, location: "Bangalore", source: "LinkedIn", status: "Applied", rating: 4.5 },
+            { applicantName: "Sarah Chen", email: "sarah@example.com", phone: "+91 9876543211", jobTitle: "Product Designer", yearsOfExperience: 5, location: "Pune", source: "Referral", status: "Shortlisted", rating: 4.8 },
+            { applicantName: "Marcus Thompson", email: "marcus@example.com", phone: "+91 9876543212", jobTitle: "HR Manager", yearsOfExperience: 10, location: "Delhi", source: "Indeed", status: "Technical Interview", rating: 4.2 }
+        ];
+
+        await Job.insertMany(sampleJobs);
+        await Candidate.insertMany(sampleCandidates);
+
+        res.status(200).json({ success: true, message: "Recruitment data seeded successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 exports.getDashboardSummary = async (req, res) => {
     try {
         const totalEmployees = await User.countDocuments({ role: "employee" });
@@ -86,7 +109,18 @@ exports.getHRAdminProfile = async (req, res) => {
 // ---> HR Operations: Employee <---
 exports.addEmployee = async (req, res) => {
     try {
-        const { name, email, phone, employeeId: providedEmployeeId, department, designation, reportingManager, annualSalary, employmentType, password = "Password@123" } = req.body;
+        const { 
+            name, 
+            email, 
+            phone, 
+            employeeId: providedEmployeeId, 
+            department, 
+            designation, 
+            reportingManager, 
+            annualSalary, 
+            employmentType, 
+            password = "Password@123" 
+        } = req.body;
 
         const existing = await User.findOne({ email });
         if (existing) return res.status(400).json({ success: false, message: "Email already exists" });
@@ -94,13 +128,31 @@ exports.addEmployee = async (req, res) => {
         // Auto-generate employeeId if not provided
         let employeeId = providedEmployeeId;
         if (!employeeId) {
-            const count = await User.countDocuments({ role: "employee" });
-            employeeId = `EMP-${String(count + 1).padStart(4, '0')}`;
+            // Find all employees with EMP- prefix
+            const employees = await User.find({ employeeId: /^EMP-/ }, { employeeId: 1 }).lean();
+            
+            let maxNumber = 0;
+            employees.forEach(emp => {
+                const parts = emp.employeeId.split("-");
+                const num = parseInt(parts[1]);
+                if (!isNaN(num) && num > maxNumber) {
+                    maxNumber = num;
+                }
+            });
+            
+            employeeId = `EMP-${String(maxNumber + 1).padStart(4, "0")}`;
         }
+
+        // Clean up reportingManager if it's an empty string
+        const cleanedManager = (reportingManager && mongoose.Types.ObjectId.isValid(reportingManager)) 
+            ? reportingManager 
+            : undefined;
 
         const newEmployee = new User({
             name, email, phone, password, role: "employee",
-            employeeId, department, designation, reportingManager, annualSalary, employmentType
+            employeeId, department, designation, 
+            reportingManager: cleanedManager, 
+            annualSalary, employmentType
         });
 
         await newEmployee.save();
@@ -1104,6 +1156,17 @@ exports.getRecruitmentDashboard = async (req, res) => {
     }
 };
 
+// 0. Add Candidate - New applicant entry
+exports.addCandidate = async (req, res) => {
+    try {
+        const candidate = new Candidate(req.body);
+        await candidate.save();
+        res.status(201).json({ success: true, message: "Candidate added successfully", data: candidate });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // 2. Candidate Tracking — List all candidates with filters
 exports.getCandidateTrackingList = async (req, res) => {
     try {
@@ -1614,10 +1677,43 @@ exports.getPayslip = async (req, res) => {
 // ---> HR Operations: Resignation <---
 exports.submitResignation = async (req, res) => {
     try {
-        const { userId, reason, noticePeriodDays } = req.body;
-        const reqData = new Resignation({ userId, reason, noticePeriodDays });
+        const { 
+            userId, 
+            employeeId, 
+            reason, 
+            noticePeriodDays, 
+            lastWorkingDate, 
+            lastWorkingDay,
+            comments 
+        } = req.body;
+
+        // 1. Resolve Target User
+        let targetUserId = userId || employeeId;
+        
+        if (!targetUserId) {
+            return res.status(400).json({ success: false, message: "Employee identity is required" });
+        }
+
+        // 2. Check if targetUserId is a valid ObjectId, if not, find by employeeId string
+        if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+            const foundUser = await User.findOne({ employeeId: targetUserId });
+            if (!foundUser) {
+                return res.status(404).json({ success: false, message: `No employee found with ID: ${targetUserId}` });
+            }
+            targetUserId = foundUser._id;
+        }
+
+        // 3. Create Resignation Record
+        const reqData = new Resignation({ 
+            userId: targetUserId, 
+            reason, 
+            noticePeriodDays: noticePeriodDays || 30,
+            lastWorkingDate: lastWorkingDate || lastWorkingDay,
+            managerRemarks: comments
+        });
+
         await reqData.save();
-        res.status(201).json({ success: true, message: "Resignation submitted", data: reqData });
+        res.status(201).json({ success: true, message: "Resignation protocol initiated successfully", data: reqData });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -1747,6 +1843,27 @@ exports.getPerformanceAnalytics = async (req, res) => {
 
         const result = await Performance.aggregate(pipeline);
         res.status(200).json({ success: true, data: result });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.deleteEmployee = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const employee = await User.findByIdAndDelete(id);
+        if (!employee) return res.status(404).json({ success: false, message: "Employee not found" });
+        
+        // Delete related data
+        await Promise.all([
+            Punch.deleteMany({ userId: id }),
+            LeaveApplication.deleteMany({ EmployeeID: id }),
+            Performance.deleteMany({ userId: id }),
+            Payroll.deleteMany({ userId: id }),
+            Resignation.deleteMany({ userId: id })
+        ]);
+
+        res.status(200).json({ success: true, message: "Employee and all related data deleted successfully" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

@@ -75,6 +75,7 @@ export const updateEmployee = (id, data) => {
   }
 };
 export const getEmployeeProfile = (id) => get(`/employees/${id}/profile`);
+export const deleteEmployee = (id) => api.delete(`${HR_BASE}/employees/${id}`);
 
 // ─── 3. Attendance ───────────────────────────────────────────────────────────
 export const getAttendanceDailyOverview = (params) => get('/attendance/daily-overview', params);
@@ -110,6 +111,11 @@ export const selectCandidate = (id) => put(`/recruitment/candidates/${id}/select
 export const sendCandidateOffer = (id, data) => post(`/recruitment/candidates/${id}/offer`, data);
 export const getRecruitmentJobs = (params) => get('/recruitment/jobs', params);
 export const createRecruitmentJob = (data) => post('/recruitment/jobs', data);
+export const updateRecruitmentJob = (id, data) => put(`/recruitment/jobs/${id}`, data);
+export const deleteRecruitmentJob = (id) => del(`/recruitment/jobs/${id}`);
+export const createCandidate = (data) => post('/recruitment/candidates', data);
+export const updateCandidate = (id, data) => put(`/recruitment/candidates/${id}`, data);
+export const deleteCandidate = (id) => del(`/recruitment/candidates/${id}`);
 
 // ─── 6. Performance ──────────────────────────────────────────────────────────
 export const getPerformanceDashboard = (params) => get('/performance/dashboard', params);
@@ -145,6 +151,7 @@ export default {
     createEmployee,
     updateEmployee,
     getEmployeeProfile,
+    deleteEmployee,
     getAttendanceDailyOverview,
     getAttendanceRecords,
     submitAttendanceCorrection,
@@ -173,6 +180,11 @@ export default {
     sendCandidateOffer,
     getRecruitmentJobs,
     createRecruitmentJob,
+    updateRecruitmentJob,
+    deleteRecruitmentJob,
+    createCandidate,
+    updateCandidate,
+    deleteCandidate,
     getPerformanceDashboard,
     getPerformanceList,
     getFeedbackStats,

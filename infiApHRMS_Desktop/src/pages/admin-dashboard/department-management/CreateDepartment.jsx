@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Building2, 
   ArrowLeft, 
@@ -16,8 +16,10 @@ import { useAuth } from '../../../context/AuthContext';
 
 const CreateDepartment = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = !!id;
   const { role } = useAuth();
-  const { addDepartment } = useAdminDashboard();
+  const { addDepartment, updateDepartment, departments } = useAdminDashboard();
   const { employees } = useEmployeeContext();
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,11 +31,33 @@ const CreateDepartment = () => {
     manager: ''
   });
 
+  useEffect(() => {
+    if (isEditMode && departments.length > 0) {
+      const dept = departments.find(d => d.id === id);
+      if (dept) {
+        setFormData({
+          name: dept.name,
+          description: dept.description || '',
+          location: dept.location || 'Headquarters',
+          teams: String(dept.teams),
+          manager: typeof dept.head === 'string' ? '' : (dept.head?._id || dept.head?.id || '')
+        });
+      }
+    }
+  }, [id, isEditMode, departments]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
-    const result = await addDepartment(formData);
+    
+    let result;
+    if (isEditMode) {
+      result = await updateDepartment(id, formData);
+    } else {
+      result = await addDepartment(formData);
+    }
+    
     setIsSubmitting(false);
 
     if (result?.success) {
@@ -41,7 +65,7 @@ const CreateDepartment = () => {
       return;
     }
 
-    setError(result?.error || 'Failed to create department. Please try again.');
+    setError(result?.error || `Failed to ${isEditMode ? 'update' : 'create'} department. Please try again.`);
   };
 
   return (
@@ -66,8 +90,8 @@ const CreateDepartment = () => {
               <Building2 size={28} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1">Create Department</h1>
-              <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">Setup new organizational unit</p>
+              <h1 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1">{isEditMode ? 'Edit' : 'Create'} Department</h1>
+              <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 leading-none">{isEditMode ? 'Update existing' : 'Setup new'} organizational unit</p>
             </div>
           </div>
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -165,7 +189,7 @@ const CreateDepartment = () => {
                 className="w-full md:flex-1 py-4 bg-linear-to-r from-[#4E63F0] to-[#6855E8] text-white rounded-[18px] font-black text-[9px] uppercase tracking-[0.25em] shadow-2xl shadow-indigo-100 hover:shadow-indigo-300 hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-4"
               >
                 <Check size={18} strokeWidth={3} />
-                {isSubmitting ? 'Creating...' : 'Create Department'}
+                {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Department' : 'Create Department')}
               </button>
               <button 
                 type="button"

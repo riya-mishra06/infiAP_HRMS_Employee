@@ -75,6 +75,7 @@ const LeaveRequests = () => {
             await approveLeave({ id, status });
             setRequests(prev => prev.map(req => req.id === id ? { ...req, status } : req));
             showNotification(`Request ${id} ${status} successfully.`);
+            setTimeout(() => navigate('/leave'), 1000);
         } catch (error) {
             showNotification(`Failed to ${status} request ${id}.`);
         }
@@ -88,6 +89,7 @@ const LeaveRequests = () => {
             ));
             showNotification(`${selectedRequests.length} requests ${status} successfully.`);
             setSelectedRequests([]);
+            setTimeout(() => navigate('/leave'), 1000);
         } catch (error) {
             showNotification(`Failed to process bulk action.`);
         }
