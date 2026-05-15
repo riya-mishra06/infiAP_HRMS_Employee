@@ -106,10 +106,10 @@ const LeaveApproval = () => {
         <div className="flex flex-col h-[calc(100vh-120px)] items-center justify-center">
           <p className="text-slate-600 mb-4">No pending leave requests</p>
           <button 
-            onClick={() => navigate('/leave/requests')}
+            onClick={() => navigate('/leave')}
             className="px-6 py-2 bg-indigo-600 text-white rounded-lg"
           >
-            Back to Requests
+            Back to Hub
           </button>
         </div>
       );
@@ -158,7 +158,7 @@ const LeaveApproval = () => {
             <div className="flex items-center justify-between shrink-0 px-2">
                 <div className="flex items-center gap-4">
                     <button 
-                        onClick={() => navigate('/leave/requests')}
+                        onClick={() => navigate('/leave')}
                         className="p-2.5 bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 rounded-xl shadow-sm transition-all hover:-translate-x-1"
                     >
                         <ArrowLeft size={18} />

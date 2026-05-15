@@ -33,116 +33,119 @@ const AddCandidateModal = ({ isOpen, onClose, onRefresh }) => {
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 text-left">
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose}></div>
-            <div className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                <div className="px-12 py-10 border-b border-slate-50 flex items-center justify-between">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose}></div>
+            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Ingest Candidate</h2>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Manual Applicant Entry Protocol</p>
+                        <h2 className="text-xl font-bold text-slate-800">Add New Candidate</h2>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Enter candidate details below</p>
                     </div>
-                    <button onClick={onClose} className="p-3 hover:bg-slate-50 rounded-2xl transition-all text-slate-300 hover:text-slate-900">
-                        <X size={24} />
+                    <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-xl transition-all text-slate-300 hover:text-slate-900">
+                        <X size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-12 space-y-8 max-h-[70vh] overflow-y-auto no-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Full Name</label>
+                <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto no-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
                             <div className="relative group">
-                                <User className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                                <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
                                 <input 
                                     required
                                     type="text" 
                                     placeholder="e.g. Alex Rivers"
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-xs font-black outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-inner"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                                     value={formData.applicantName}
                                     onChange={(e) => setFormData({...formData, applicantName: e.target.value})}
                                 />
                             </div>
                         </div>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Email Address</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
                             <div className="relative group">
-                                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
                                 <input 
                                     required
                                     type="email" 
                                     placeholder="alex@work.com"
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-xs font-black outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-inner"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                                     value={formData.email}
                                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                                 />
                             </div>
                         </div>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Target Role</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Target Role</label>
                             <div className="relative group">
-                                <Briefcase className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                                <Briefcase className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
                                 <input 
                                     required
                                     type="text" 
                                     placeholder="e.g. Senior Frontend Engineer"
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-xs font-black outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-inner"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                                     value={formData.jobTitle}
                                     onChange={(e) => setFormData({...formData, jobTitle: e.target.value})}
                                 />
                             </div>
                         </div>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Experience (Years)</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Experience (Years)</label>
                             <div className="relative group">
-                                <Star className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                                <Star className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
                                 <input 
                                     required
                                     type="number" 
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-xs font-black outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-inner"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                                     value={formData.yearsOfExperience}
                                     onChange={(e) => setFormData({...formData, yearsOfExperience: e.target.value})}
                                 />
                             </div>
                         </div>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Location</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Location</label>
                             <div className="relative group">
-                                <Globe className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                                <Globe className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
                                 <input 
                                     type="text" 
                                     placeholder="e.g. New York, Remote"
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-xs font-black outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-inner"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                                     value={formData.location}
                                     onChange={(e) => setFormData({...formData, location: e.target.value})}
                                 />
                             </div>
                         </div>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Acquisition Source</label>
-                            <select 
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-xs font-black outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-inner appearance-none"
-                                value={formData.source}
-                                onChange={(e) => setFormData({...formData, source: e.target.value})}
-                            >
-                                <option>LinkedIn</option>
-                                <option>Referral</option>
-                                <option>Indeed</option>
-                                <option>Career Page</option>
-                                <option>Other</option>
-                            </select>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Candidate Source</label>
+                            <div className="relative">
+                                <select 
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all appearance-none"
+                                    value={formData.source}
+                                    onChange={(e) => setFormData({...formData, source: e.target.value})}
+                                >
+                                    <option>LinkedIn</option>
+                                    <option>Referral</option>
+                                    <option>Indeed</option>
+                                    <option>Career Page</option>
+                                    <option>Other</option>
+                                </select>
+                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
                         </div>
                     </div>
                 </form>
 
-                <div className="p-12 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-4">
-                    <button onClick={onClose} className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">Cancel</button>
+                <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-4">
+                    <button onClick={onClose} className="px-6 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-800 transition-colors">Cancel</button>
                     <button 
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="px-10 py-4 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center gap-3 disabled:opacity-50 active:scale-95"
+                        className="px-8 py-3 bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center gap-2 disabled:opacity-50 active:scale-95"
                     >
                         {loading ? 'Processing...' : (
                             <>
                                 <Rocket size={16} />
-                                Launch Entry
+                                Add Candidate
                             </>
                         )}
                     </button>

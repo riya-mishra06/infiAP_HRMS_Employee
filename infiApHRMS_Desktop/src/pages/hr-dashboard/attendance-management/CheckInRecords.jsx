@@ -8,7 +8,6 @@ import {
   ChevronDown,
   BellRing,
   X,
-  ArrowRight,
   Briefcase,
   Laptop,
   Loader2
@@ -276,7 +275,6 @@ const CheckInRecords = () => {
                     <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Duration</th>
                     <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                     <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Mode</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-10"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -313,9 +311,6 @@ const CheckInRecords = () => {
                         </span>
                       </td>
                       <td className="px-5 py-3 text-sm text-slate-600">{rec.mode}</td>
-                      <td className="px-5 py-3">
-                        <ArrowRight size={16} className={`transition-colors ${selectedRecordId === rec.id ? 'text-indigo-600' : 'text-slate-300'}`} />
-                      </td>
                     </tr>
                   ))}
                 </tbody>

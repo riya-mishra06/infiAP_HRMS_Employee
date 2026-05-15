@@ -259,7 +259,6 @@ const Navbar = ({ setMobileMenuOpen }) => {
                 {[
                   { label: 'View Profile', icon: User, path: '/profile' },
                   { label: 'Edit Profile', icon: Settings, path: '/profile/edit' },
-                  { label: 'Security Details', icon: Shield, path: '/settings' },
                 ].map((item) => (
                   <button
                     key={item.label}

@@ -1205,6 +1205,30 @@ exports.getCandidateProfile = async (req, res) => {
     }
 };
 
+// 3b. Update Candidate
+exports.updateCandidate = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const candidate = await Candidate.findByIdAndUpdate(id, req.body, { new: true });
+        if (!candidate) return res.status(404).json({ success: false, message: "Candidate not found" });
+        res.status(200).json({ success: true, message: "Candidate updated successfully", data: candidate });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 3c. Delete Candidate
+exports.deleteCandidate = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const candidate = await Candidate.findByIdAndDelete(id);
+        if (!candidate) return res.status(404).json({ success: false, message: "Candidate not found" });
+        res.status(200).json({ success: true, message: "Candidate deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // 4. Shortlist Candidate
 exports.shortlistCandidate = async (req, res) => {
     try {
@@ -1355,6 +1379,28 @@ exports.getJobs = async (req, res) => {
     try {
         const jobs = await Job.find().sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: jobs });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.updateJob = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const job = await Job.findByIdAndUpdate(id, req.body, { new: true });
+        if (!job) return res.status(404).json({ success: false, message: "Job not found" });
+        res.status(200).json({ success: true, message: "Job updated successfully", data: job });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.deleteJob = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const job = await Job.findByIdAndDelete(id);
+        if (!job) return res.status(404).json({ success: false, message: "Job not found" });
+        res.status(200).json({ success: true, message: "Job deleted successfully" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

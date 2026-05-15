@@ -11,9 +11,11 @@ import {
   Home,
   RefreshCw
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../../utils/axios';
 
 const PendingApproval = () => {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('all');
