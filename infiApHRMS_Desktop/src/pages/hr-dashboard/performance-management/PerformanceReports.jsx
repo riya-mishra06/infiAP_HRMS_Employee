@@ -1,32 +1,32 @@
 import React, { useState } from 'react';
-import { 
-  FileText, 
-  Download, 
-  BarChart3, 
-  TrendingUp, 
-  Undo2, 
-  Filter, 
-  Activity, 
-  Award, 
-  Building, 
-  Search,
-  ChevronDown,
-  LayoutDashboard,
-  Zap,
-  ClipboardList,
-  BellRing
+import {
+    FileText,
+    Download,
+    BarChart3,
+    TrendingUp,
+    Undo2,
+    Filter,
+    Activity,
+    Award,
+    Building,
+    Search,
+    ChevronDown,
+    LayoutDashboard,
+    Zap,
+    ClipboardList,
+    BellRing
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  Cell,
-  LineChart,
-  Line
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Cell,
+    LineChart,
+    Line
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
@@ -69,7 +69,7 @@ const PerformanceReports = () => {
         let csvContent = "MERIT DISTRIBUTION MATRIX\n";
         csvContent += headers1.join(",") + "\n";
         csvContent += rows1.map(row => row.join(",")).join("\n") + "\n\n";
-        
+
         csvContent += "EVOLUTION VELOCITY BY NODE\n";
         csvContent += headers2.join(",") + "\n";
         csvContent += rows2.map(row => row.join(",")).join("\n");
@@ -88,7 +88,7 @@ const PerformanceReports = () => {
 
     return (
         <div className="flex flex-col min-h-[calc(100vh-120px)] w-full gap-10 animate-in fade-in slide-in-from-bottom-4 duration-700 relative pt-4 text-left pb-20">
-            
+
             {/* Notification */}
             {notification && (
                 <div className="fixed top-20 right-6 z-50 flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-lg animate-in slide-in-from-right-4">
@@ -96,11 +96,11 @@ const PerformanceReports = () => {
                     <span className="text-sm font-medium">{notification}</span>
                 </div>
             )}
-            
+
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0 text-left">
                 <div className="flex items-center gap-6 text-left">
-                    <button 
+                    <button
                         onClick={() => navigate('/performance')}
                         className="p-4 bg-white border border-slate-100 text-slate-400 hover:text-slate-800 rounded-2xl shadow-sm transition-all hover:-translate-x-1 active:scale-95 text-left"
                     >
@@ -111,12 +111,12 @@ const PerformanceReports = () => {
                         <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1 text-left leading-none">Forensic Growth Attribution & Merit Bell Curve Diagnostic</p>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-3 px-5 py-2 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 shadow-sm text-left">
                         Cycle: {activeCycle}
                     </div>
-                    <button 
+                    <button
                         onClick={handleExportData}
                         className="p-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 text-left"
                     >
@@ -127,7 +127,7 @@ const PerformanceReports = () => {
 
             {/* Analytical Workspace */}
             <div className="flex-1 grid grid-cols-1 xl:grid-cols-12 gap-8 text-left">
-                
+
                 {/* Row 1: Merit Distribution (8) + Insights (4) */}
                 <div className="xl:col-span-8 bg-white p-8 rounded-[32px] border border-slate-100 shadow-soft flex flex-col min-h-[480px] text-left">
                     <div className="mb-8 flex items-center justify-between shrink-0 text-left">
@@ -136,30 +136,30 @@ const PerformanceReports = () => {
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 text-left">Bell curve mapping of current performance nodes</p>
                         </div>
                         <div className="flex items-center gap-2">
-                             <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
-                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Live Engine Data</span>
+                            <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Live Engine Data</span>
                         </div>
                     </div>
                     <div className="flex-1 min-h-0 text-left">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={distributionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis 
-                                    dataKey="name" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fontSize: 9, fontWeight: 900, fill: '#94a3b8'}}
+                                <XAxis
+                                    dataKey="name"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 9, fontWeight: 900, fill: '#94a3b8' }}
                                     dy={10}
                                 />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fontSize: 9, fontWeight: 900, fill: '#94a3b8'}}
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 9, fontWeight: 900, fill: '#94a3b8' }}
                                 />
-                                <Tooltip 
-                                    contentStyle={{backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '12px'}}
-                                    itemStyle={{color: '#fff', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase'}}
-                                    cursor={{fill: '#f1f5f9'}}
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '12px' }}
+                                    itemStyle={{ color: '#fff', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase' }}
+                                    cursor={{ fill: '#f1f5f9' }}
                                 />
                                 <Bar dataKey="count" radius={[10, 10, 0, 0]} barSize={40}>
                                     {distributionData.map((entry, index) => (
@@ -188,7 +188,7 @@ const PerformanceReports = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-soft">
                         <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] mb-6">Talent Distribution</h3>
                         <div className="space-y-4">
@@ -231,22 +231,22 @@ const PerformanceReports = () => {
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={growthData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis 
-                                    dataKey="month" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fontSize: 9, fontWeight: 900, fill: '#94a3b8'}}
+                                <XAxis
+                                    dataKey="month"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 9, fontWeight: 900, fill: '#94a3b8' }}
                                     dy={10}
                                 />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fontSize: 9, fontWeight: 900, fill: '#94a3b8'}}
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 9, fontWeight: 900, fill: '#94a3b8' }}
                                     domain={[50, 100]}
                                 />
-                                <Tooltip 
-                                    contentStyle={{backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '12px'}}
-                                    itemStyle={{fontSize: '10px', fontWeight: 900, textTransform: 'uppercase'}}
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '12px' }}
+                                    itemStyle={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase' }}
                                 />
                                 <Line type="monotone" dataKey="engineering" stroke="#6366f1" strokeWidth={4} dot={false} activeDot={{ r: 6 }} />
                                 <Line type="monotone" dataKey="product" stroke="#10b981" strokeWidth={4} dot={false} activeDot={{ r: 6 }} />
@@ -278,7 +278,7 @@ const PerformanceReports = () => {
                             </div>
                         </div>
                     </div>
-                    <button 
+                    <button
                         onClick={handleExportData}
                         className="w-full lg:w-auto px-12 py-6 bg-slate-900 text-white font-black rounded-[24px] hover:bg-slate-800 transition-all uppercase tracking-[0.3em] text-[11px] shadow-2xl shadow-slate-200 active:scale-95 flex items-center justify-center gap-3"
                     >
