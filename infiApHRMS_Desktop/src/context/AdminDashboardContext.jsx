@@ -98,12 +98,12 @@ const normalizeTeam = (team) => {
   
   return {
     id: team.id || team._id,
-    name: team.name,
+    name: team.name || team.teamName || 'Unnamed Team',
     lead: team.lead?.name || team.lead || 'Unassigned',
     leadId: team.lead?._id || team.lead?.id || team.lead || null,
     members: team.totalMembers || memberList.length || 0,
     memberIds,
-    type: team.type || team.departmentName || 'Development', // use departmentName as type for tabs if needed
+    type: team.type || team.departmentName || 'General',
     keyMembers: memberList.map(m => ({
       id: typeof m === 'string' ? m : (m?._id || m?.id),
       name: typeof m === 'string' ? 'Assigned Employee' : (m?.name || 'Unknown'),
@@ -113,8 +113,8 @@ const normalizeTeam = (team) => {
         ? `https://ui-avatars.com/api/?name=${encodeURIComponent('U')}&background=random&color=fff`
         : (m?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(m?.name || 'U')}&background=random&color=fff`)
     })),
-    departmentId: team.departmentId || null,
-    departmentName: team.departmentName || ''
+    departmentId: team.departmentId || team.department_id || (typeof team.department === 'string' ? team.department : (team.department?._id || team.department?.id)) || null,
+    departmentName: team.departmentName || (typeof team.department === 'string' ? '' : team.department?.name) || ''
   };
 };
 
@@ -215,15 +215,16 @@ export const AdminDashboardProvider = ({ children }) => {
                dept.teams.forEach(team => {
                  allTeams.push({
                    ...team,
-                   departmentName: dept.departmentName,
-                   departmentId: dept.departmentId
+                   departmentName: dept.departmentName || dept.name,
+                   departmentId: dept.departmentId || dept._id || dept.id
                  });
                });
             }
          });
-      } else if (Array.isArray(res.data?.data)) {
-         // Fallback if backend changes to return a flat array directly
+      } else if (res.data?.data && Array.isArray(res.data.data)) {
          allTeams = res.data.data;
+      } else if (Array.isArray(res.data)) {
+         allTeams = res.data;
       }
       
       const mapped = allTeams.map(normalizeTeam);

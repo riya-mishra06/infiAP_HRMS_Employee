@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAdminDashboard } from '../../../context/AdminDashboardContext';
 import { useEmployeeContext } from '../../../context/EmployeeContext';
 import { 
@@ -17,7 +17,9 @@ import { useAuth } from '../../../context/AuthContext';
 const EditTeam = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { role } = useAuth();
+  const isAdminRoute = location.pathname.startsWith('/admin');
   const { teams, updateTeam, departments, fetchDepartments } = useAdminDashboard();
   const { employees, fetchEmployees } = useEmployeeContext();
   const [formData, setFormData] = useState({
@@ -51,7 +53,7 @@ const EditTeam = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await updateTeam(id, formData);
-    navigate(role === 'HR' ? '/departments/teams' : '/admin/department-management/teams');
+    navigate(isAdminRoute ? '/admin/department-management/teams' : '/departments/teams');
   };
 
   if (loading) {
@@ -68,7 +70,7 @@ const EditTeam = () => {
       {/* Back Link */}
       <div className="w-full max-w-[800px] mb-10">
         <button 
-          onClick={() => navigate(role === 'HR' ? '/departments/teams' : '/admin/department-management/teams')}
+          onClick={() => navigate(isAdminRoute ? '/admin/department-management/teams' : '/departments/teams')}
           className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 font-black text-[10px] uppercase tracking-widest transition-all"
         >
           <ArrowLeft size={16} />
@@ -145,7 +147,7 @@ const EditTeam = () => {
                       <option value="" disabled>Select Team Lead</option>
                       {employees.map(emp => (
                         <option key={emp.id} value={emp.id}>
-                          {emp.name} ({emp.role})
+                          {emp.name} ({emp.employeeId || emp.id}) - {emp.role}
                         </option>
                       ))}
                     </select>
@@ -198,7 +200,7 @@ const EditTeam = () => {
               </button>
               <button 
                 type="button"
-                onClick={() => navigate(role === 'HR' ? '/departments/teams' : '/admin/department-management/teams')}
+                onClick={() => navigate(isAdminRoute ? '/admin/department-management/teams' : '/departments/teams')}
                 className="w-full md:w-auto px-12 py-6 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-[24px] font-black text-[10px] uppercase tracking-[0.25em] transition-all"
               >
                 Cancel

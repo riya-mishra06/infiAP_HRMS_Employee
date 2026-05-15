@@ -286,7 +286,7 @@ const AdminNavbar = ({ setMobileMenuOpen }) => {
                 {[
                   { label: 'View Profile', icon: User, path: '/admin/profile' },
                   { label: 'Edit Profile', icon: Settings, path: '/admin/profile/edit' },
-                  { label: 'Reset Password', icon: Key, path: '/admin/reset-password' },
+                  { label: 'Reset Password', icon: Key, path: '/reset-password' },
                 ].map((item) => (
                   <button
                     key={item.label}

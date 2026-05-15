@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminDashboard } from '../../../context/AdminDashboardContext';
 import { useEmployeeContext } from '../../../context/EmployeeContext';
 import { 
@@ -20,6 +20,7 @@ import { useAuth } from '../../../context/AuthContext';
 
 const ManageTeams = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { role } = useAuth();
   const { teams, fetchTeams, updateTeam, deleteTeam } = useAdminDashboard();
   const { employees, fetchEmployees } = useEmployeeContext();
@@ -29,6 +30,8 @@ const ManageTeams = () => {
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [savingMember, setSavingMember] = useState(false);
   const [memberError, setMemberError] = useState('');
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
   useEffect(() => {
     fetchTeams();
@@ -37,15 +40,32 @@ const ManageTeams = () => {
 
   useEffect(() => {
     if (!employees || employees.length === 0) {
-      fetchEmployees?.({ limit: 100 });
+      fetchEmployees?.({ limit: 1000 }); // Increase limit for enterprise scale
     }
   }, [employees, fetchEmployees]);
 
+  // Handle direct team selection from query param
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const teamId = params.get('team');
+    if (teamId && teams.length > 0) {
+      const team = teams.find(t => t.id === teamId || t._id === teamId);
+      if (team) openTeamDetails(team);
+    }
+  }, [location.search, teams]);
+
   const employeeOptions = useMemo(() => {
-    return (employees || [])
-      .filter((employee) => employee.id)
-      .sort((left, right) => String(left.name || '').localeCompare(String(right.name || '')));
-  }, [employees]);
+    const query = employeeSearch.toLowerCase().trim();
+    const list = (employees || [])
+      .filter((employee) => employee.id && !(activeTeamDetails?.memberIds || []).includes(employee.id));
+    
+    if (!query) return list.slice(0, 10); // Show top 10 if no search
+    
+    return list.filter(emp => 
+      (emp.name || '').toLowerCase().includes(query) || 
+      (emp.employeeId || '').toLowerCase().includes(query)
+    ).slice(0, 20); // Limit results for performance
+  }, [employees, employeeSearch, activeTeamDetails]);
 
   const tabs = useMemo(() => {
     const uniqueTypes = Array.from(new Set(teams.map(t => t.type || 'General')));
@@ -115,6 +135,25 @@ const ManageTeams = () => {
     fetchTeams();
   };
 
+  const handleRemoveMember = async (memberId) => {
+    if (!activeTeamDetails?.id || !window.confirm('Are you sure you want to remove this member from the team?')) return;
+
+    const nextMemberIds = (activeTeamDetails.memberIds || []).filter(id => id !== memberId);
+    setSavingMember(true);
+
+    const result = await updateTeam(activeTeamDetails.id, { members: nextMemberIds });
+    setSavingMember(false);
+
+    if (!result?.success) {
+      setMemberError(result?.error || 'Failed to remove member.');
+      return;
+    }
+
+    const refreshed = result.data;
+    setActiveTeamDetails((prev) => prev ? { ...prev, ...refreshed } : prev);
+    fetchTeams();
+  };
+
   const handleDeleteTeam = async (teamId, teamName) => {
     if (!window.confirm(`Are you sure you want to delete "${teamName}"?`)) return;
     
@@ -131,7 +170,7 @@ const ManageTeams = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0">
          <div className="flex items-center gap-6">
             <button
-               onClick={() => navigate(role === 'HR' ? '/departments' : '/admin/departments')}
+               onClick={() => navigate(location.pathname.startsWith('/admin') ? '/admin/department-management' : '/departments')}
                className="w-12 h-12 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
             >
                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
@@ -282,75 +321,111 @@ const ManageTeams = () => {
                    </div>
                 </div>
 
-                <div className="rounded-[24px] border border-slate-100 bg-slate-50/80 p-6 space-y-4">
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-2">Add employee to team</label>
-                    <div className="flex flex-col md:flex-row gap-3">
-                      <select
-                        value={selectedMemberId}
-                        onChange={(event) => setSelectedMemberId(event.target.value)}
-                        className="flex-1 bg-white border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-indigo-500"
-                      >
-                        <option value="">Select employee</option>
-                        {employeeOptions
-                          .filter((employee) => !(activeTeamDetails.memberIds || []).includes(employee.id))
-                          .map((employee) => (
-                            <option key={employee.id} value={employee.id}>
-                              {employee.name} - {employee.department || 'General'}
-                            </option>
-                          ))}
-                      </select>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-2 px-1">Find employee by name or ID</label>
+                    <div className="flex flex-col md:flex-row gap-3 relative">
+                      <div className="flex-1 relative">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                          <Search size={14} />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Search for employees..."
+                          value={employeeSearch}
+                          onChange={(e) => {
+                            setEmployeeSearch(e.target.value);
+                            setShowSearchDropdown(true);
+                          }}
+                          onFocus={() => setShowSearchDropdown(true)}
+                          className="w-full bg-white border border-slate-100 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-indigo-500 shadow-sm"
+                        />
+                        
+                        {showSearchDropdown && employeeSearch.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[60] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="max-h-[250px] overflow-y-auto no-scrollbar">
+                              {employeeOptions.length > 0 ? employeeOptions.map((employee) => (
+                                <button
+                                  key={employee.id}
+                                  onClick={() => {
+                                    setSelectedMemberId(employee.id);
+                                    setEmployeeSearch(`${employee.name} (${employee.employeeId || 'ID Pending'})`);
+                                    setShowSearchDropdown(false);
+                                  }}
+                                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors text-left border-b border-slate-50 last:border-0"
+                                >
+                                  <div>
+                                    <p className="text-sm font-bold text-slate-800">{employee.name}</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{employee.employeeId || 'ID Pending'} • {employee.department || 'General'}</p>
+                                  </div>
+                                  <Plus size={14} className="text-indigo-500" />
+                                </button>
+                              )) : (
+                                <div className="p-6 text-center">
+                                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No matching employees found</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       <button
                         type="button"
-                        onClick={handleAddMember}
+                        onClick={async () => {
+                          await handleAddMember();
+                          setEmployeeSearch('');
+                        }}
                         disabled={!selectedMemberId || savingMember}
-                        className="px-5 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-8 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 active:scale-95"
                       >
-                        {savingMember ? 'Adding...' : 'Add Employee'}
+                        {savingMember ? 'Adding...' : 'Add to Roster'}
                       </button>
                     </div>
                     {memberError && (
-                      <p className="mt-3 text-sm font-medium text-red-600">{memberError}</p>
+                      <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-red-500 px-1">{memberError}</p>
                     )}
                   </div>
-                </div>
                 
-                <div>
-                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-4 px-2">Team Directory</label>
-                   <div className="space-y-3">
-                     {activeTeamDetails.keyMembers?.length > 0 ? activeTeamDetails.keyMembers.map((member, midx) => (
-                        <div key={midx} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
-                           <div className="flex items-center gap-4">
-                              <img 
-                                src={member.img} 
-                                alt={member.name} 
-                                className="w-10 h-10 rounded-full border border-slate-100"
-                                onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'U')}&background=random&color=fff`; }}
-                              />
-                              <div>
-                                 <p className="text-sm font-bold text-slate-800">{member.name}</p>
-                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">{member.role}</p>
-                              </div>
-                           </div>
-                           <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-green-50 text-green-600 rounded-full">{member.status}</span>
-                        </div>
-                     )) : (
-                        <div className="flex flex-col items-center justify-center p-10 bg-slate-50 border border-slate-100 border-dashed rounded-3xl text-center">
-                           <Users size={32} className="text-slate-300 mb-3" />
-                           <p className="text-lg text-slate-700 font-black mb-1">0 Team Members</p>
-                           <p className="text-xs text-slate-400 font-bold mb-6 max-w-[250px]">HR can add and assign employees to this team from the Employee directory.</p>
-                           {role === 'HR' && (
-                             <button 
-                                 onClick={() => navigate('/admin/employees/add')}
-                               className="px-8 py-4 bg-indigo-600 text-white rounded-[16px] text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:-translate-y-1 transition-all shadow-xl shadow-indigo-100"
-                             >
-                               Add Employee
-                             </button>
-                           )}
-                        </div>
-                     )}
-                   </div>
-                </div>
+                 <div>
+                    <div className="flex items-center justify-between mb-4 px-2">
+                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Team Directory</label>
+                       <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{activeTeamDetails.keyMembers?.length || 0} Members</span>
+                    </div>
+                    <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 no-scrollbar">
+                      {activeTeamDetails.keyMembers?.length > 0 ? activeTeamDetails.keyMembers.map((member, midx) => (
+                         <div key={midx} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-indigo-100/30 transition-all group/memberitem">
+                            <div className="flex items-center gap-4">
+                               <img 
+                                 src={member.img} 
+                                 alt={member.name} 
+                                 className="w-10 h-10 rounded-xl border border-slate-100 shadow-sm object-cover"
+                                 onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'U')}&background=random&color=fff`; }}
+                               />
+                               <div>
+                                  <p className="text-sm font-bold text-slate-800 leading-tight">{member.name}</p>
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{member.employeeId || member.role}</p>
+                               </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                               <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1 bg-green-50 text-green-600 rounded-full border border-green-100">{member.status || 'Active'}</span>
+                               <button 
+                                 onClick={() => handleRemoveMember(member.id || member._id)}
+                                 className="p-2.5 bg-slate-50 text-slate-300 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all opacity-0 group-hover/memberitem:opacity-100"
+                                 title="Remove Member"
+                               >
+                                  <Trash2 size={14} />
+                               </button>
+                            </div>
+                         </div>
+                      )) : (
+                         <div className="flex flex-col items-center justify-center p-10 bg-slate-50 border border-slate-100 border-dashed rounded-3xl text-center">
+                            <Users size={32} className="text-slate-300 mb-3" />
+                            <p className="text-lg text-slate-700 font-black mb-1">0 Team Members</p>
+                            <p className="text-xs text-slate-400 font-bold mb-6 max-w-[250px]">Start adding employees to build this operational unit.</p>
+                         </div>
+                      )}
+                    </div>
+                 </div>
              </div>
           </div>
         </div>

@@ -15,10 +15,13 @@ import {
   Calendar
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 import { getResignationRegister, updateExitProcess } from '../../../services/hrApi';
 
 const ResignationRequests = () => {
     const navigate = useNavigate();
+    const { role } = useAuth();
+    const baseRoute = role === 'HR' ? '' : '/admin';
     const [searchQuery, setSearchQuery] = useState('');
     const [notification, setNotification] = useState(null);
 
@@ -61,6 +64,11 @@ const ResignationRequests = () => {
             await updateExitProcess({ id, status: action });
             setRequests(prev => prev.map(r => r.id === id ? { ...r, status: action } : r));
             showNotification(`${action} resignation protocol for ${id}...`);
+            
+            // Wait for notification to be visible, then navigate back
+            setTimeout(() => {
+                navigate(`${baseRoute}/resignation`);
+            }, 1500);
         } catch (err) {
             showNotification(`Failed to update: ${id}`);
         }
@@ -81,7 +89,7 @@ const ResignationRequests = () => {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0 text-left">
                 <div className="flex items-center gap-6 text-left">
                     <button 
-                        onClick={() => navigate('/resignation')}
+                        onClick={() => navigate(`${baseRoute}/resignation`)}
                         className="p-4 bg-white border border-slate-100 text-slate-400 hover:text-slate-800 rounded-2xl shadow-sm transition-all hover:-translate-x-1 active:scale-95 text-left"
                     >
                         <Undo2 size={20} />

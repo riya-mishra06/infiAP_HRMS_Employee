@@ -12,6 +12,7 @@ const SalaryStructure = require("../models/salaryStructure.model");
 const Notification = require("../models/notification.model");
 const Performance = require("../models/performance.model");
 const Resignation = require("../models/resignation.model");
+const { generateDepartmentCode, generateTeamCode, generateEmployeeCode } = require("../utils/idGenerator");
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const DEPARTMENT_CATEGORIES = ["tech", "ui/ux", "social media", "developers", "rnd"];
@@ -798,17 +799,22 @@ exports.createDepartment = async (req, res) => {
         });
         if (exists) return res.status(400).json({ success: false, message: "Department already exists" });
 
+        const departmentCode = await generateDepartmentCode(Department);
+
         const dept = await Department.create({
             name: normalizedName,
+            departmentCode,
             description,
             head: headUser._id,
             category: normalizedCategory,
-            numberOfTeams: parsedTeams,
+            teamCapacity: parsedTeams,
             tag,
-            tagColor
+            tagColor,
+            companyId: req.user?.companyId,
+            createdBy: req.user?._id
         });
 
-        const populatedDepartment = await Department.findById(dept._id).populate("head", "name email designation role");
+        const populatedDepartment = await Department.findById(dept._id).populate("head", "firstName lastName name email designation role");
         res.status(201).json({ success: true, data: populatedDepartment });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -882,14 +888,22 @@ exports.addDepartmentEmployee = async (req, res) => {
             return res.status(404).json({ success: false, message: "Department not found or inactive" });
         }
 
+        const employeeId = await generateEmployeeCode(User);
+        const nameParts = normalizedName.split(" ");
+        const firstName = nameParts[0];
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "Unknown";
+
         const employee = await User.create({
-            name: normalizedName,
+            firstName,
+            lastName,
             email: normalizedEmail,
             password: String(password),
             role: "employee",
+            employeeId,
             designation: normalizedDesignation,
-            department: departmentDoc.name,
-            isEmailVerified: true
+            departmentId: departmentDoc._id,
+            isEmailVerified: true,
+            companyId: req.user?.companyId
         });
 
         const createdEmployee = await User.findById(employee._id).select("-password -refreshToken");
@@ -951,7 +965,17 @@ exports.deleteDepartment = async (req, res) => {
 exports.createTeam = async (req, res) => {
     try {
         const { name, departmentId, lead, members, icon, color } = req.body;
-        const team = await Team.create({ name, departmentId, lead, members, icon, color });
+        const teamCode = await generateTeamCode(Team);
+        const team = await Team.create({ 
+            name, 
+            teamCode,
+            departmentId, 
+            lead, 
+            members, 
+            icon, 
+            color,
+            status: "Active" 
+        });
         res.status(201).json({ success: true, data: team });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

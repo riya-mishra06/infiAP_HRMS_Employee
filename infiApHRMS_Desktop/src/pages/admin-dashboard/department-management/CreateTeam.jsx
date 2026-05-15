@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminDashboard } from '../../../context/AdminDashboardContext';
 import { useEmployeeContext } from '../../../context/EmployeeContext';
 import { 
@@ -19,9 +19,14 @@ const CreateTeam = () => {
   const { role } = useAuth();
   const { addTeam, departments, fetchDepartments } = useAdminDashboard();
   const { employees, fetchEmployees } = useEmployeeContext();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const queryParams = new URLSearchParams(location.search);
+  const preSelectedDeptId = queryParams.get('dept');
+
   const [formData, setFormData] = useState({
     name: '',
-    department: '',
+    department: preSelectedDeptId || '',
     lead: '',
     capacity: '',
     mission: ''
@@ -36,7 +41,11 @@ const CreateTeam = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await addTeam(formData);
-    navigate(role === 'HR' ? '/departments/teams' : '/admin/department-management/teams');
+    if (preSelectedDeptId) {
+        navigate(isAdminRoute ? `/admin/department-management/teams/view/${preSelectedDeptId}` : `/departments/teams/view/${preSelectedDeptId}`);
+    } else {
+        navigate(isAdminRoute ? '/admin/department-management/teams' : '/departments/teams');
+    }
   };
 
   return (
@@ -45,11 +54,17 @@ const CreateTeam = () => {
       {/* Back Link */}
       <div className="w-full max-w-[800px] mb-10">
         <button 
-          onClick={() => navigate(role === 'HR' ? '/departments/teams' : '/admin/department-management/teams')}
+          onClick={() => {
+              if (preSelectedDeptId) {
+                  navigate(isAdminRoute ? `/admin/department-management/teams/view/${preSelectedDeptId}` : `/departments/teams/view/${preSelectedDeptId}`);
+              } else {
+                  navigate(isAdminRoute ? '/admin/department-management/teams' : '/departments/teams');
+              }
+          }}
           className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 font-black text-[10px] uppercase tracking-widest transition-all"
         >
           <ArrowLeft size={16} />
-          Back to Teams Dashboard
+          Back to {preSelectedDeptId ? 'Department Teams' : 'Teams Dashboard'}
         </button>
       </div>
 
@@ -122,7 +137,7 @@ const CreateTeam = () => {
                       <option value="" disabled>Select Team Lead</option>
                       {employees.map(emp => (
                         <option key={emp.id} value={emp.id}>
-                          {emp.name} ({emp.role})
+                          {emp.name} ({emp.employeeId || emp.id}) - {emp.role}
                         </option>
                       ))}
                     </select>

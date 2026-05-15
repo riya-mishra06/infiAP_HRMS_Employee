@@ -11,6 +11,7 @@ import {
   UserX
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 import { getResignationRegister } from '../../../services/hrApi';
 
 const getPayloadArray = (response) => {
@@ -59,6 +60,8 @@ const statusStyles = {
 
 const ResignationHub = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const baseRoute = role === 'HR' ? '' : '/admin';
   const [requests, setRequests] = useState([]);
   const [activeStatus, setActiveStatus] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -128,13 +131,7 @@ const ResignationHub = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/resignation/submit')}
-            className="px-8 py-4 bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-rose-700 transition-all shadow-2xl shadow-rose-100 flex items-center gap-3 active:scale-95 group"
-          >
-            <UserX size={16} strokeWidth={3} className="group-hover:rotate-12 transition-transform" />
-            New Resignation
-          </button>
+
           <button
             onClick={fetchResignations}
             disabled={loading}
@@ -228,7 +225,7 @@ const ResignationHub = () => {
                 </tr>
               ) : filteredRequests.length ? (
                 filteredRequests.map((request) => (
-                  <tr key={request.id} className="group hover:bg-slate-50/50 transition-all cursor-pointer" onClick={() => navigate('/resignation/requests')}>
+                  <tr key={request.id} className="group hover:bg-slate-50/50 transition-all cursor-pointer" onClick={() => navigate(`${baseRoute}/resignation/requests`)}>
                     <td className="px-10 py-6">
                       <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-[10px] font-black group-hover:scale-110 transition-transform">
@@ -266,7 +263,7 @@ const ResignationHub = () => {
                     </td>
                     <td className="px-10 py-6 text-right">
                       <button
-                        onClick={(e) => { e.stopPropagation(); navigate('/resignation/requests'); }}
+                        onClick={(e) => { e.stopPropagation(); navigate(`${baseRoute}/resignation/requests`); }}
                         className="px-6 py-2.5 bg-white border border-slate-100 rounded-xl text-[10px] font-black text-slate-400 hover:text-slate-900 hover:border-slate-900 transition-all uppercase tracking-widest active:scale-95 shadow-sm"
                       >
                         Review Node
@@ -302,7 +299,7 @@ const ResignationHub = () => {
               </div>
           </div>
           <button
-            onClick={() => navigate('/resignation/exit')}
+            onClick={() => navigate(`${baseRoute}/resignation/exit`)}
             className="px-6 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-white border border-white/5"
           >
             Initiate Exit Protocol

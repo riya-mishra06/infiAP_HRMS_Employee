@@ -63,6 +63,7 @@ import CreateDepartment from './pages/admin-dashboard/department-management/Crea
 import ManageTeams from './pages/admin-dashboard/department-management/ManageTeams';
 import CreateTeam from './pages/admin-dashboard/department-management/CreateTeam';
 import EditTeam from './pages/admin-dashboard/department-management/EditTeam';
+import ViewTeams from './pages/admin-dashboard/department-management/ViewTeams';
 import AdminProfileView from './pages/admin-dashboard/profile-management/AdminProfileView';
 import AdminProfileEdit from './pages/admin-dashboard/profile-management/AdminProfileEdit';
 import ProfileSettings from './pages/admin-dashboard/profile-management/ProfileSettings';
@@ -97,9 +98,9 @@ import SystemMonitoring from './pages/main-admin/SystemMonitoring';
 // Auth
 import SplashScreen from './pages/auth/SplashScreen';
 import Login from './pages/auth/Login';
-import Signup from './pages/auth/Signup';
 import TwoFactor from './pages/auth/TwoFactor';
 import ResetPassword from './pages/auth/ResetPassword';
+import ConfirmResetPassword from './pages/auth/ConfirmResetPassword';
 import Success from './pages/auth/Success';
 import { AlertCircle, ShieldAlert } from 'lucide-react';
 
@@ -219,9 +220,9 @@ function AppContent() {
               <Route path="/" element={<RootRedirect />} />
               <Route path="/splash" element={<SplashScreen />} />
               <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-              <Route path="/signup" element={<Signup />} />
               <Route path="/2fa" element={<TwoFactor />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/confirm-reset" element={<ConfirmResetPassword />} />
               <Route path="/auth-success" element={<Success />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
 
@@ -239,6 +240,7 @@ function AppContent() {
                       <Route path="/department-management/create" element={<CreateDepartment />} />
                       <Route path="/department-management/edit/:id" element={<CreateDepartment />} />
                       <Route path="/department-management/teams" element={<ManageTeams />} />
+                      <Route path="/department-management/teams/view/:departmentId" element={<ViewTeams />} />
                       <Route path="/department-management/teams/create" element={<CreateTeam />} />
                       <Route path="/department-management/teams/edit/:id" element={<EditTeam />} />
 
@@ -266,8 +268,13 @@ function AppContent() {
                       {/* Independent Profile & Account Routes */}
                       <Route path="/profile-settings" element={<ProfileSettings />} />
                       <Route path="/account-details" element={<AccountDetails />} />
-                      <Route path="/reset-password" element={<ChangePassword />} />
+
                       <Route path="/preferences" element={<AdminPreferences />} />
+
+                      {/* Resignation Control */}
+                      <Route path="/resignation" element={<ResignationHub />} />
+                      <Route path="/resignation/requests" element={<ResignationRequests />} />
+                      <Route path="/resignation/exit" element={<ExitProcess />} />
                     </Routes>
                   </AdminLayout>
                 </ProtectedRoute>
@@ -313,6 +320,7 @@ function AppContent() {
                       <Route path="/departments/create" element={<CreateDepartment />} />
                       <Route path="/departments/edit/:id" element={<CreateDepartment />} />
                       <Route path="/departments/teams" element={<ManageTeams />} />
+                      <Route path="/departments/teams/view/:departmentId" element={<ViewTeams />} />
                       <Route path="/departments/teams/create" element={<CreateTeam />} />
                       <Route path="/departments/teams/edit/:id" element={<EditTeam />} />
 

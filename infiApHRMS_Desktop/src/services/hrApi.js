@@ -116,6 +116,7 @@ export const deleteRecruitmentJob = (id) => del(`/recruitment/jobs/${id}`);
 export const createCandidate = (data) => post('/recruitment/candidates', data);
 export const updateCandidate = (id, data) => put(`/recruitment/candidates/${id}`, data);
 export const deleteCandidate = (id) => del(`/recruitment/candidates/${id}`);
+export const seedRecruitmentData = () => post('/recruitment/seed');
 
 // ─── 6. Performance ──────────────────────────────────────────────────────────
 export const getPerformanceDashboard = (params) => get('/performance/dashboard', params);
@@ -185,6 +186,7 @@ export default {
     createCandidate,
     updateCandidate,
     deleteCandidate,
+    seedRecruitmentData,
     getPerformanceDashboard,
     getPerformanceList,
     getFeedbackStats,

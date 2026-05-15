@@ -21,7 +21,7 @@ import {
   Cell
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { getCandidateTracking, getRecruitmentJobs } from '../../../services/hrApi';
+import { getCandidateTracking, getRecruitmentJobs, seedRecruitmentData } from '../../../services/hrApi';
 
 const formatDate = (value, fallback = 'Pending') => {
   if (!value) return fallback;
@@ -243,19 +243,11 @@ const RecruitmentManagement = () => {
             onClick={async () => {
               showNotification("Initiating Recruitment Data Seeding...");
               try {
-                // I'll call a custom endpoint or just add a few via existing APIs
-                // For simplicity, I'll assume there's a /recruitment/seed endpoint
-                // or just log that it's being done.
-                // Actually, I'll just show the notification for now and assume the script I created earlier is used.
-                // But to be helpful, I'll add a call to a seed endpoint.
-                await fetch('http://localhost:5000/api/v1/hr/recruitment/seed', { 
-                  method: 'POST',
-                  headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                });
+                await seedRecruitmentData();
                 showNotification("Recruitment Pipeline Seeded successfully.");
-                window.location.reload();
+                setTimeout(() => window.location.reload(), 1000);
               } catch (err) {
-                showNotification("Seed protocol failed. Please run script manually.");
+                showNotification("Seed protocol failed. Please check backend connection.");
               }
             }}
             className="px-4 py-2.5 border border-amber-200 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-amber-50 transition-all flex items-center gap-2 active:scale-95"

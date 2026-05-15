@@ -16,10 +16,13 @@ import {
   CreditCard
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 import { hrService } from '../../../services/hr.service';
 
 const ExitProcess = () => {
     const navigate = useNavigate();
+    const { role } = useAuth();
+    const baseRoute = role === 'HR' ? '' : '/admin';
     const [notification, setNotification] = useState(null);
 
     const [exitData, setExitData] = useState(null);
@@ -92,7 +95,7 @@ const ExitProcess = () => {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0 text-left">
                 <div className="flex items-center gap-6 text-left">
                     <button 
-                        onClick={() => navigate('/resignation')}
+                        onClick={() => navigate(`${baseRoute}/resignation`)}
                         className="p-4 bg-white border border-slate-100 text-slate-400 hover:text-slate-800 rounded-2xl shadow-sm transition-all hover:-translate-x-1 active:scale-95 text-left"
                     >
                         <Undo2 size={20} />

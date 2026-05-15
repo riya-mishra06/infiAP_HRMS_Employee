@@ -8,41 +8,71 @@ const departmentSchema = new mongoose.Schema(
             unique: true,
             trim: true
         },
+        departmentCode: {
+            type: String,
+            unique: true,
+            required: true,
+            uppercase: true,
+            trim: true,
+            index: true
+        },
         description: {
-            type: String
+            type: String,
+            trim: true
         },
         category: {
             type: String,
-            enum: ["tech", "ui/ux", "social media", "developers", "rnd"],
-            default: "tech"
+            trim: true
         },
-        numberOfTeams: {
+        primaryLocation: {
+            type: String,
+            trim: true,
+            default: "Headquarters"
+        },
+        teamCapacity: {
             type: Number,
-            default: 0,
-            min: 0
-        },
-        tag: {
-            type: String,
-            default: "Operations"
-        },
-        tagColor: {
-            type: String,
-            default: "#0ea5e9"
+            default: 10
         },
         head: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User"
+            ref: "User",
+            index: true
         },
         companyId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Company"
+            ref: "Company",
+            index: true
         },
-        isActive: {
-            type: Boolean,
-            default: true
+        createdBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        status: {
+            type: String,
+            enum: ["Active", "Inactive", "Archived"],
+            default: "Active",
+            index: true
         }
     },
-    { timestamps: true }
+    { 
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
+    }
 );
+
+// Virtual for teams in this department
+departmentSchema.virtual('teams', {
+    ref: 'Team',
+    localField: '_id',
+    foreignField: 'departmentId'
+});
+
+// Virtual for employees in this department
+departmentSchema.virtual('employeeList', {
+    ref: 'User',
+    localField: '_id',
+    foreignField: 'departmentId'
+});
 
 module.exports = mongoose.model("Department", departmentSchema);

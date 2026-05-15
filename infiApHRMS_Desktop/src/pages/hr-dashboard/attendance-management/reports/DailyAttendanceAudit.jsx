@@ -16,6 +16,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const DailyAttendanceAudit = () => {
   const navigate = useNavigate();
@@ -36,6 +38,41 @@ const DailyAttendanceAudit = () => {
       case 'Absent': return 'bg-rose-50 text-rose-600 border-rose-100';
       default: return 'bg-slate-50 text-slate-400 border-slate-100';
     }
+  };
+
+  const handleExportPDF = () => {
+    if (!auditData.length) return;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Daily Attendance Audit Report', 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+
+    const tableColumn = ["ID", "Name", "Punch In", "Punch Out", "Status", "Location", "Device"];
+    const tableRows = [];
+
+    auditData.forEach(emp => {
+      const rowData = [
+        emp.id,
+        emp.name,
+        emp.punchIn,
+        emp.punchOut,
+        emp.status,
+        emp.loc,
+        emp.device
+      ];
+      tableRows.push(rowData);
+    });
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 28,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [79, 70, 229] }
+    });
+
+    doc.save(`Attendance_Audit_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   return (
@@ -66,7 +103,7 @@ const DailyAttendanceAudit = () => {
                  <span className="text-sm font-black text-slate-800 tracking-tighter">94.2%</span>
               </div>
            </div>
-           <button className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 uppercase tracking-widest text-[10px]">
+           <button onClick={handleExportPDF} className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 uppercase tracking-widest text-[10px]">
               <Download size={16} />
               Export PDF
            </button>

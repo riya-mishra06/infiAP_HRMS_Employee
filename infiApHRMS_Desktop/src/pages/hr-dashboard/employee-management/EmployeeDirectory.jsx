@@ -97,7 +97,8 @@ const EmployeeDirectory = () => {
         name.includes(query) || 
         email.includes(query) ||
         dept.includes(query) ||
-        role.includes(query);
+        role.includes(query) ||
+        (emp.employeeId || '').toLowerCase().includes(query);
 
       const matchesDept = filters.department === 'All Departments' || emp.department === filters.department;
       const matchesStatus = filters.status === 'All Status' || emp.status === filters.status;
@@ -285,7 +286,7 @@ const EmployeeDirectory = () => {
               <table className="w-full text-left border-collapse">
                  <thead className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200">
                     <tr>
-                       <th className="px-6 py-4 text-xs font-semibold text-slate-600">Employee</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-slate-600">ID & Name</th>
                        <th className="px-6 py-4 text-xs font-semibold text-slate-600">Role</th>
                        <th className="px-6 py-4 text-xs font-semibold text-slate-600 text-center">Status</th>
                        <th className="px-6 py-4 text-xs font-semibold text-slate-600 text-right">Actions</th>
@@ -303,9 +304,12 @@ const EmployeeDirectory = () => {
                                       <span className="text-sm font-semibold text-slate-500">{emp.name?.charAt(0)}</span>
                                    )}
                                 </div>
-                                 <div>
-                                    <p className="text-sm font-medium text-slate-800">{emp.name}</p>
-                                    <p className="text-xs text-slate-500">{emp.email}</p>
+                                 <div className="flex flex-col">
+                                    <span className="inline-flex items-center w-fit px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest border border-slate-200 mb-1">
+                                       {emp.employeeId || 'EMP-NEW'}
+                                    </span>
+                                    <p className="text-sm font-semibold text-slate-900 leading-tight">{emp.name}</p>
+                                    <p className="text-xs text-slate-500 leading-none">{emp.email}</p>
                                  </div>
                              </div>
                           </td>

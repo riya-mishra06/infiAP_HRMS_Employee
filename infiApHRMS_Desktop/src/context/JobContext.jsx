@@ -71,17 +71,22 @@ export const JobProvider = ({ children }) => {
   // Add job via API
   const addJob = async (newJob) => {
     try {
-      const res = await createRecruitmentJob({
+      const payload = {
         title: newJob.title,
         department: newJob.department,
         type: newJob.type,
         experience: newJob.experience,
         location: newJob.location,
-        deadline: newJob.deadline,
         description: newJob.description,
         skills: newJob.skills,
         status: 'Open',
-      });
+      };
+
+      if (newJob.deadline) {
+          payload.deadline = newJob.deadline;
+      }
+
+      const res = await createRecruitmentJob(payload);
 
       const created = res.data?.data;
       const formattedJob = {

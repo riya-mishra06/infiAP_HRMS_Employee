@@ -312,25 +312,7 @@ const Dashboard = () => {
                   )}
                </div>
 
-               <div className="bg-slate-900 p-8 rounded-3xl text-white shadow-xl shadow-slate-100 relative overflow-hidden group">
-                  <div className="flex items-center justify-between mb-8">
-                     <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">System Insights</h3>
-                     <Sparkles size={16} className="text-indigo-400" />
-                  </div>
-                  <p className="text-lg font-black tracking-tight leading-tight uppercase">
-                     {summaryData.employees} employees across the organization with{' '}
-                     <span className="text-emerald-400">{summaryData.activeJobs} open</span> positions.
-                  </p>
-                  <div className="mt-8 flex items-center gap-3">
-                     <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
-                        <TrendingUp size={16} className="text-white" />
-                     </div>
-                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                        {summaryData.pendingCorrections} corrections waiting for review
-                     </span>
-                  </div>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/10 rounded-full blur-[80px]"></div>
-               </div>
+
             </div>
          </div>
       </div>

@@ -9,6 +9,9 @@ const Resignation = require("../models/resignation.model");
 const Holiday = require("../models/holiday.model");
 const Job = require("../models/job.model");
 const logger = require("../utils/logger");
+const { generateEmployeeCode } = require("../utils/idGenerator");
+const Department = require("../models/department.model");
+const Team = require("../models/team.model");
 
 // ---> Welcome Page Greeting <---
 exports.seedRecruitmentData = async (req, res) => {
@@ -125,22 +128,16 @@ exports.addEmployee = async (req, res) => {
         const existing = await User.findOne({ email });
         if (existing) return res.status(400).json({ success: false, message: "Email already exists" });
 
-        // Auto-generate employeeId if not provided
-        let employeeId = providedEmployeeId;
-        if (!employeeId) {
-            // Find all employees with EMP- prefix
-            const employees = await User.find({ employeeId: /^EMP-/ }, { employeeId: 1 }).lean();
-            
-            let maxNumber = 0;
-            employees.forEach(emp => {
-                const parts = emp.employeeId.split("-");
-                const num = parseInt(parts[1]);
-                if (!isNaN(num) && num > maxNumber) {
-                    maxNumber = num;
-                }
-            });
-            
-            employeeId = `EMP-${String(maxNumber + 1).padStart(4, "0")}`;
+        const employeeId = await generateEmployeeCode(User);
+        const nameParts = (name || "").split(" ");
+        const firstName = nameParts[0] || "Unknown";
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "Employee";
+
+        // Handle department linking by ID if string was provided
+        let deptId = department;
+        if (department && !mongoose.Types.ObjectId.isValid(department)) {
+            const deptDoc = await Department.findOne({ name: department });
+            if (deptDoc) deptId = deptDoc._id;
         }
 
         // Clean up reportingManager if it's an empty string
@@ -149,10 +146,19 @@ exports.addEmployee = async (req, res) => {
             : undefined;
 
         const newEmployee = new User({
-            name, email, phone, password, role: "employee",
-            employeeId, department, designation, 
+            firstName, 
+            lastName, 
+            email, 
+            phone, 
+            password, 
+            role: "employee",
+            employeeId, 
+            departmentId: deptId, 
+            designation, 
             reportingManager: cleanedManager, 
-            annualSalary, employmentType
+            annualSalary, 
+            employmentType,
+            companyId: req.user?.companyId
         });
 
         await newEmployee.save();
@@ -192,24 +198,53 @@ exports.editEmployee = async (req, res) => {
 
 exports.getAllEmployees = async (req, res) => {
     try {
-        const { department, role, search, page = 1, limit = 20 } = req.query;
-        const filter = { role: { $nin: ["main_admin", "superadmin"] } };
-        if (department) filter.department = department;
+        const { departmentId, teamId, role, search, page = 1, limit = 20 } = req.query;
+        const filter = { role: { $nin: ["main_admin", "superadmin"] }, status: { $ne: "Archived" } };
+        
+        if (departmentId) filter.departmentId = departmentId;
+        if (teamId) filter.teamId = teamId;
         if (role) filter.designation = role;
+        
         if (search) {
             filter.$or = [
-                { name: { $regex: search, $options: "i" } },
+                { firstName: { $regex: search, $options: "i" } },
+                { lastName: { $regex: search, $options: "i" } },
                 { email: { $regex: search, $options: "i" } },
-                { employeeId: { $regex: search, $options: "i" } }
+                { employeeId: { $regex: search, $options: "i" } },
+                { phone: { $regex: search, $options: "i" } }
             ];
         }
+
         const skip = (parseInt(page) - 1) * parseInt(limit);
         const employees = await User.find(filter)
             .select("-password -refreshToken")
-            .populate("reportingManager", "name employeeId")
-            .skip(skip).limit(parseInt(limit)).sort({ createdAt: -1 });
+            .populate("reportingManager", "firstName lastName employeeId")
+            .populate("departmentId", "name departmentCode")
+            .populate("teamId", "name teamCode")
+            .skip(skip)
+            .limit(parseInt(limit))
+            .sort({ createdAt: -1 })
+            .lean();
+
         const total = await User.countDocuments(filter);
-        res.status(200).json({ success: true, data: employees, pagination: { total, page: parseInt(page), limit: parseInt(limit), totalPages: Math.ceil(total / parseInt(limit)) } });
+        
+        // Backward compatibility for 'name' field
+        const transformedEmployees = employees.map(emp => ({
+            ...emp,
+            name: `${emp.firstName} ${emp.lastName}`,
+            department: emp.departmentId?.name || "N/A"
+        }));
+
+        res.status(200).json({ 
+            success: true, 
+            data: transformedEmployees, 
+            pagination: { 
+                total, 
+                page: parseInt(page), 
+                limit: parseInt(limit), 
+                totalPages: Math.ceil(total / parseInt(limit)) 
+            } 
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

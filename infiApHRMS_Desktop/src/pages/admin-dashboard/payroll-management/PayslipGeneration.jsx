@@ -25,6 +25,7 @@ import {
   Send
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
 
 const PayslipGeneration = () => {
   const navigate = useNavigate();
@@ -41,6 +42,32 @@ const PayslipGeneration = () => {
     setTimeout(() => {
        setStep('success');
     }, 1500); // Simulate processing
+  };
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(22);
+    doc.text('Payslip', 105, 20, null, null, 'center');
+    doc.setFontSize(12);
+    doc.text('August 2023', 105, 30, null, null, 'center');
+    
+    doc.setFontSize(14);
+    doc.text('Employee details', 20, 50);
+    doc.setFontSize(10);
+    doc.text('Name: John Doe', 20, 60);
+    doc.text('Position: Software Engineer', 20, 70);
+    
+    doc.setFontSize(14);
+    doc.text('Earnings & Deductions', 20, 90);
+    doc.setFontSize(10);
+    doc.text('Gross Pay: $5,400.00', 20, 100);
+    doc.text('Total Deductions: $840.50', 20, 110);
+    
+    doc.setFontSize(16);
+    doc.text('Net Pay: $4,559.50', 20, 130);
+    
+    doc.save('Payslip_Aug_2023.pdf');
+    setShowShareModal(false);
   };
 
   const handleFinalShare = () => {
@@ -200,7 +227,7 @@ const PayslipGeneration = () => {
                                <Eye size={18} />
                                View Payslip
                             </button>
-                            <button className="w-full py-5.5 bg-white border-2 border-slate-100 text-slate-900 text-[10px] font-black uppercase tracking-[0.4em] rounded-[24px] hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center gap-4">
+                            <button onClick={handleDownloadPDF} className="w-full py-5.5 bg-white border-2 border-slate-100 text-slate-900 text-[10px] font-black uppercase tracking-[0.4em] rounded-[24px] hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center gap-4">
                                <Download size={18} />
                                Download PDF
                             </button>
@@ -298,7 +325,7 @@ const PayslipGeneration = () => {
                    { label: 'Share via Email', detail: 'Send to a verified recipient', icon: Mail, color: 'indigo-500', action: handleFinalShare },
                    { label: 'Send to Slack', detail: 'Post to a channel or DM', icon: MessageCircle, color: 'purple-500', action: handleFinalShare },
                    { label: 'Copy Link', detail: 'Share secure document link', icon: Copy, color: 'blue-500', action: handleFinalShare },
-                   { label: 'Download PDF', detail: 'Save file to your device', icon: Download, color: 'slate-400', action: () => setShowShareModal(false) }
+                   { label: 'Download PDF', detail: 'Save file to your device', icon: Download, color: 'slate-400', action: handleDownloadPDF }
                  ].map((opt, i) => (
                    <button 
                      key={i} 

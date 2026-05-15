@@ -1,7 +1,7 @@
 const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const { sendVerificationEmail, sendLoginOTPEmail } = require("../services/email.service");
+const { sendVerificationEmail, sendLoginOTPEmail, sendPasswordResetEmail } = require("../services/email.service");
 const logger = require("../utils/logger");
 
 // ===== Token Generation =====
@@ -185,7 +185,7 @@ exports.registerUser = async (req, res) => {
  */
 exports.loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, role } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required" });
@@ -201,6 +201,19 @@ exports.loginUser = async (req, res) => {
         const isPasswordValid = await user.isPasswordCorrect(password);
         if (!isPasswordValid) {
             return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        // Verify that the requested role matches the user's actual role
+        if (role) {
+            const requestedRole = normalizeRole(role);
+            const actualRole = normalizeRole(user.role);
+            
+            // If they ask for admin but they are not admin
+            if (requestedRole !== actualRole) {
+                return res.status(403).json({ 
+                    message: `Access denied. You do not have ${requestedRole || role} privileges.` 
+                });
+            }
         }
 
         // 2FA already done — go straight to login (existing user who has logged in before)
@@ -354,9 +367,9 @@ exports.forgotPassword = async (req, res) => {
         const normalizedEmail = String(email).trim().toLowerCase();
         const user = await User.findOne({ email: normalizedEmail });
 
-        // Always return 200 — don't reveal if email exists or not
+        // For user convenience (per user request), we tell them if the email doesn't exist
         if (!user) {
-            return res.status(200).json({ message: "If this email exists, a reset link has been sent." });
+            return res.status(404).json({ message: "No account found with this email address." });
         }
 
         const resetToken = crypto.randomBytes(32).toString("hex");
@@ -366,22 +379,35 @@ exports.forgotPassword = async (req, res) => {
         user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
         await user.save({ validateBeforeSave: false });
 
+        // Capture origin for link generation
+        const origin = req.headers.origin || req.headers.referer;
+
         try {
             // Send the RAW token in the email link (not the hash)
-            await sendLoginOTPEmail(user.email, resetToken);
+            // Use the email provided in the request body as confirmed by the user
+            const emailSent = await sendPasswordResetEmail(normalizedEmail, resetToken, origin);
+            
+            if (!emailSent) {
+                // If service returns false (e.g. not configured), we should notify the user or log it
+                // In dev we still allow it but in production it's an error
+                if (process.env.NODE_ENV === 'production') {
+                    throw new Error("Email delivery failed");
+                }
+            }
+
+            return res.status(200).json({
+                message: "A password reset link has been sent to your email.",
+                emailSent
+            });
         } catch (mailError) {
             // If email fails, clear the token
             user.resetPasswordToken = undefined;
             user.resetPasswordExpires = undefined;
             await user.save({ validateBeforeSave: false });
-            logger.warn("Reset email failed", { error: mailError.message });
-            return res.status(500).json({ message: "Failed to send reset email. Please try again." });
+            
+            logger.error("Reset email failed", { error: mailError.message });
+            return res.status(500).json({ message: "Failed to send reset email. Please check your email configuration and try again." });
         }
-
-        // NEVER return the token in the response — it defeats the purpose
-        return res.status(200).json({
-            message: "If this email exists, a reset link has been sent.",
-        });
     } catch (error) {
         logger.error("Forgot Password Error", { error: error.message });
         return res.status(500).json({ message: "Server error while processing forgot password" });
@@ -395,9 +421,10 @@ exports.forgotPassword = async (req, res) => {
  */
 exports.resetPassword = async (req, res) => {
     try {
-        const { resetToken, newPassword } = req.body;
+        const { token, password } = req.body;
+        const newPassword = password;
 
-        if (!resetToken || !newPassword) {
+        if (!token || !newPassword) {
             return res.status(400).json({ message: "Reset token and new password are required" });
         }
 
@@ -406,7 +433,7 @@ exports.resetPassword = async (req, res) => {
         }
 
         // Hash the incoming token and compare against DB
-        const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
         const user = await User.findOne({
             resetPasswordToken: hashedToken,

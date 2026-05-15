@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getLeaveHistory } from '../../../services/hrApi';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const LeaveHistory = () => {
     const navigate = useNavigate();
@@ -58,6 +60,67 @@ const LeaveHistory = () => {
         };
         fetchHistory();
     }, []);
+
+    const handleExportPDF = () => {
+        if (!filteredRecords.length) return;
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text('Leave History Report', 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+
+        const tableColumn = ["ID", "Name", "Type", "Department", "Date Range", "Status", "Verified By"];
+        const tableRows = [];
+
+        filteredRecords.forEach(rec => {
+            const rowData = [
+                rec.id,
+                rec.name,
+                rec.type,
+                rec.dept,
+                rec.range,
+                rec.status,
+                rec.verifiedBy
+            ];
+            tableRows.push(rowData);
+        });
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 28,
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [79, 70, 229] }
+        });
+
+        doc.save(`Leave_History_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
+    const handleExportExcel = () => {
+        if (!filteredRecords.length) return;
+        const csvContent = [
+            ["ID", "Name", "Type", "Department", "Date Range", "Status", "Verified By"],
+            ...filteredRecords.map(rec => [
+                rec.id,
+                rec.name,
+                rec.type,
+                rec.dept,
+                rec.range,
+                rec.status,
+                rec.verifiedBy
+            ])
+        ].map(e => e.join(",")).join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Leave_History_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const filteredRecords = historicalRecords.filter(rec => {
         const matchesSearch = rec.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -217,11 +280,11 @@ const LeaveHistory = () => {
                                     Generate Report
                                 </button>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <button className="py-4 bg-white/10 hover:bg-white/20 text-white border border-white/10 font-black rounded-2xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[9px]">
+                                    <button onClick={handleExportPDF} className="py-4 bg-white/10 hover:bg-white/20 text-white border border-white/10 font-black rounded-2xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[9px]">
                                         <Download size={14} />
                                         Export PDF
                                     </button>
-                                    <button className="py-4 bg-white/10 hover:bg-white/20 text-white border border-white/10 font-black rounded-2xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[9px]">
+                                    <button onClick={handleExportExcel} className="py-4 bg-white/10 hover:bg-white/20 text-white border border-white/10 font-black rounded-2xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[9px]">
                                         <FileSpreadsheet size={14} />
                                         Export Excel
                                     </button>

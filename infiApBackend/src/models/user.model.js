@@ -4,9 +4,25 @@ const jwt = require("jsonwebtoken");
 
 const userSchema = new mongoose.Schema(
     {
-        name: {
+        firstName: {
             type: String,
-            required: true
+            required: true,
+            trim: true,
+            index: true
+        },
+        middleName: {
+            type: String,
+            trim: true
+        },
+        lastName: {
+            type: String,
+            required: true,
+            trim: true,
+            index: true
+        },
+        gender: {
+            type: String,
+            enum: ["Male", "Female", "Other", "Prefer not to say"]
         },
         email: {
             type: String,
@@ -14,7 +30,8 @@ const userSchema = new mongoose.Schema(
             unique: [true, "Email already exists"],
             lowercase: true,
             trim: true,
-            match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Please use a valid email address"]
+            match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Please use a valid email address"],
+            index: true
         },
         password: {
             type: String,
@@ -22,31 +39,47 @@ const userSchema = new mongoose.Schema(
         },
         role: {
             type: String,
-            enum: ["employee","hr", "admin", "superadmin"],
-            default: "employee"
+            enum: ["employee", "hr", "admin", "superadmin"],
+            default: "employee",
+            index: true
         },
         companyId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Company"
+            ref: "Company",
+            index: true
         },
-        permissions: [{
-            type: String
-        }],
-        refreshToken: {
-            type: String
+        employeeId: {
+            type: String,
+            unique: true,
+            sparse: true,
+            index: true
         },
-        isEmailVerified: {
-            type: Boolean,
-            default: false
+        departmentId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Department",
+            index: true
         },
-        verificationToken: String,
-        resetPasswordToken: String,
-        resetPasswordExpires: Date,
-        twoFactorOTP: String,
-        twoFactorOTPExpires: Date,
-        firstLogin2FAVerified: {
-            type: Boolean,
-            default: false
+        teamId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Team",
+            index: true
+        },
+        designation: {
+            type: String,
+            trim: true,
+            index: true
+        },
+        employmentType: {
+            type: String,
+            enum: ["full-time", "part-time", "contract", "internship", "remote"],
+            default: "full-time",
+            index: true
+        },
+        status: {
+            type: String,
+            enum: ["Active", "On Leave", "Terminated", "Archived"],
+            default: "Active",
+            index: true
         },
         dob: {
             type: Date
@@ -56,7 +89,8 @@ const userSchema = new mongoose.Schema(
             default: Date.now
         },
         phone: {
-            type: String
+            type: String,
+            index: true
         },
         address: {
             type: String
@@ -64,33 +98,8 @@ const userSchema = new mongoose.Schema(
         profileImage: {
             type: String
         },
-        employeeId: {
-            type: String,
-            unique: true,
-            sparse: true
-        },
-        department: {
-            type: String
-        },
-        designation: {
-            type: String
-        },
-        reportingManager: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User"
-        },
         annualSalary: {
             type: Number
-        },
-        employmentType: {
-            type: String,
-            enum: ["full-time", "part-time", "contract", "internship", "remote"],
-            default: "full-time"
-        },
-        status: {
-            type: String,
-            enum: ["Active", "On Leave", "Terminate"],
-            default: "Active"
         },
         currentBaseSalary: {
             type: Number

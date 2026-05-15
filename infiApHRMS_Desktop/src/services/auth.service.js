@@ -32,6 +32,16 @@ export const authService = {
     return res.data;
   },
 
+  forgotPassword: async (email) => {
+    const res = await apiClient.post("/auth/forgot-password", { email });
+    return res.data;
+  },
+
+  resetPassword: async (token, password) => {
+    const res = await apiClient.post("/auth/reset-password", { token, password });
+    return res.data;
+  },
+
   logout: () => {
     tokenStore.clearToken();
   },

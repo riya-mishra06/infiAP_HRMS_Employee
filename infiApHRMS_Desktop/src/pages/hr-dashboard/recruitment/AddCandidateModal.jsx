@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, Briefcase, Globe, Star, Upload, Rocket } from 'lucide-react';
+import { X, User, Mail, Phone, Briefcase, Globe, Star, Upload, Rocket, ChevronDown } from 'lucide-react';
 import { createCandidate } from '../../../services/hrApi';
 
 const AddCandidateModal = ({ isOpen, onClose, onRefresh }) => {

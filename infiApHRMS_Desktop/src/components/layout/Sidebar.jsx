@@ -224,7 +224,7 @@ const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen }) => {
     {
       name: 'Resignation',
       icon: DoorOpen,
-      path: '/resignation',
+      path: role === 'HR' ? '/resignation' : '/admin/resignation',
       roles: ['HR', 'Admin']
     },
     {

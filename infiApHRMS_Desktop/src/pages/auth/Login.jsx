@@ -197,17 +197,6 @@ const Login = () => {
                         )}
                     </button>
 
-                    {/* Sign Up Link */}
-                    <p className="text-center text-xs font-medium text-[#7C87AE] pt-2">
-                        Don't have an account?{' '}
-                        <button
-                            type="button"
-                            onClick={() => navigate('/signup')}
-                            className="text-[#4E63F0] font-bold hover:underline"
-                        >
-                            Sign Up
-                        </button>
-                    </p>
 
                 </form>
             </div>
