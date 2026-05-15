@@ -101,6 +101,7 @@ import Signup from './pages/auth/Signup';
 import TwoFactor from './pages/auth/TwoFactor';
 import ResetPassword from './pages/auth/ResetPassword';
 import Success from './pages/auth/Success';
+import { AlertCircle, ShieldAlert } from 'lucide-react';
 
 import { EmployeeProvider } from './context/EmployeeContext';
 import { PolicyProvider } from './context/PolicyContext';
@@ -140,20 +141,64 @@ const getDashboardPathByRole = (role) => {
 };
 
 const RootRedirect = () => {
-  const { role } = useAuth();
+  const { role, loading } = useAuth();
+  
+  if (loading) return null; // or a loading spinner
+  
+  if (!role) return <Navigate to="/login" replace />;
+  
   return <Navigate to={getDashboardPathByRole(role)} replace />;
 };
 
 const PublicOnlyRoute = ({ children }) => {
-  const { role } = useAuth();
-  const normalizedRole = normalizeRole(role);
+  const { role, loading } = useAuth();
+  
+  if (loading) return null;
 
-  if (normalizedRole) {
-    return <Navigate to={getDashboardPathByRole(normalizedRole)} replace />;
+  if (role) {
+    return <Navigate to={getDashboardPathByRole(role)} replace />;
   }
 
   return children;
 };
+
+// Simple Unauthorized Component
+const Unauthorized = () => (
+  <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 text-center">
+    <div className="max-w-md w-full bg-white p-10 rounded-[32px] shadow-soft border border-slate-100">
+      <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-red-100">
+        <ShieldAlert size={40} />
+      </div>
+      <h2 className="text-3xl font-black text-slate-800 mb-2 tracking-tight uppercase">Access Denied</h2>
+      <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-8">You do not have permission to view this section</p>
+      <button 
+        onClick={() => window.location.href = '/'}
+        className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] shadow-xl hover:-translate-y-1 transition-all"
+      >
+        Return to Safety
+      </button>
+    </div>
+  </div>
+);
+
+// Simple Not Found Component
+const NotFound = () => (
+  <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 text-center">
+    <div className="max-w-md w-full bg-white p-10 rounded-[32px] shadow-soft border border-slate-100">
+      <div className="w-20 h-20 bg-indigo-50 text-indigo-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-100">
+        <AlertCircle size={40} />
+      </div>
+      <h2 className="text-3xl font-black text-slate-800 mb-2 tracking-tight uppercase">404 - Not Found</h2>
+      <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-8">The coordinate you requested does not exist</p>
+      <button 
+        onClick={() => window.location.href = '/'}
+        className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] shadow-xl hover:-translate-y-1 transition-all"
+      >
+        Back to Nexus
+      </button>
+    </div>
+  </div>
+);
 
 
 function AppContent() {
@@ -178,6 +223,7 @@ function AppContent() {
               <Route path="/2fa" element={<TwoFactor />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/auth-success" element={<Success />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
 
               {/* 2. Management Portal (Company Level) */}
               <Route path="/admin/*" element={
@@ -320,6 +366,9 @@ function AppContent() {
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
+              
+              {/* 5. Fallback Catch-all */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
             </AdminDashboardProvider>
             </PolicyProvider>

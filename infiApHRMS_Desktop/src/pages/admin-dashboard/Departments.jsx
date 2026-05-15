@@ -14,8 +14,9 @@ import { useAuth } from '../../context/AuthContext';
 const Departments = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const { departments, summary, fetchDepartments, loading } = useAdminDashboard();
+  const { departments, summary, fetchDepartments, loading, deleteDepartment } = useAdminDashboard();
   const [searchQuery, setSearchQuery] = useState('');
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   const filteredDepartments = useMemo(() => {
     const query = searchQuery.toLowerCase();
@@ -112,22 +113,22 @@ const Departments = () => {
         {loading ? (
           <div className="rounded-3xl border border-slate-100 bg-white p-8 text-sm font-bold text-slate-500">Loading live departments...</div>
         ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredDepartments.map((dept, idx) => {
-            const [isMenuOpen, setIsMenuOpen] = useState(false);
-            const menuRef = useRef(null);
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredDepartments.map((dept, idx) => {
+              const isMenuOpen = openMenuId === dept.id;
+              const menuRef = useRef(null);
 
-            useEffect(() => {
-              const handleClickOutside = (event) => {
-                if (menuRef.current && !menuRef.current.contains(event.target)) {
-                  setIsMenuOpen(false);
+              useEffect(() => {
+                const handleClickOutside = (event) => {
+                  if (menuRef.current && !menuRef.current.contains(event.target)) {
+                    setOpenMenuId(null);
+                  }
+                };
+                if (isMenuOpen) {
+                  document.addEventListener('mousedown', handleClickOutside);
                 }
-              };
-              if (isMenuOpen) {
-                document.addEventListener('mousedown', handleClickOutside);
-              }
-              return () => document.removeEventListener('mousedown', handleClickOutside);
-            }, [isMenuOpen]);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+              }, [isMenuOpen]);
 
             const handleDelete = async () => {
               if (window.confirm(`Are you sure you want to delete the ${dept.name} department? This action cannot be undone.`)) {
@@ -151,7 +152,7 @@ const Departments = () => {
                   </div>
                   <div className="relative" ref={menuRef}>
                     <button 
-                      onClick={() => setIsMenuOpen(!isMenuOpen)}
+                      onClick={() => setOpenMenuId(isMenuOpen ? null : dept.id)}
                       className={`transition-colors p-1.5 rounded-lg ${isMenuOpen ? 'bg-indigo-50 text-indigo-600' : 'text-slate-200 hover:text-slate-400 hover:bg-slate-50'}`}
                     >
                       <MoreVertical size={18} />
@@ -163,7 +164,7 @@ const Departments = () => {
                           <button
                             onClick={() => {
                               navigate(teamRoute);
-                              setIsMenuOpen(false);
+                              setOpenMenuId(null);
                             }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all group/item text-left"
                           >
@@ -176,7 +177,7 @@ const Departments = () => {
                           <button
                             onClick={() => {
                               navigate(editRoute);
-                              setIsMenuOpen(false);
+                              setOpenMenuId(null);
                             }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all group/item text-left"
                           >
@@ -191,7 +192,7 @@ const Departments = () => {
                           <button
                             onClick={() => {
                               handleDelete();
-                              setIsMenuOpen(false);
+                              setOpenMenuId(null);
                             }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-all group/item text-left"
                           >

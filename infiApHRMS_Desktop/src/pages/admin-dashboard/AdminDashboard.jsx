@@ -18,7 +18,8 @@ import {
    Layers,
    Wallet,
    X,
-   Check
+   Check,
+   DoorOpen
 } from 'lucide-react';
 
 const MONTHS = [
